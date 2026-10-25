@@ -32,7 +32,7 @@ def lock_exposure(index: int) -> None:
 
 class Camera:
     def __init__(self, source: int | str, roi: dict, simulate=None, lock: bool = True):
-        self.source, self.roi, self.simulate = source, roi, simulate
+        self.source, self.roi, self.simulate, self.lock = source, roi, simulate, lock
         self.available = False
         self.detail = "starting"
         self._cap: cv2.VideoCapture | None = None
@@ -83,10 +83,16 @@ class Camera:
                         self._cap.set(cv2.CAP_PROP_POS_FRAMES, 0)
                         continue
                     self.available, self.detail = False, "camera disconnected"
-                    time.sleep(0.5)
-                    if self._stream and self._cap is not None:  # phone stream dropped: reconnect
+                    time.sleep(1.0)
+                    # Unplugged USB webcam or dropped phone stream: reopen until it comes back.
+                    if self._cap is not None:
                         self._cap.release()
-                        self._cap = cv2.VideoCapture(self.source)
+                    if isinstance(self.source, int) and self.lock:
+                        lock_exposure(self.source)
+                    self._cap = cv2.VideoCapture(self.source)
+                    if self._cap.isOpened() and not self._stream:
+                        self._cap.set(cv2.CAP_PROP_FRAME_WIDTH, 1280)
+                        self._cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 720)
                     continue
                 if self._replay:
                     time.sleep(period)

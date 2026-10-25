@@ -23,6 +23,7 @@ class FlipConfig:
     smooth: int = 5           # trailing median window, in samples
     circular: bool = False    # hue in degrees wraps at 360
     onset_fraction: float = 0.3  # the reported flip time is where the change first passed this share of delta
+    relative: bool = False    # delta is a fraction of the baseline (for sensors in arbitrary units)
 
     @classmethod
     def from_dict(cls, d: dict | None) -> "FlipConfig":
@@ -72,6 +73,8 @@ class FlipDetector:
 
     def _exceeds(self, value: float, fraction: float = 1.0) -> bool:
         d = _diff(value, self.baseline, self.cfg.circular)
+        if self.cfg.relative:
+            d = d / max(abs(self.baseline), 1e-9)
         threshold = self.cfg.delta * fraction
         if self.cfg.direction == "rise":
             return d >= threshold

@@ -11,7 +11,7 @@
   },
   "roi": { "x": 0.42, "y": 0.38, "w": 0.16, "h": 0.30 },
   "flip": { "metric": "lab_a", "direction": "rise", "delta": 12, "hold_s": 2, "baseline_s": 3, "smooth": 5 },
-  "light_flip": { "metric": "light", "direction": "fall", "delta": 0.06, "hold_s": 2, "baseline_s": 3, "smooth": 5 },
+  "light_flip": { "metric": "light", "direction": "fall", "delta": 0.08, "relative": true, "hold_s": 2, "baseline_s": 3, "smooth": 5 },
   "flip_agreement_s": 1.0,
   "mix": { "sensor": "mix_angle", "low_deg": 60, "high_deg": 150, "active_dps": 30 },
   "steps": [

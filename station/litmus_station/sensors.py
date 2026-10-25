@@ -126,31 +126,74 @@ class AnalogSensor:
 
 # ------------------------------------------------------------------ digital
 
-class LDRTiming:
-    """Photoresistor + capacitor on one GPIO pin, no ADC: darker = longer charge time.
+def _rp1_chip():
+    """Open the GPIO chip that drives the 40-pin header (gpiochip0 on new kernels, gpiochip4 on older Pi 5 ones)."""
+    import lgpio  # type: ignore[import-not-found]
+    for n in (0, 4, 1, 2, 3):
+        try:
+            h = lgpio.gpiochip_open(n)
+        except Exception:  # noqa: BLE001 - chip not present
+            continue
+        try:
+            _, _, label = lgpio.gpio_get_chip_info(h)
+            if "rp1" in label or "pinctrl-bcm" in label:
+                return lgpio, h
+        except Exception:  # noqa: BLE001
+            pass
+        lgpio.gpiochip_close(h)
+    raise RuntimeError("no GPIO header chip found")
 
-    Reported as a 0-1 brightness-like ratio (fast charge = bright).
+
+class RCTiming:
+    """Resistive sensor read without an ADC: time how long a capacitor takes to charge through it.
+
+    Wiring: 3.3 V -> 1 kOhm -> sensor resistance -> GPIO pin, with a capacitor (about 1 uF)
+    from the GPIO pin to GND. For a Grove rotary angle sensor use its VCC and SIG pins only
+    (leave its GND unconnected) so the knob is a plain variable resistor.
+
+    mode "angle": maps charge time to degrees using min_us/max_us (or the range seen so far).
+    mode "light": brightness proxy (higher = brighter) for a bare photoresistor.
     """
 
-    def __init__(self, pin: int, timeout_s: float = 0.05):
-        from gpiozero import DigitalInputDevice, DigitalOutputDevice  # type: ignore[import-not-found]
-        self._pin, self._timeout = pin, timeout_s
-        self._out_cls, self._in_cls = DigitalOutputDevice, DigitalInputDevice
-        self.name, self.unit, self.detail, self.available = "light", "ratio", f"RC timing on GPIO{pin}", True
+    def __init__(self, name: str, unit: str, pin: int, mode: str, max_deg: float = 300.0,
+                 min_us: float | None = None, max_us: float | None = None, timeout_ms: float = 60.0):
+        self._lg, self._h = _rp1_chip()
+        self.name, self.unit, self._pin, self._mode = name, unit, pin, mode
+        self._max_deg, self._timeout = max_deg, timeout_ms / 1000.0
+        self._min_us, self._max_us = min_us, max_us
+        self._seen_min, self._seen_max = float("inf"), 0.0
+        self.detail, self.available = f"RC timing on GPIO{pin}", True
+        self.last_us: float | None = None
+
+    def _charge_us(self) -> float | None:
+        lg, h, pin = self._lg, self._h, self._pin
+        lg.gpio_claim_output(h, pin, 0)
+        time.sleep(0.002)  # discharge the capacitor
+        lg.gpio_free(h, pin)
+        lg.gpio_claim_input(h, pin, lg.SET_PULL_NONE)
+        start = time.perf_counter()
+        while lg.gpio_read(h, pin) == 0:
+            if time.perf_counter() - start > self._timeout:
+                lg.gpio_free(h, pin)
+                return None
+        dt = (time.perf_counter() - start) * 1e6
+        lg.gpio_free(h, pin)
+        return dt
 
     def read(self) -> float | None:
-        out = self._out_cls(self._pin)
-        out.off()
-        time.sleep(0.005)
-        out.close()
-        inp = self._in_cls(self._pin)
-        start = time.perf_counter()
-        while not inp.value:
-            if time.perf_counter() - start > self._timeout:
-                inp.close()
-                return 0.0
-        inp.close()
-        return round(1.0 - (time.perf_counter() - start) / self._timeout, 4)
+        samples = [s for s in (self._charge_us() for _ in range(3)) if s is not None]
+        if not samples:
+            return None
+        us = sorted(samples)[len(samples) // 2]
+        self.last_us = us
+        if self._mode == "light":
+            return round(1e4 / max(us, 1.0), 4)
+        self._seen_min, self._seen_max = min(self._seen_min, us), max(self._seen_max, us)
+        lo = self._min_us if self._min_us is not None else self._seen_min
+        hi = self._max_us if self._max_us is not None else self._seen_max
+        if hi - lo < 50:  # not calibrated yet and the knob has not moved: no meaningful angle
+            return None
+        return round(max(0.0, min(1.0, (us - lo) / (hi - lo))) * self._max_deg, 1)
 
 
 class DS18B20:
@@ -257,11 +300,20 @@ def build_sensors(hw: dict, simulate: SimulatedBench | None = None) -> dict[str,
             sensors[name] = AnalogSensor(name, unit, adc, int(spec["channel"]), s)
         else:
             sensors[name] = Missing(name, unit, "no ADC" if spec is not None else "not connected")
-    if sensors["light"].available is False and hw.get("light_rc_pin") is not None:
+    # No ADC: resistive sensors can still be read by RC charge timing on a GPIO pin.
+    rc = dict(hw.get("rc") or {})
+    if hw.get("light_rc_pin") is not None:
+        rc.setdefault("light", {"pin": hw["light_rc_pin"]})
+    for name, unit, mode in (("light", "rel", "light"), ("mix_angle", "deg", "angle")):
+        spec = rc.get(name)
+        if sensors[name].available or not spec:
+            continue
         try:
-            sensors["light"] = LDRTiming(int(hw["light_rc_pin"]))
+            sensors[name] = RCTiming(name, unit, int(spec["pin"]), mode, float(spec.get("max_deg", 300)),
+                                     spec.get("min_us"), spec.get("max_us"))
         except Exception as exc:  # noqa: BLE001
-            log.warning("RC light sensor unavailable: %s", exc)
+            log.warning("RC sensor %s unavailable: %s", name, exc)
+            sensors[name] = Missing(name, unit, f"RC timing failed: {exc}")
     try:
         sensors["temp_c"] = DS18B20() if hw.get("ds18b20", True) else Missing("temp_c", "°C")
     except Exception:  # noqa: BLE001 - probe absent: temperature is entered by hand or missing

@@ -101,7 +101,8 @@ class Session:
                 "elapsed_s": round(time.time() - self.started, 1) if self.state == "recording" else 0,
                 "experiment": self.protocol["name"], "step_index": self.step, "steps": [{"id": s["id"], "title": s["title"], "detail": s.get("detail"), "quantity": s.get("quantity"), "repeat": s.get("repeat", False)} for s in steps],
                 "current_step": cur, "totals": self.totals,
-                "sensors": {name: {"value": self.latest.get(name), "unit": s.unit, "available": s.available, "detail": s.detail}
+                "sensors": {name: {"value": self.latest.get(name), "unit": s.unit, "available": s.available, "detail": s.detail,
+                                   "raw_us": getattr(s, "last_us", None)}
                             for name, s in self.sensors.items()},
                 "camera": {"available": self.camera.available, "detail": self.camera.detail,
                            "blocked": bool(self.color and self.color.get("blocked")),
