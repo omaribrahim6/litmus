@@ -15,7 +15,7 @@ interface Validation {
   flip_timing: { n: number; within_1s: number; mean_abs_error_s: number | null; max_abs_error_s: number | null; sources: string[]; rows: { run: string; detected_s: number; truth_s: number; error_s: number; source: string }[] };
   probe_agreement: { n: number; agree: number; mean_abs_delta_s: number | null; tolerance_s: number; rows: { run: string; delta_s: number; agree: boolean }[] };
   hidden_faults: { n: number; found: number; rows: { run: string; planted: string; top_difference: string | null; found: boolean }[] };
-  false_alarms: { pairs: number; pairs_with_alarm: number; total_alarms: number; rows: { a: string; b: string; false_alarms: string[] }[] };
+  false_alarms: { pairs: number; pairs_with_alarm: number; total_alarms: number; comparisons?: number; rows: { a: string; b: string; false_alarms: string[] }[] };
   traceability: { claims: number; traced: number; flagged_gaps: number; percent: number | null };
 }
 
@@ -63,8 +63,8 @@ async function Content() {
         <Figure value={v.hidden_faults.found} of={v.hidden_faults.n}>
           planted confounds surfaced as the top difference by the diff engine.
         </Figure>
-        <Figure value={v.false_alarms.total_alarms} unit={`across ${v.false_alarms.pairs} pairs`}>
-          false alarms when comparing reference runs that followed the same protocol.
+        <Figure value={v.false_alarms.total_alarms} of={v.false_alarms.comparisons} unit="comparisons">
+          variables flagged as different between reference runs that followed the same protocol ({v.false_alarms.pairs} pairs). These are false alarms.
         </Figure>
         <Figure value={v.traceability.percent != null ? `${fmtNumber(v.traceability.percent, 1)}%` : "n/a"}>
           of {v.traceability.claims} AI-written claims and report sentences cite evidence in the record{v.traceability.flagged_gaps ? `; ${v.traceability.flagged_gaps} unsupported sentences were flagged, not shown as fact` : ""}.
@@ -85,7 +85,8 @@ async function Content() {
                   <td className="py-1.5">{r.run}</td>
                   <td className="num">{fmtNumber(r.detected_s, 2)} s</td>
                   <td className="num">{fmtNumber(r.truth_s, 2)} s</td>
-                  <td className={`num ${Math.abs(r.error_s) > 1 ? "text-accent" : ""}`}>{r.error_s > 0 ? "+" : ""}{fmtNumber(r.error_s, 2)} s</td>
+                  <td className={
+um ${Math.abs(r.error_s) > 1 ? "text-accent" : ""}`}>{r.error_s > 0 ? "+" : ""}{fmtNumber(r.error_s, 2)} s</td>
                 </tr>
               ))}
             </tbody>

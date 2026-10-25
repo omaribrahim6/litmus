@@ -80,8 +80,9 @@ def compute(experiment_slug: str = "vinegar-titration") -> dict:
         for a, b in itertools.combinations(refs, 2):
             others = [x for x in refs if x.id not in (a.id, b.id)]
             d = diff(protocol, a, [b], others)
-            alarms = [i["key"] for i in d["differences"] if i["status"] == "notable" and i.get("role") != "outcome"]
-            pairs.append({"a": a.label, "b": b.label, "false_alarms": alarms})
+            conditions = [i for i in d["differences"] if i.get("role") != "outcome" and i["status"] != "missing_evidence"]
+            alarms = [i["key"] for i in conditions if i["status"] == "notable"]
+            pairs.append({"a": a.label, "b": b.label, "false_alarms": alarms, "comparisons": len(conditions)})
 
         # 5. Traceability of every AI-written claim and report sentence.
         total = traced = 0
@@ -116,7 +117,8 @@ def compute(experiment_slug: str = "vinegar-titration") -> dict:
             },
             "hidden_faults": {"n": len(faults), "found": sum(1 for f in faults if f["found"]), "rows": faults},
             "false_alarms": {"pairs": len(pairs), "pairs_with_alarm": sum(1 for p in pairs if p["false_alarms"]),
-                             "total_alarms": sum(len(p["false_alarms"]) for p in pairs), "rows": pairs},
+                             "total_alarms": sum(len(p["false_alarms"]) for p in pairs),
+                             "comparisons": sum(p["comparisons"] for p in pairs), "rows": pairs},
             "traceability": {"claims": total, "traced": traced, "flagged_gaps": gaps,
                              "percent": round(100 * traced / total, 1) if total else None},
             "results": [{"run": r["label"], "role": r["role"], "value": measure_result(data[r["id"]], protocol).value} for r in runs],

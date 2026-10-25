@@ -57,7 +57,7 @@ def results_by_run(conn: psycopg.Connection, experiment: dict, run_ids: list[str
     if len(refs) >= 2:
         mean = statistics.fmean(refs)
         band = 2 * statistics.stdev(refs) if len(refs) >= 3 else (max(refs) - min(refs)) / 2
-        layers.append({"mark": {"type": "rect", "opacity": 0.12, "color": "#888"},
+        layers.append({"mark": {"type": "rect", "opacity": 0.14, "fillOpacity": 0.14, "strokeOpacity": 0, "color": "#7a8793"},
                        "encoding": {"y": {"datum": mean - band}, "y2": {"datum": mean + band}}})
         layers.append({"mark": {"type": "rule", "strokeDash": [4, 3], "color": "#666"},
                        "encoding": {"y": {"datum": mean}}})
