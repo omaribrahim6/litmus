@@ -4,81 +4,114 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
 <title>Litmus station</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap">
 <style>
+  /* Same tokens as the web app's dark theme: an instrument screen on the bench, built to read well on camera. */
   :root {
-    --paper: #0e151b; --surface: #141d25; --sunken: #0b1116; --ink: #e4eaee; --ink-2: #93a0aa; --ink-3: #66727c;
-    --rule: #233039; --accent: #f0577a; --accent-soft: #3a1620; --base: #79a9e6; --ok: #6cc497; --amber: #e1a553;
+    --paper: #111112; --surface: #19191b; --sunken: #212124; --hover: #2a2a2d; --ink: #ececeb; --ink-2: #a3a29e; --ink-3: #74736f;
+    --rule: #2a2a2c; --rule-strong: #3a3a3c; --accent: #ff5d73; --accent-soft: #3a1821; --base: #7fa8ff; --base-soft: #172440;
+    --ok: #5fd29b; --ok-soft: #10291d; --amber: #f0b25e; --amber-soft: #33260f;
+    --ai: linear-gradient(135deg, #f2b33d 0%, #e8466c 48%, #6c5cf0 100%);
   }
   * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-  html, body { margin: 0; height: 100%; background: var(--paper); color: var(--ink); font-family: "Archivo", system-ui, -apple-system, "Segoe UI", sans-serif; overflow: hidden; user-select: none; }
-  .num { font-family: ui-monospace, "SF Mono", "JetBrains Mono", Consolas, monospace; font-variant-numeric: tabular-nums; }
-  header { height: 56px; display: flex; align-items: center; gap: 16px; padding: 0 20px; border-bottom: 1px solid var(--rule); }
-  .mark { display: inline-flex; align-items: center; gap: 8px; font-weight: 650; font-size: 20px; letter-spacing: -0.01em; }
-  .mark i { width: 8px; height: 22px; border-radius: 2px; background: linear-gradient(180deg, #e8c33a 0 46%, #c8264e 54% 100%); display: inline-block; }
-  header .exp { color: var(--ink-2); font-size: 15px; }
-  header .right { margin-left: auto; display: flex; gap: 14px; align-items: center; font-size: 14px; color: var(--ink-2); }
-  .dot { width: 9px; height: 9px; border-radius: 50%; display: inline-block; margin-right: 6px; }
-  main { height: calc(100% - 56px); display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(280px, 1fr); gap: 16px; padding: 16px 20px; }
-  .panel { background: var(--surface); border: 1px solid var(--rule); border-radius: 14px; padding: 16px; min-height: 0; }
-  .camera { position: relative; padding: 0; overflow: hidden; display: flex; flex-direction: column; }
-  .camera img { width: 100%; flex: 1; object-fit: contain; background: #000; min-height: 0; }
-  .tiles { display: grid; grid-template-columns: 1fr 1fr; grid-auto-rows: max-content; gap: 8px; align-content: start; overflow: auto; }
-  .tile { background: var(--sunken); border: 1px solid var(--rule); border-radius: 10px; padding: 8px 12px; min-height: 60px; }
-  .tile .k { font-size: 13px; color: var(--ink-2); }
-  .tile .v { font-size: 22px; margin-top: 2px; }
-  .tile .v small { font-size: 14px; color: var(--ink-2); margin-left: 4px; }
-  .tile.missing { border-style: dashed; }
-  .tile.missing .v { font-size: 15px; color: var(--ink-3); margin-top: 8px; }
-  .swatch { width: 100%; height: 26px; border-radius: 6px; margin-top: 8px; border: 1px solid var(--rule); }
-  button { font: inherit; color: inherit; border: 0; cursor: pointer; border-radius: 12px; }
-  .big { width: 100%; padding: 22px; font-size: 26px; font-weight: 650; background: var(--ink); color: var(--paper); }
-  .big:active { transform: scale(.99); }
-  .ghost { background: transparent; border: 1px solid var(--rule); padding: 12px 16px; font-size: 17px; }
-  .seg { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
-  .seg button { padding: 14px 6px; background: var(--sunken); border: 1px solid var(--rule); font-size: 17px; }
-  .seg button.on { border-color: var(--base); background: #14263b; color: var(--ink); font-weight: 600; }
-  .labels { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
-  .labels button { padding: 10px 14px; background: var(--sunken); border: 1px solid var(--rule); font-size: 16px; }
-  .labels button.on { border-color: var(--ink); }
-  .step-title { font-size: 30px; font-weight: 650; line-height: 1.1; letter-spacing: -0.015em; }
-  .step-detail { font-size: 19px; color: var(--ink-2); margin-top: 8px; }
+  html, body { margin: 0; height: 100%; background: var(--paper); color: var(--ink); font-family: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif; overflow: hidden; user-select: none; -webkit-font-smoothing: antialiased; font-feature-settings: "cv11" 1; }
+  .num { font-family: "JetBrains Mono", ui-monospace, Consolas, monospace; font-variant-numeric: tabular-nums; letter-spacing: -0.02em; }
+  header { height: 52px; display: flex; align-items: center; gap: 12px; padding: 0 18px; }
+  .mark { display: inline-flex; align-items: center; gap: 8px; font-weight: 600; font-size: 17px; letter-spacing: -0.02em; }
+  .mark i { width: 6px; height: 17px; border-radius: 2px; background: linear-gradient(180deg, #e8c33a 0 46%, #d0365b 54% 100%); display: inline-block; }
+  header .exp { color: var(--ink-2); font-size: 13.5px; padding: 4px 10px; border-radius: 999px; background: var(--sunken); max-width: 360px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  header .right { margin-left: auto; display: flex; gap: 10px; align-items: center; font-size: 13px; color: var(--ink-2); }
+  .dot { width: 7px; height: 7px; border-radius: 50%; display: inline-block; margin-right: 6px; vertical-align: 1px; }
+  .rec { display: inline-flex; align-items: center; gap: 2px; padding: 5px 12px; border-radius: 999px; background: var(--accent-soft); color: var(--accent); font-weight: 600; max-width: 380px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .rec .num { margin-left: 8px; color: var(--ink); }
+  main { height: calc(100% - 52px); display: grid; grid-template-columns: minmax(0, 1fr) 372px; gap: 12px; padding: 0 12px 12px; }
+  .panel { background: var(--surface); border: 1px solid var(--rule); border-radius: 18px; padding: 16px; min-height: 0; }
+  .camera { position: relative; padding: 0; overflow: hidden; background: #000; border-color: #000; }
+  .camera img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; }
+  .glass { background: rgba(17,17,18,0.62); border: 1px solid rgba(255,255,255,0.12); backdrop-filter: blur(14px) saturate(1.3); -webkit-backdrop-filter: blur(14px) saturate(1.3); border-radius: 14px; }
+  .sees { position: absolute; left: 12px; right: 12px; bottom: 12px; padding: 10px 14px; display: flex; gap: 10px; align-items: flex-start; }
+  .sees .k { font-size: 11.5px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: var(--amber); }
+  .sees .v { font-size: 15px; line-height: 1.35; margin-top: 2px; }
+  .orb { display: inline-block; flex-shrink: 0; border-radius: 50%; background: radial-gradient(circle at 32% 28%, #fff9 0%, #fff0 40%), var(--ai); box-shadow: inset 0 -3px 6px #0004; }
+  .orb.glow { box-shadow: 0 0 60px 6px #e8466c55, inset 0 -3px 6px #0004; }
+  .tiles { display: grid; grid-template-columns: 1fr 1fr; grid-auto-rows: max-content; gap: 8px; align-content: start; overflow: auto; scrollbar-width: none; }
+  .tile { background: var(--sunken); border-radius: 12px; padding: 9px 12px; min-height: 58px; }
+  .tile .k { font-size: 12px; color: var(--ink-2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .tile .k b { color: var(--amber); font-weight: 600; }
+  .tile .v { font-size: 21px; margin-top: 3px; font-weight: 500; }
+  .tile .v small { font-size: 12px; color: var(--ink-3); margin-left: 5px; font-family: "Inter", sans-serif; }
+  .tile .v.txt { font-size: 16px; line-height: 1.3; }
+  .tile.missing { background: transparent; border: 1px dashed var(--rule-strong); }
+  .tile.missing .v { font-size: 13.5px; color: var(--ink-3); margin-top: 6px; font-family: "Inter", sans-serif; }
+  .swatch { width: 100%; height: 22px; border-radius: 6px; margin-top: 8px; }
+  button { font: inherit; color: inherit; border: 0; cursor: pointer; border-radius: 14px; }
+  .big { width: 100%; padding: 18px; font-size: 21px; font-weight: 600; background: var(--ink); color: var(--paper); display: flex; align-items: center; justify-content: center; gap: 12px; letter-spacing: -0.01em; transition: transform .1s; }
+  .big:active { transform: scale(.985); }
+  .big .r { width: 14px; height: 14px; border-radius: 50%; background: #e5484d; }
+  .big.stop { background: transparent; color: var(--accent); border: 1.5px solid color-mix(in oklab, var(--accent) 55%, transparent); }
+  .big.stop .r { border-radius: 3px; background: var(--accent); }
+  .ghost { background: transparent; border: 1px solid var(--rule-strong); padding: 10px 14px; font-size: 15px; color: var(--ink-2); }
+  .link { background: none; padding: 0; font-size: 13px; color: var(--ink-3); text-decoration: underline; text-underline-offset: 3px; }
+  .seg { display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px; background: var(--sunken); padding: 3px; border-radius: 12px; }
+  .seg button { padding: 10px 6px; background: transparent; font-size: 14.5px; color: var(--ink-2); border-radius: 9px; }
+  .seg button.on { background: var(--hover); color: var(--ink); font-weight: 600; }
+  .labels { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+  .labels button { padding: 7px 12px; background: var(--sunken); font-size: 14px; border-radius: 999px; color: var(--ink-2); }
+  .labels button.on { background: var(--ink); color: var(--paper); }
+  .kicker { font-size: 12px; color: var(--ink-3); font-weight: 500; }
+  .step-title { font-size: 25px; font-weight: 600; line-height: 1.15; letter-spacing: -0.025em; margin-top: 4px; }
+  .step-detail { font-size: 15px; color: var(--ink-2); margin-top: 6px; line-height: 1.4; }
   .muted { color: var(--ink-2); }
   .stack { display: flex; flex-direction: column; gap: 12px; height: 100%; }
   .grow { flex: 1; min-height: 0; }
-  .banner { padding: 12px 16px; border-radius: 10px; font-size: 16px; }
-  .banner.warn { background: #33240f; color: var(--amber); }
+  .banner { padding: 9px 12px; border-radius: 10px; font-size: 13.5px; }
+  .banner.warn { background: var(--amber-soft); color: var(--amber); }
   .banner.err { background: var(--accent-soft); color: var(--accent); }
-  .flip { position: fixed; inset: auto 20px 20px 20px; background: var(--accent); color: #fff; border-radius: 14px; padding: 18px 22px; font-size: 26px; font-weight: 700; display: none; box-shadow: 0 12px 40px rgba(0,0,0,.5); }
-  .verdict { font-size: 22px; line-height: 1.35; }
-  .modal { position: fixed; inset: 0; background: rgba(0,0,0,.6); display: none; align-items: center; justify-content: center; }
-  .pad { background: var(--surface); border: 1px solid var(--rule); border-radius: 16px; padding: 18px; width: 340px; }
-  .pad .display { font-size: 40px; text-align: right; padding: 8px 12px; background: var(--sunken); border-radius: 10px; margin-bottom: 12px; }
-  .pad .keys { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
-  .pad .keys button { padding: 16px; font-size: 24px; background: var(--sunken); border: 1px solid var(--rule); }
-  .rec { color: var(--accent); font-weight: 600; }
+  .flip { position: fixed; left: 50%; top: 18px; transform: translateX(-50%); padding: 12px 20px; font-size: 18px; font-weight: 600; display: none; align-items: center; gap: 12px; color: #fff; z-index: 5; }
+  .flip i { width: 10px; height: 26px; border-radius: 3px; background: linear-gradient(#e8c33a 0 46%, #d0365b 54% 100%); }
+  .verdict { font-size: 17px; line-height: 1.45; overflow: auto; }
+  .modal { position: fixed; inset: 0; background: rgba(0,0,0,.6); display: none; align-items: center; justify-content: center; z-index: 9; }
+  .pad { background: var(--surface); border: 1px solid var(--rule); border-radius: 18px; padding: 16px; width: 320px; }
+  .pad .display { font-size: 36px; text-align: right; padding: 8px 12px; background: var(--sunken); border-radius: 12px; margin-bottom: 10px; }
+  .pad .keys { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
+  .pad .keys button { padding: 14px; font-size: 22px; background: var(--sunken); }
   @keyframes pulse { 50% { opacity: .3 } }
   .pulse { animation: pulse 1.4s infinite; }
-  .intro { background: var(--sunken); border: 1px solid var(--base); border-radius: 12px; padding: 14px 16px; }
-  .intro .q { font-size: 21px; font-weight: 600; line-height: 1.25; }
-  .intro .t { font-size: 24px; font-weight: 650; line-height: 1.2; }
+  @keyframes breathe { 50% { transform: scale(1.06) } }
+  .breathe { animation: breathe 2.6s ease-in-out infinite; }
+  .intro { background: var(--sunken); border-radius: 14px; padding: 14px; }
+  .intro .q { font-size: 18px; font-weight: 600; line-height: 1.3; letter-spacing: -0.015em; }
+  .intro .t { font-size: 21px; font-weight: 600; line-height: 1.2; letter-spacing: -0.02em; }
   .intro .row { display: flex; gap: 8px; margin-top: 12px; }
-  .intro .row button { flex: 1; padding: 12px; font-size: 17px; }
-  .mics { display: flex; gap: 14px; margin-top: 10px; font-size: 13px; color: var(--ink-2); }
-  .mics .bar { width: 70px; height: 8px; background: var(--rule); border-radius: 4px; overflow: hidden; display: inline-block; vertical-align: middle; margin-left: 6px; }
+  .intro .row button { flex: 1; padding: 11px; font-size: 15px; }
+  .mics { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; font-size: 12.5px; color: var(--ink-2); }
+  .mics > span { display: inline-flex; align-items: center; gap: 6px; padding: 5px 10px; border-radius: 999px; background: var(--sunken); }
+  .mics .bar { width: 46px; height: 5px; background: var(--rule-strong); border-radius: 3px; overflow: hidden; display: inline-block; }
   .mics .bar i { display: block; height: 100%; background: var(--ink-3); }
   .mics .on { color: var(--ink); }
   .mics .on .bar i { background: var(--ok); }
-  .said { font-size: 15px; color: var(--ink-2); border-left: 3px solid var(--amber); padding: 2px 0 2px 10px; line-height: 1.35; }
-  .said b { color: var(--ink); font-weight: 500; }
+  .said { display: flex; flex-direction: column; gap: 6px; }
+  .said div { font-size: 13.5px; line-height: 1.35; padding: 7px 10px; border-radius: 10px; background: var(--sunken); display: flex; gap: 8px; align-items: baseline; }
+  .said div span { flex-shrink: 0; font-size: 10.5px; font-weight: 600; letter-spacing: .05em; text-transform: uppercase; }
+  .said div b { font-weight: 500; color: var(--ink); overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
+  .hero { display: flex; flex-direction: column; align-items: center; text-align: center; padding-top: 10px; }
+  .hero h1 { font-size: 22px; font-weight: 600; letter-spacing: -0.025em; line-height: 1.25; margin: 18px 0 6px; }
+  .hero p { font-size: 14px; color: var(--ink-2); line-height: 1.45; margin: 0; max-width: 300px; }
+  .result { font-size: 40px; font-weight: 500; line-height: 1.1; }
+  .data { display: flex; flex-direction: column; gap: 4px; }
+  .data div { display: flex; justify-content: space-between; gap: 10px; font-size: 14px; padding: 7px 10px; border-radius: 10px; background: var(--sunken); }
+  .data div span:first-child { color: var(--ink-2); }
   .hidden { display: none !important; }
 </style>
+
 </head>
 <body>
 <header>
   <span class="mark"><i></i>litmus</span>
   <span class="exp" id="exp"></span>
   <div class="right">
-    <span id="rec" class="rec hidden"><span class="dot pulse" style="background:var(--accent)"></span><span id="label"></span> <span class="num" id="timer"></span></span>
+    <span id="rec" class="rec hidden"><span class="dot pulse" style="background:var(--accent)"></span><span id="label"></span><span class="num" id="timer"></span></span>
     <span id="upload"></span>
   </div>
 </header>
@@ -86,18 +119,21 @@
   <section class="panel camera">
     <img id="cam" alt="Station camera">
     <div id="camwarn" class="banner err hidden" style="position:absolute;left:12px;top:12px"></div>
+    <div id="sees" class="sees glass hidden">
+      <span class="orb" style="width:18px;height:18px;margin-top:2px"></span>
+      <div><div class="k" id="seesk">Gemini sees</div><div class="v" id="seesv"></div></div>
+    </div>
   </section>
 
   <section class="panel">
     <!-- idle -->
     <div id="idle" class="stack">
-      <div>
-        <div style="font-size:22px;font-weight:600;line-height:1.25">Tap start, then say who you are and what you're doing.</div>
-        <div class="muted" style="font-size:15px;margin-top:6px">Gemini sets up the run from what you say. If you say nothing, it works from what the camera sees.</div>
-        <button class="ghost" id="manual" style="margin-top:10px;padding:8px 12px;font-size:14px">Choose run type manually</button>
+      <div class="hero">
+        <span class="orb glow breathe" style="width:56px;height:56px"></span>
+        <h1>Tap start, then say who you are and what you're doing.</h1>
+        <p>Gemini sets up the run from what you say. Say nothing and it works from what the camera sees.</p>
       </div>
       <div id="manualbox" class="hidden">
-        <div class="muted" style="font-size:14px;margin-bottom:6px">Reference: a normal run. Control: the baseline. Candidate: the run to test.</div>
         <div class="seg" id="roles">
           <button data-role="reference" class="on">Reference</button>
           <button data-role="control">Control</button>
@@ -106,15 +142,16 @@
         <div class="labels" id="labels"></div>
       </div>
       <div class="tiles grow" id="tiles-idle"></div>
-      <div class="muted" id="micline" style="font-size:14px"></div>
-      <button class="big" id="start">Start recording</button>
+      <div id="micline"></div>
+      <button class="big" id="start"><span class="r"></span>Start recording</button>
+      <div style="text-align:center;margin-top:-4px"><button class="link" id="manual">Choose run type manually</button></div>
     </div>
 
     <!-- recording -->
     <div id="recording" class="stack hidden">
       <div id="introbox" class="intro hidden"></div>
       <div id="steparea">
-        <div class="muted num" id="stepcount" style="font-size:14px"></div>
+        <div class="kicker" id="stepcount"></div>
         <div class="step-title" id="steptitle"></div>
         <div class="step-detail" id="stepdetail"></div>
       </div>
@@ -126,24 +163,26 @@
       <div id="said" class="said hidden"></div>
       <div id="warns"></div>
       <div style="display:grid;grid-template-columns:1fr auto;gap:10px">
-        <button class="big" id="end" style="grid-column:1 / -1;background:var(--accent);color:#fff">Stop recording</button>
+        <button class="big stop" id="end" style="grid-column:1 / -1"><span class="r"></span>Stop recording</button>
       </div>
     </div>
 
     <!-- finished -->
     <div id="finished" class="stack hidden">
-      <div class="muted" style="font-size:15px">Run complete</div>
-      <div id="result" style="font-size:40px" class="num"></div>
-      <div id="resultlabel" class="muted"></div>
-      <div id="findata" class="said" style="border-left-color:var(--ok)"></div>
+      <div class="kicker" style="display:flex;align-items:center;gap:8px"><span class="dot" style="background:var(--ok);margin:0"></span>Run complete · sealed</div>
+      <div>
+        <div id="result" class="result num"></div>
+        <div id="resultlabel" class="muted" style="font-size:14px;margin-top:4px"></div>
+      </div>
+      <div id="findata" class="data"></div>
       <div id="verdict" class="verdict grow"></div>
-      <div id="finmsg" class="muted"></div>
+      <div id="finmsg" class="muted" style="font-size:13px"></div>
       <button class="big" id="new">New run</button>
     </div>
   </section>
 </main>
 
-<div class="flip" id="flip"></div>
+<div class="flip glass" id="flip"></div>
 
 <div class="modal" id="modal">
   <div class="pad">
@@ -152,7 +191,7 @@
     <div class="keys" id="keys"></div>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px">
       <button class="ghost" id="padcancel">Cancel</button>
-      <button class="big" style="padding:14px;font-size:20px" id="padok">Save</button>
+      <button class="big" style="padding:12px;font-size:18px" id="padok">Save</button>
     </div>
   </div>
 </div>
@@ -170,22 +209,18 @@ const shown = (d) => typeof d.value === "number" ? `${+d.value.toFixed(4)}` : es
 
 function tiles(el, s) {
   const out = [];
-  if (s.state !== "idle") {
-    const sees = !s.camera.available ? "Camera disconnected" : s.scene ? esc(s.scene) : "Looking at the bench…";
-    out.push(`<div class="tile" style="grid-column:1 / -1"><div class="k">Gemini sees${s.activity && s.activity !== "unclear" ? ` · ${esc(s.activity)}` : ""}</div><div class="v" style="font-size:16px;line-height:1.3">${sees}</div></div>`);
-  }
   // Every measurement Gemini decided to record for this lab, with the latest value it read or heard.
   const data = s.data || {};
   const declared = (s.measurements || []).map(m => m.key);
   for (const m of s.measurements || []) {
     const d = data[m.key];
     out.push(d
-      ? `<div class="tile"><div class="k">${esc(m.label)}${m.role === "outcome" ? " · result" : ""}</div><div class="v num">${shown(d)}<small>${esc(d.unit || "")} ${d.source === "speech" ? "said" : "read"}</small></div></div>`
-      : `<div class="tile missing"><div class="k">${esc(m.label)}${m.role === "outcome" ? " · result" : ""}</div><div class="v">watching${m.unit ? " (" + esc(m.unit) + ")" : ""}</div></div>`);
+      ? `<div class="tile"><div class="k">${esc(m.label)}${m.role === "outcome" ? " · <b>result</b>" : ""}</div><div class="v ${typeof d.value === "number" ? "num" : "txt"}">${shown(d)}<small>${esc(d.unit || "")} · ${d.source === "speech" ? "heard" : "read"}</small></div></div>`
+      : `<div class="tile missing"><div class="k">${esc(m.label)}${m.role === "outcome" ? " · <b>result</b>" : ""}</div><div class="v">Watching${m.unit ? " · " + esc(m.unit) : ""}</div></div>`);
   }
   for (const [key, d] of Object.entries(data)) {
     if (declared.includes(key)) continue;
-    out.push(`<div class="tile"><div class="k">${esc(d.label)}</div><div class="v num">${shown(d)}<small>${esc(d.unit || "")}</small></div></div>`);
+    out.push(`<div class="tile"><div class="k">${esc(d.label)}</div><div class="v ${typeof d.value === "number" ? "num" : "txt"}">${shown(d)}<small>${esc(d.unit || "")}</small></div></div>`);
   }
   const rgb = s.camera.rgb;
   if (s.armed || (s.setup && s.setup.change)) {
@@ -196,10 +231,10 @@ function tiles(el, s) {
   }
   for (const [name, x] of Object.entries(s.sensors)) {
     if (name === "mix_angle" && x.available) continue;
-    if (!x.available && name !== "temp_c") continue;  // not part of this station's hardware
+    if (!x.available && (name !== "temp_c" || s.state === "idle")) continue;  // not part of this station's hardware, or nothing to show yet
     if (!x.available) {
-      const enter = name === "temp_c" && s.state === "recording" ? `<button class="ghost" style="margin-top:6px;padding:6px 10px;font-size:14px" onclick="openPad()">Enter reading</button>` : "";
-      const entered = name === "temp_c" && x.value != null ? `<div class="v num">${fmt(x.value)}<small>°C entered</small></div>` : `<div class="v">missing: ${x.detail}</div>`;
+      const enter = "";  // one-button station: Gemini reads the thermometer from the camera
+      const entered = name === "temp_c" && x.value != null ? `<div class="v num">${fmt(x.value)}<small>°C entered</small></div>` : `<div class="v">${name === "temp_c" ? "No thermometer in view yet" : "Missing: " + esc(x.detail)}</div>`;
       out.push(`<div class="tile missing"><div class="k">${NAMES[name] || name}</div>${entered}${enter}</div>`);
     } else {
       out.push(`<div class="tile"><div class="k">${NAMES[name] || name}</div><div class="v num">${x.value == null ? "…" : fmt(x.value, name === "light" ? 3 : 1)}<small>${x.unit}</small></div></div>`);
@@ -219,13 +254,17 @@ function render(s) {
   $("rec").classList.toggle("hidden", !rec);
   $("label").textContent = (s.title && s.title.title) ? `${s.title.title}${s.title.researcher ? ", " + s.title.researcher : ""}` : s.label;
   const a = s.audio || { sources: [] };
-  $("micline").textContent = a.available
-    ? `Listening on ${a.sources.map(m => m.name).join(" and ")}. You'll be asked to say who you are; anything you say about the experiment is added to the record.`
-    : "No microphone connected. The run is labeled from the buttons above.";
+  $("micline").innerHTML = a.available ? micBars(s) : `<div class="banner warn">No microphone connected. The run is labeled from the camera.</div>`;
+  const cam = s.camera.available && s.state !== "idle" && s.state !== "finished";
+  $("sees").classList.toggle("hidden", !cam);
+  if (cam) {
+    $("seesk").textContent = "Gemini sees" + (s.activity && !["unclear", "nobody", "idle"].includes(s.activity) ? " · " + s.activity : "");
+    $("seesv").textContent = s.scene || "Looking at the bench…";
+  }
   renderIntro(s);
-  const said = [...(s.narration || []).map(n => ({ text: `“${n.text}”`, by: n.mic })), ...(s.seen || []).map(n => ({ text: n.text, by: "camera" }))].slice(-3);
+  const said = [...(s.narration || []).map(n => ({ text: `“${esc(n.text)}”`, by: "heard", t: n.t_s })), ...(s.seen || []).map(n => ({ text: esc(n.text), by: "seen", t: n.t_s }))].sort((x, y) => (x.t || 0) - (y.t || 0)).slice(-3);
   $("said").classList.toggle("hidden", !said.length || s.state !== "recording");
-  $("said").innerHTML = said.map(n => `<div><b>${n.text}</b> <span class="num" style="font-size:12px">${n.by}</span></div>`).join("");
+  $("said").innerHTML = said.map(n => `<div><span style="color:${n.by === "heard" ? "var(--base)" : "var(--amber)"}">${n.by}</span><b>${n.text}</b></div>`).join("");
   $("timer").textContent = rec ? `${Math.floor(s.elapsed_s / 60)}:${String(Math.floor(s.elapsed_s % 60)).padStart(2, "0")}` : "";
   $("idle").classList.toggle("hidden", s.state !== "idle");
   $("recording").classList.toggle("hidden", !rec && s.state !== "finishing");
@@ -240,7 +279,7 @@ function render(s) {
   if (rec || s.state === "finishing") {
     tiles($("tiles-rec"), s);
     const st = s.current_step;
-    $("stepcount").textContent = st ? `Gemini sees step ${s.step_index + 1} of ${s.steps.length}${s.armed ? ", watching for the color change" : ""}` : "Protocol complete";
+    $("stepcount").textContent = st ? `Step ${s.step_index + 1} of ${s.steps.length} · tracked by Gemini${s.armed ? " · watching for the color change" : ""}` : "Protocol complete";
     $("steptitle").textContent = s.state === "finishing" ? "Uploading the record" : st ? st.title : "Protocol complete";
     $("stepdetail").textContent = st ? (st.detail || "") : "End the run when you are done.";
     const titrating = st && st.repeat && st.quantity;
@@ -256,7 +295,7 @@ function render(s) {
     $("warns").innerHTML = w.join("");
   }
   const fl = $("flip");
-  if (s.flip && rec) { fl.textContent = s.flip.at_total ? `Color change detected at ${fmt(s.flip.at_total)} ${s.flip.unit || ""}` : `Color change detected at ${fmt(s.flip.t_s)} s`; fl.style.display = "block"; }
+  if (s.flip && rec) { fl.innerHTML = `<i></i>` + (s.flip.at_total ? `Color change detected at ${fmt(s.flip.at_total)} ${esc(s.flip.unit || "")}` : `Color change detected at ${fmt(s.flip.t_s)} s`); fl.style.display = "flex"; }
   else fl.style.display = "none";
 
   if (s.state === "finished") {
@@ -271,7 +310,7 @@ function render(s) {
       $("result").textContent = r.recorded ? `${r.recorded} values recorded` : "Recorded";
       $("resultlabel").textContent = r.note && r.metric !== "result" ? `${r.label}: ${r.note}` : "Every commit is sealed in the record.";
     }
-    $("findata").innerHTML = n ? Object.values(s.data).map(d => `<div><b>${esc(d.label)}</b> ${shown(d)} ${esc(d.unit || "")}</div>`).join("") : "";
+    $("findata").innerHTML = n ? Object.values(s.data).map(d => `<div><span>${esc(d.label)}</span><span class="num">${shown(d)} ${esc(d.unit || "")}</span></div>`).join("") : "";
     $("verdict").textContent = s.verdict ? s.verdict.summary : (s.role === "candidate" ? "Running the litmus test…" : "");
     $("finmsg").textContent = s.message || "Sealed in the record. Open the web app to see every commit.";
   }
@@ -279,7 +318,7 @@ function render(s) {
 
 function micBars(s) {
   const a = s.audio || { sources: [] };
-  return `<div class="mics">${a.sources.map(m => `<span class="${m.name === a.active ? "on" : ""}">${m.name}${m.available ? "" : " (offline)"}<span class="bar"><i style="width:${Math.round(m.level * 100)}%"></i></span></span>`).join("")}</div>`;
+  return `<div class="mics">${a.sources.map(m => `<span class="${m.name === a.active ? "on" : ""}"><span class="dot" style="margin:0;background:${m.available ? "var(--ok)" : "var(--ink-3)"}"></span>${esc(m.name)}${m.available ? "" : " · offline"}<span class="bar"><i style="width:${Math.round(m.level * 100)}%"></i></span></span>`).join("")}</div>`;
 }
 
 function renderIntro(s) {
@@ -295,7 +334,7 @@ function renderIntro(s) {
       ${micBars(s)}
       <div class="row"><button class="big" style="padding:12px;font-size:18px" onclick="post('/intro/stop')">Done</button><button class="ghost" onclick="post('/intro/skip')">Skip</button></div>`;
   } else if (it.state === "processing") {
-    box.innerHTML = `<div class="q">Gemini is listening back<span class="pulse">…</span></div><div class="muted" style="margin-top:4px">Picked the clearest mic: ${s.audio.active || "station mic"}</div>`;
+    box.innerHTML = `<div style="display:flex;gap:12px;align-items:center"><span class="orb breathe" style="width:26px;height:26px"></span><div><div class="q">Gemini is listening back<span class="pulse">…</span></div><div class="muted" style="font-size:13px;margin-top:2px">Clearest mic: ${esc(s.audio.active || "station mic")}. Keep talking, nothing is missed.</div></div></div>`;
   } else if (it.state === "ready") {
     const r = it.result || {};
     box.innerHTML = `<div class="muted" style="font-size:13px">Heard on the ${it.mic || "station"} mic</div>
@@ -323,7 +362,7 @@ document.querySelectorAll("#roles button").forEach(b => b.onclick = () => {
   renderLabels();
 });
 let manual = false;
-$("manual").onclick = () => { manual = !manual; $("manualbox").classList.toggle("hidden", !manual); $("manual").textContent = manual ? "Let Gemini decide" : "Choose run type manually"; };
+$("manual").onclick = () => { manual = !manual; $("manualbox").classList.toggle("hidden", !manual); $("tiles-idle").classList.toggle("hidden", manual); $("manual").textContent = manual ? "Let Gemini decide" : "Choose run type manually"; };
 $("start").onclick = () => post("/start", manual ? { label, role } : { label: "", role: "reference" });
 $("add").onclick = () => post("/add", { value: window.addAmount || 1 });
 $("end").onclick = () => post("/end");
