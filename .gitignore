@@ -47,3 +47,8 @@ graphify-out/
 
 # Per-device station wiring
 station/station.json
+
+# Server-only deploy secrets
+deploy/secrets/
+deploy/.env.vps
+data/

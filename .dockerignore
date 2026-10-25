@@ -1,0 +1,13 @@
+**/.venv
+**/__pycache__
+**/node_modules
+web
+station/data
+worker/media
+data
+deploy/secrets
+deploy/.env.vps
+.env
+.env.*
+*.json.key
+.git

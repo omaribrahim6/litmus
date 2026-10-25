@@ -1,0 +1,32 @@
+# Worker on a host that runs nginx-proxy + acme-companion on the external "webnet" network.
+# Files expected next to this compose file on the server (never committed):
+#   .env.vps             DATABASE_URL, Vertex settings, WORKER_TOKEN, LITMUS_HOST
+#   secrets/vertex.json  Vertex AI service-account key
+#
+#   docker compose --env-file .env.vps up -d --build
+services:
+  litmus-worker:
+    build:
+      context: ..
+      dockerfile: worker/Dockerfile
+    container_name: litmus_worker
+    restart: unless-stopped
+    env_file: .env.vps
+    environment:
+      VIRTUAL_HOST: ${LITMUS_HOST}
+      VIRTUAL_PORT: "8000"
+      LETSENCRYPT_HOST: ${LITMUS_HOST}
+      LETSENCRYPT_EMAIL: ${LETSENCRYPT_EMAIL}
+      MEDIA_DIR: /data/media
+      GOOGLE_APPLICATION_CREDENTIALS: /secrets/vertex.json
+      PUBLIC_WORKER_URL: https://${LITMUS_HOST}
+    volumes:
+      - ../data/media:/data/media
+      - ../data/cache:/app/demo/cache
+      - ./secrets/vertex.json:/secrets/vertex.json:ro
+    networks:
+      - webnet
+
+networks:
+  webnet:
+    external: true
