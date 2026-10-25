@@ -31,7 +31,7 @@ async function RunPage({ params, searchParams }: { params: Promise<{ id: string 
 
   return (
     <div className="mx-auto max-w-[1280px] px-8 pb-20 pt-7 max-md:px-4">
-      <AskContext page="run" run_id={run.id} run_label={run.label ?? undefined} description={`${run.label} (${run.role})`} />
+      <AskContext page="run" run_id={run.id} run_label={run.label ?? undefined} description={`${run.label} (${run.role})`} experiment={experiment?.slug} experiment_name={experiment?.name} result_label={experiment?.protocol.result.label} />
       <nav className="mb-3 text-[13px] text-ink-2">
         <Link href="/" className="hover:text-ink">{experiment?.name ?? "Lab history"}</Link>
         <span className="mx-1.5 text-ink-3">/</span>

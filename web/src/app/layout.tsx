@@ -1,24 +1,14 @@
 import type { Metadata, Viewport } from "next";
-import { Archivo, Martian_Mono } from "next/font/google";
+import { Inter, JetBrains_Mono } from "next/font/google";
 import { Suspense } from "react";
 import { AskProvider } from "@/components/ask/AskProvider";
 import { AskPanel } from "@/components/ask/AskPanel";
 import { EvidenceProvider } from "@/components/evidence/EvidenceProvider";
-import { TopBar } from "@/components/shell/TopBar";
-import { Wordmark } from "@/components/ui";
+import { Sidebar } from "@/components/shell/Sidebar";
 import "./globals.css";
 
-const archivo = Archivo({
-  variable: "--font-archivo",
-  subsets: ["latin"],
-  axes: ["wdth"],
-});
-
-const martian = Martian_Mono({
-  variable: "--font-martian",
-  subsets: ["latin"],
-  axes: ["wdth"],
-});
+const inter = Inter({ variable: "--font-inter", subsets: ["latin"] });
+const mono = JetBrains_Mono({ variable: "--font-mono-face", subsets: ["latin"] });
 
 export const metadata: Metadata = {
   title: { default: "Litmus", template: "%s · Litmus" },
@@ -27,40 +17,35 @@ export const metadata: Metadata = {
 
 export const viewport: Viewport = {
   themeColor: [
-    { media: "(prefers-color-scheme: light)", color: "#f4f6f7" },
-    { media: "(prefers-color-scheme: dark)", color: "#0e151b" },
+    { media: "(prefers-color-scheme: light)", color: "#ffffff" },
+    { media: "(prefers-color-scheme: dark)", color: "#171717" },
   ],
 };
 
-const themeScript = `try{var t=localStorage.getItem("litmus-theme");if(t==="light"||t==="dark")document.documentElement.dataset.theme=t}catch(e){}`;
+// Light by default; dark only when the viewer picked it.
+const themeScript = `try{var t=localStorage.getItem("litmus-theme");document.documentElement.dataset.theme=t==="dark"?"dark":"light"}catch(e){document.documentElement.dataset.theme="light"}`;
 
-function TopBarShell() {
-  return (
-    <header className="sticky top-0 z-40 flex h-[57px] items-center border-b border-rule bg-paper/90 px-5">
-      <Wordmark />
-    </header>
-  );
+function SidebarShell() {
+  return <aside className="sticky top-0 hidden h-screen w-[248px] shrink-0 border-r border-rule bg-side md:block" />;
 }
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
-    <html lang="en" className={`${archivo.variable} ${martian.variable} h-full`} suppressHydrationWarning>
+    <html lang="en" className={`${inter.variable} ${mono.variable} h-full`} suppressHydrationWarning>
       <head>
         <script dangerouslySetInnerHTML={{ __html: themeScript }} />
       </head>
       <body className="min-h-full">
         <EvidenceProvider>
           <AskProvider>
-            <div className="flex min-h-screen flex-col">
-              <Suspense fallback={<TopBarShell />}>
-                <TopBar />
+            <div className="flex min-h-screen max-md:flex-col">
+              <Suspense fallback={<SidebarShell />}>
+                <Sidebar />
               </Suspense>
-              <div className="flex flex-1">
-                <main className="min-w-0 flex-1">{children}</main>
-                <Suspense>
-                  <AskPanel />
-                </Suspense>
-              </div>
+              <main className="min-w-0 flex-1">{children}</main>
+              <Suspense>
+                <AskPanel />
+              </Suspense>
             </div>
           </AskProvider>
         </EvidenceProvider>

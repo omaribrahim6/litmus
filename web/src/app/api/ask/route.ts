@@ -5,6 +5,7 @@ import type { AskAnswer } from "@/lib/types";
 interface AskBody {
   messages: { role: string; text: string }[];
   context?: Record<string, unknown>;
+  experiment?: string;
 }
 
 async function fromSnapshot(question: string): Promise<AskAnswer | null> {
@@ -20,7 +21,7 @@ export async function POST(req: Request) {
 
   if (!demoMode()) {
     try {
-      return Response.json(await workerPost<AskAnswer>("/api/ask", { messages: body.messages, context: body.context ?? {} }));
+      return Response.json(await workerPost<AskAnswer>("/api/ask", { messages: body.messages, context: body.context ?? {}, ...(body.experiment ? { experiment: body.experiment } : {}) }));
     } catch (err) {
       const cached = await fromSnapshot(question);
       if (cached) return Response.json(cached);

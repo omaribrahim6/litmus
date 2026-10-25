@@ -22,16 +22,18 @@ async function load(slug: string): Promise<Table | null> {
 }
 
 /** The experiment as a dataset: one row per run, one column per thing recorded, every cell traceable. */
-export async function DataTable({ slug }: { slug: string }) {
+export async function DataTable({ slug, bare }: { slug: string; bare?: boolean }) {
   const table = await load(slug);
-  if (!table || !table.rows.length) return null;
+  if (!table || !table.rows.length) {
+    return bare ? <p className="rounded-xl border border-dashed border-rule-strong px-5 py-10 text-center text-[13.5px] text-ink-2">No completed runs with recorded data yet, or the worker is offline.</p> : null;
+  }
   const cols = table.columns.filter((c) => table.rows.some((r) => r.cells[c.key]?.value != null));
   if (!cols.length) return null;
 
   return (
     <section className="mb-10">
       <div className="mb-2 flex flex-wrap items-baseline justify-between gap-x-4 gap-y-2">
-        <h2 className="text-[17px] font-semibold">Data</h2>
+        {bare ? <span /> : <h2 className="text-[15px] font-semibold">Data</h2>}
         <div className="flex flex-wrap items-baseline gap-x-4 gap-y-2 text-[13px] text-ink-2">
           <span>One row per run. Empty cells were not recorded.</span>
           <Link href={`/worker/api/experiments/${encodeURIComponent(slug)}/dataset.csv`} prefetch={false}

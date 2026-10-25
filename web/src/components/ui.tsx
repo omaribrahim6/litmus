@@ -8,13 +8,18 @@ import type { StripStop } from "@/lib/color";
 export function Wordmark({ className }: { className?: string }) {
   return (
     <span className={clsx("inline-flex items-center gap-2", className)}>
-      <span
-        aria-hidden
-        className="inline-block h-[18px] w-[7px] rounded-[2px]"
-        style={{ background: "linear-gradient(180deg, #e8c33a 0%, #e8c33a 46%, #c8264e 54%, #c8264e 100%)" }}
-      />
-      <span className="wide text-[17px] font-semibold tracking-[-0.01em]">litmus</span>
+      <span aria-hidden className="inline-block h-[16px] w-[6px] rounded-[2px]"
+        style={{ background: "linear-gradient(180deg, #e8c33a 0%, #e8c33a 46%, #d0365b 54%, #d0365b 100%)" }} />
+      <span className="text-[15px] font-semibold tracking-[-0.02em]">litmus</span>
     </span>
+  );
+}
+
+/** The assistant's mark: a small lit sphere in the one gradient the product uses. */
+export function AiMark({ size = 16, className, pulse }: { size?: number; className?: string; pulse?: boolean }) {
+  return (
+    <span aria-hidden className={clsx("relative inline-block shrink-0 rounded-full", pulse && "live-dot", className)}
+      style={{ width: size, height: size, background: "radial-gradient(circle at 32% 28%, #fff8 0%, #fff0 38%), var(--ai)", boxShadow: "inset 0 -2px 4px #0002" }} />
   );
 }
 

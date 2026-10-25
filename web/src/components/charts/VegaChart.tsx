@@ -24,7 +24,7 @@ export function VegaChart({ spec, className }: { spec: Record<string, unknown>; 
           config: {
             ...(spec.config as object),
             background: null,
-            font: "var(--font-archivo), sans-serif",
+            font: "Inter, system-ui, sans-serif",
             axis: { labelColor: dark ? "#93a0aa" : "#5b6873", titleColor: dark ? "#93a0aa" : "#5b6873", gridColor: dark ? "#233039" : "#dce1e5", domainColor: dark ? "#34434e" : "#c3cbd1", tickColor: dark ? "#34434e" : "#c3cbd1", labelFontSize: 11, titleFontSize: 12, titleFontWeight: 500 },
             legend: { labelColor: dark ? "#e4eaee" : "#15202b", titleColor: dark ? "#93a0aa" : "#5b6873" },
             title: { color: dark ? "#e4eaee" : "#15202b", fontSize: 13, fontWeight: 600, anchor: "start" },

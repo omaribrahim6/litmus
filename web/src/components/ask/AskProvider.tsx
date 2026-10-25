@@ -8,6 +8,9 @@ export interface AskContextValue {
   run_label?: string;
   analysis_id?: string;
   description?: string;
+  experiment?: string;
+  experiment_name?: string;
+  result_label?: string;
 }
 
 interface Ctx {
@@ -23,14 +26,14 @@ interface Ctx {
 const AskCtx = createContext<Ctx | null>(null);
 
 export function AskProvider({ children }: { children: React.ReactNode }) {
-  const [isOpen, setIsOpen] = useState(true);
+  const [isOpen, setIsOpen] = useState(false);
   const [context, setContext] = useState<AskContextValue>({ page: "history", description: "Lab history" });
   const [pending, setPending] = useState<string | null>(null);
 
   useEffect(() => {
     try {
       const v = localStorage.getItem("litmus-ask-open");
-      if (v === "0") setIsOpen(false);
+      if (v === "1") setIsOpen(true);
     } catch {
       /* storage unavailable */
     }
@@ -70,9 +73,9 @@ export function useAsk(): Ctx {
 /** Drop into a page to tell the Ask panel what the user is looking at. */
 export function AskContext(props: AskContextValue) {
   const { setContext } = useAsk();
-  const { page, run_id, run_label, analysis_id, description } = props;
+  const { page, run_id, run_label, analysis_id, description, experiment, experiment_name, result_label } = props;
   useEffect(() => {
-    setContext({ page, run_id, run_label, analysis_id, description });
-  }, [setContext, page, run_id, run_label, analysis_id, description]);
+    setContext({ page, run_id, run_label, analysis_id, description, experiment, experiment_name, result_label });
+  }, [setContext, page, run_id, run_label, analysis_id, description, experiment, experiment_name, result_label]);
   return null;
 }
