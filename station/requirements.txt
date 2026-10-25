@@ -1,0 +1,13 @@
+numpy>=1.24
+opencv-python-headless>=4.8
+requests>=2.31
+fastapi>=0.110
+uvicorn>=0.29
+python-dotenv>=1.0
+-e ../core
+
+# Raspberry Pi only (install on the Pi):
+#   gpiozero lgpio            buttons, RC-timing light sensor
+#   adafruit-circuitpython-ads1x15   ADS1115 ADC over I2C
+#   grove.py                  Seeed Grove Base HAT ADC
+#   adafruit-circuitpython-dht       DHT22 air temperature / humidity

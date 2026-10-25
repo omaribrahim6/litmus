@@ -1,0 +1,248 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+<title>Litmus station</title>
+<style>
+  :root {
+    --paper: #0e151b; --surface: #141d25; --sunken: #0b1116; --ink: #e4eaee; --ink-2: #93a0aa; --ink-3: #66727c;
+    --rule: #233039; --accent: #f0577a; --accent-soft: #3a1620; --base: #79a9e6; --ok: #6cc497; --amber: #e1a553;
+  }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body { margin: 0; height: 100%; background: var(--paper); color: var(--ink); font-family: "Archivo", system-ui, -apple-system, "Segoe UI", sans-serif; overflow: hidden; user-select: none; }
+  .num { font-family: ui-monospace, "SF Mono", "JetBrains Mono", Consolas, monospace; font-variant-numeric: tabular-nums; }
+  header { height: 56px; display: flex; align-items: center; gap: 16px; padding: 0 20px; border-bottom: 1px solid var(--rule); }
+  .mark { display: inline-flex; align-items: center; gap: 8px; font-weight: 650; font-size: 20px; letter-spacing: -0.01em; }
+  .mark i { width: 8px; height: 22px; border-radius: 2px; background: linear-gradient(180deg, #e8c33a 0 46%, #c8264e 54% 100%); display: inline-block; }
+  header .exp { color: var(--ink-2); font-size: 15px; }
+  header .right { margin-left: auto; display: flex; gap: 14px; align-items: center; font-size: 14px; color: var(--ink-2); }
+  .dot { width: 9px; height: 9px; border-radius: 50%; display: inline-block; margin-right: 6px; }
+  main { height: calc(100% - 56px); display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(280px, 1fr); gap: 16px; padding: 16px 20px; }
+  .panel { background: var(--surface); border: 1px solid var(--rule); border-radius: 14px; padding: 16px; min-height: 0; }
+  .camera { position: relative; padding: 0; overflow: hidden; display: flex; flex-direction: column; }
+  .camera img { width: 100%; flex: 1; object-fit: contain; background: #000; min-height: 0; }
+  .tiles { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; align-content: start; overflow: auto; }
+  .tile { background: var(--sunken); border: 1px solid var(--rule); border-radius: 10px; padding: 8px 12px; min-height: 60px; }
+  .tile .k { font-size: 13px; color: var(--ink-2); }
+  .tile .v { font-size: 22px; margin-top: 2px; }
+  .tile .v small { font-size: 14px; color: var(--ink-2); margin-left: 4px; }
+  .tile.missing { border-style: dashed; }
+  .tile.missing .v { font-size: 15px; color: var(--ink-3); margin-top: 8px; }
+  .swatch { width: 100%; height: 26px; border-radius: 6px; margin-top: 8px; border: 1px solid var(--rule); }
+  button { font: inherit; color: inherit; border: 0; cursor: pointer; border-radius: 12px; }
+  .big { width: 100%; padding: 22px; font-size: 26px; font-weight: 650; background: var(--ink); color: var(--paper); }
+  .big:active { transform: scale(.99); }
+  .ghost { background: transparent; border: 1px solid var(--rule); padding: 12px 16px; font-size: 17px; }
+  .seg { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+  .seg button { padding: 14px 6px; background: var(--sunken); border: 1px solid var(--rule); font-size: 17px; }
+  .seg button.on { border-color: var(--base); background: #14263b; color: var(--ink); font-weight: 600; }
+  .labels { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+  .labels button { padding: 10px 14px; background: var(--sunken); border: 1px solid var(--rule); font-size: 16px; }
+  .labels button.on { border-color: var(--ink); }
+  .step-title { font-size: 30px; font-weight: 650; line-height: 1.1; letter-spacing: -0.015em; }
+  .step-detail { font-size: 19px; color: var(--ink-2); margin-top: 8px; }
+  .muted { color: var(--ink-2); }
+  .stack { display: flex; flex-direction: column; gap: 12px; height: 100%; }
+  .grow { flex: 1; min-height: 0; }
+  .banner { padding: 12px 16px; border-radius: 10px; font-size: 16px; }
+  .banner.warn { background: #33240f; color: var(--amber); }
+  .banner.err { background: var(--accent-soft); color: var(--accent); }
+  .flip { position: fixed; inset: auto 20px 20px 20px; background: var(--accent); color: #fff; border-radius: 14px; padding: 18px 22px; font-size: 26px; font-weight: 700; display: none; box-shadow: 0 12px 40px rgba(0,0,0,.5); }
+  .verdict { font-size: 22px; line-height: 1.35; }
+  .modal { position: fixed; inset: 0; background: rgba(0,0,0,.6); display: none; align-items: center; justify-content: center; }
+  .pad { background: var(--surface); border: 1px solid var(--rule); border-radius: 16px; padding: 18px; width: 340px; }
+  .pad .display { font-size: 40px; text-align: right; padding: 8px 12px; background: var(--sunken); border-radius: 10px; margin-bottom: 12px; }
+  .pad .keys { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+  .pad .keys button { padding: 16px; font-size: 24px; background: var(--sunken); border: 1px solid var(--rule); }
+  .rec { color: var(--accent); font-weight: 600; }
+  @keyframes pulse { 50% { opacity: .3 } }
+  .pulse { animation: pulse 1.4s infinite; }
+  .hidden { display: none !important; }
+</style>
+</head>
+<body>
+<header>
+  <span class="mark"><i></i>litmus</span>
+  <span class="exp" id="exp"></span>
+  <div class="right">
+    <span id="rec" class="rec hidden"><span class="dot pulse" style="background:var(--accent)"></span><span id="label"></span> <span class="num" id="timer"></span></span>
+    <span id="upload"></span>
+  </div>
+</header>
+<main>
+  <section class="panel camera">
+    <img id="cam" alt="Station camera" src="/frame.jpg">
+    <div id="camwarn" class="banner err hidden" style="position:absolute;left:12px;top:12px"></div>
+  </section>
+
+  <section class="panel">
+    <!-- idle -->
+    <div id="idle" class="stack">
+      <div>
+        <div class="muted" style="font-size:15px;margin-bottom:8px">This run is a</div>
+        <div class="seg" id="roles">
+          <button data-role="reference" class="on">Reference</button>
+          <button data-role="control">Control</button>
+          <button data-role="candidate">Candidate</button>
+        </div>
+        <div class="labels" id="labels"></div>
+      </div>
+      <div class="tiles grow" id="tiles-idle"></div>
+      <button class="big" id="start">Start run</button>
+    </div>
+
+    <!-- recording -->
+    <div id="recording" class="stack hidden">
+      <div>
+        <div class="muted num" id="stepcount" style="font-size:14px"></div>
+        <div class="step-title" id="steptitle"></div>
+        <div class="step-detail" id="stepdetail"></div>
+      </div>
+      <div id="titrate" class="hidden">
+        <div style="display:flex;align-items:baseline;gap:10px"><span class="muted">Added so far</span><span class="num" style="font-size:34px" id="total"></span></div>
+        <button class="big" id="add" style="margin-top:10px;background:var(--base)">+ 0.5 mL added</button>
+      </div>
+      <div class="tiles grow" id="tiles-rec"></div>
+      <div id="warns"></div>
+      <div style="display:grid;grid-template-columns:1fr auto;gap:10px">
+        <button class="big" id="confirm">Confirm step</button>
+        <button class="ghost" id="end">End run</button>
+      </div>
+    </div>
+
+    <!-- finished -->
+    <div id="finished" class="stack hidden">
+      <div class="muted" style="font-size:15px">Run complete</div>
+      <div id="result" style="font-size:40px" class="num"></div>
+      <div id="resultlabel" class="muted"></div>
+      <div id="verdict" class="verdict grow"></div>
+      <div id="finmsg" class="muted"></div>
+      <button class="big" id="new">New run</button>
+    </div>
+  </section>
+</main>
+
+<div class="flip" id="flip"></div>
+
+<div class="modal" id="modal">
+  <div class="pad">
+    <div class="muted" style="margin-bottom:8px">Temperature from the thermometer (°C)</div>
+    <div class="display num" id="padval">0</div>
+    <div class="keys" id="keys"></div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px">
+      <button class="ghost" id="padcancel">Cancel</button>
+      <button class="big" style="padding:14px;font-size:20px" id="padok">Save</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const $ = (id) => document.getElementById(id);
+let S = null, role = "reference", label = "", padValue = "";
+const post = (path, body) => fetch(path, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(body || {}) }).then(r => r.json()).then(render);
+
+const NAMES = { light: "Light through tube", mix_angle: "Holder angle", air_quality: "Air quality", temp_c: "Temperature", humidity: "Humidity" };
+const fmt = (v, d = 1) => v === null || v === undefined ? "" : Number(v).toFixed(d);
+
+function tiles(el, s) {
+  const out = [];
+  const rgb = s.camera.rgb;
+  out.push(`<div class="tile"><div class="k">Tube color (camera)</div>${rgb ? `<div class="swatch" style="background:rgb(${rgb.map(Math.round).join(",")})"></div>` : `<div class="v" style="font-size:15px;color:var(--ink-3)">no camera</div>`}</div>`);
+  out.push(`<div class="tile"><div class="k">Mixing this episode</div><div class="v num">${s.mix_inversions}<small>inversions</small></div></div>`);
+  for (const [name, x] of Object.entries(s.sensors)) {
+    if (name === "mix_angle" && x.available) continue;
+    if (!x.available) {
+      const enter = name === "temp_c" && s.state === "recording" ? `<button class="ghost" style="margin-top:6px;padding:6px 10px;font-size:14px" onclick="openPad()">Enter reading</button>` : "";
+      const entered = name === "temp_c" && x.value != null ? `<div class="v num">${fmt(x.value)}<small>°C entered</small></div>` : `<div class="v">missing: ${x.detail}</div>`;
+      out.push(`<div class="tile missing"><div class="k">${NAMES[name] || name}</div>${entered}${enter}</div>`);
+    } else {
+      out.push(`<div class="tile"><div class="k">${NAMES[name] || name}</div><div class="v num">${x.value == null ? "…" : fmt(x.value, name === "light" ? 3 : 1)}<small>${x.unit}</small></div></div>`);
+    }
+  }
+  el.innerHTML = out.join("");
+}
+
+function render(s) {
+  S = s;
+  $("exp").textContent = s.experiment + (s.simulated ? " (simulated bench)" : "");
+  const up = s.upload;
+  $("upload").innerHTML = up.online || up.pending === 0
+    ? `<span class="dot" style="background:var(--ok)"></span>${up.pending ? up.pending + " uploading" : "Synced"}`
+    : `<span class="dot" style="background:var(--amber)"></span>Saved locally, ${up.pending} waiting`;
+  const rec = s.state === "recording";
+  $("rec").classList.toggle("hidden", !rec);
+  $("label").textContent = s.label;
+  $("timer").textContent = rec ? `${Math.floor(s.elapsed_s / 60)}:${String(Math.floor(s.elapsed_s % 60)).padStart(2, "0")}` : "";
+  $("idle").classList.toggle("hidden", s.state !== "idle");
+  $("recording").classList.toggle("hidden", !rec && s.state !== "finishing");
+  $("finished").classList.toggle("hidden", s.state !== "finished");
+
+  const cw = $("camwarn");
+  if (!s.camera.available) { cw.textContent = "Camera disconnected. Color cannot be measured."; cw.classList.remove("hidden"); }
+  else if (s.camera.blocked) { cw.textContent = "Camera view blocked or too dark."; cw.classList.remove("hidden"); }
+  else cw.classList.add("hidden");
+
+  if (s.state === "idle") { tiles($("tiles-idle"), s); renderLabels(); }
+  if (rec || s.state === "finishing") {
+    tiles($("tiles-rec"), s);
+    const st = s.current_step;
+    $("stepcount").textContent = st ? `Step ${s.step_index + 1} of ${s.steps.length}` : "All steps confirmed";
+    $("steptitle").textContent = s.state === "finishing" ? "Uploading the record" : st ? st.title : "Protocol complete";
+    $("stepdetail").textContent = st ? (st.detail || "") : "End the run when you are done.";
+    const titrating = st && st.repeat;
+    $("titrate").classList.toggle("hidden", !titrating);
+    $("total").textContent = `${fmt(s.totals.base_ml || 0)} mL`;
+    $("confirm").textContent = titrating ? "Done titrating" : "Confirm step";
+    $("confirm").disabled = !st || s.state === "finishing";
+    const w = [];
+    if (s.no_flip_warning) w.push(`<div class="banner warn">No color flip after 10 minutes of titration.</div>`);
+    for (const [n, x] of Object.entries(s.sensors)) if (!x.available && n !== "temp_c" && n !== "humidity") w.push(`<div class="banner warn">${NAMES[n] || n} missing: recorded as missing evidence, never estimated.</div>`);
+    $("warns").innerHTML = w.join("");
+  }
+  const fl = $("flip");
+  if (s.flip && rec) { fl.textContent = `Color flip detected at ${fmt(s.flip.at_total)} ${s.flip.unit || ""}`; fl.style.display = "block"; }
+  else fl.style.display = "none";
+
+  if (s.state === "finished") {
+    const r = s.result;
+    $("result").textContent = r && r.value != null ? `${fmt(r.value)} ${r.unit || ""}` : (r ? "no flip" : "…");
+    $("resultlabel").textContent = r ? r.label : "Waiting for the worker";
+    $("verdict").textContent = s.verdict ? s.verdict.summary : (s.role === "candidate" ? "Running the litmus test…" : "");
+    $("finmsg").textContent = s.message || "Sealed in the record. Open the web app to see every commit.";
+  }
+}
+
+function renderLabels() {
+  const options = role === "reference" ? ["Reference 1", "Reference 2", "Reference 3", "Reference 4", "Reference 5", "Reference 6"]
+    : role === "control" ? ["Method A", "Control"] : ["Method B", "Method C", "Live demo"];
+  if (!options.includes(label)) label = options[0];
+  $("labels").innerHTML = options.map(o => `<button class="${o === label ? "on" : ""}" onclick="pickLabel('${o}')">${o}</button>`).join("");
+}
+window.pickLabel = (o) => { label = o; renderLabels(); };
+
+document.querySelectorAll("#roles button").forEach(b => b.onclick = () => {
+  role = b.dataset.role; label = "";
+  document.querySelectorAll("#roles button").forEach(x => x.classList.toggle("on", x === b));
+  renderLabels();
+});
+$("start").onclick = () => post("/start", { label, role });
+$("confirm").onclick = () => S && S.current_step && S.current_step.repeat ? post("/next") : post("/confirm");
+$("add").onclick = () => post("/add", { value: 0.5 });
+$("end").onclick = () => { if (confirm("End this run and seal the record?")) post("/end"); };
+$("new").onclick = () => post("/reset");
+
+const keys = ["7","8","9","4","5","6","1","2","3",".","0","⌫"];
+$("keys").innerHTML = keys.map(k => `<button data-k="${k}">${k}</button>`).join("");
+$("keys").onclick = (e) => { const k = e.target.dataset.k; if (!k) return; padValue = k === "⌫" ? padValue.slice(0, -1) : (padValue + k).slice(0, 6); $("padval").textContent = padValue || "0"; };
+window.openPad = () => { padValue = ""; $("padval").textContent = "0"; $("modal").style.display = "flex"; };
+$("padcancel").onclick = () => $("modal").style.display = "none";
+$("padok").onclick = () => { const v = parseFloat(padValue); $("modal").style.display = "none"; if (!isNaN(v)) post("/reading", { sensor: "temp_c", value: v, unit: "°C" }); };
+
+async function tick() { try { render(await (await fetch("/state")).json()); } catch (e) { $("upload").textContent = "Station service not responding"; } }
+setInterval(tick, 500);
+setInterval(() => { $("cam").src = "/frame.jpg?t=" + Date.now(); }, 500);
+tick();
+</script>
+</body>
+</html>
