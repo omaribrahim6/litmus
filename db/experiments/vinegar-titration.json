@@ -26,11 +26,21 @@
       "key": "water_source", "label": "Water source", "type": "categorical",
       "source": { "event": "reagent_used", "variable": "water_source" },
       "expected": "distilled",
+      "detect": {
+        "step": "dilute",
+        "question": "Which water container is being used to dilute the sample?",
+        "choices": { "distilled": "the jug labeled DISTILLED", "tap": "the jug labeled TAP (or water straight from a faucet)" }
+      },
       "aliases": ["water", "tap", "distilled", "dilut"]
     },
     {
       "key": "vinegar_bottle", "label": "Vinegar bottle", "type": "categorical",
       "source": { "event": "reagent_used", "variable": "vinegar_bottle" },
+      "detect": {
+        "step": "sample",
+        "question": "Which vinegar bottle is the sample poured from?",
+        "choices": { "Bottle A": "the bottle labeled A", "Bottle B": "the bottle labeled B" }
+      },
       "aliases": ["vinegar", "bottle", "acid"]
     },
     {
