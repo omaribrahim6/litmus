@@ -369,7 +369,7 @@ def fallback_answer(conn: psycopg.Connection, experiment: dict, question: str, c
         style = "paper" if any(w in q for w in ("paper", "publication", "journal")) else "screen"
         tb.make_chart("results_by_run", style=style)
         lines.append(f"{experiment['protocol']['result']['label']} for every completed run, with the reference-run band shaded.")
-    elif any(w in q for w in ("method", "procedure", "as it actually happened")):
+    elif any(w in q for w in ("methods section", "write the method", "procedure", "as it actually happened")):
         target = context.get("run_label") or context.get("run_id")
         runs = store.list_runs(conn, experiment["id"])
         r = resolve_run(conn, experiment["id"], target) if target else (runs[-1] if runs else None)

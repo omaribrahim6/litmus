@@ -85,8 +85,7 @@ async function Content() {
                   <td className="py-1.5">{r.run}</td>
                   <td className="num">{fmtNumber(r.detected_s, 2)} s</td>
                   <td className="num">{fmtNumber(r.truth_s, 2)} s</td>
-                  <td className={
-um ${Math.abs(r.error_s) > 1 ? "text-accent" : ""}`}>{r.error_s > 0 ? "+" : ""}{fmtNumber(r.error_s, 2)} s</td>
+                  <td className={`num ${Math.abs(r.error_s) > 1 ? "text-accent" : ""}`}>{r.error_s > 0 ? "+" : ""}{fmtNumber(r.error_s, 2)} s</td>
                 </tr>
               ))}
             </tbody>
