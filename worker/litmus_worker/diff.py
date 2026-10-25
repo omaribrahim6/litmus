@@ -256,8 +256,13 @@ def _result_compare(protocol: dict, cand: RunData, ctrls: list[RunData], refs: l
         if k:
             pct = (float(cm.value) - k) / k * 100
             item["percent_change"] = round(pct, 1)
-            word = "less" if pct < 0 else "more"
-            item["headline"] = f"{cand.label} used {abs(pct):.0f}% {word} {spec.get('noun', 'base')} than {ctrls[0].label if len(ctrls) == 1 else 'the controls'}"
+            other = ctrls[0].label if len(ctrls) == 1 else "the controls"
+            if spec.get("kind") == "time_until_change":
+                item["headline"] = f"{cand.label} changed {abs(pct):.0f}% {'faster' if pct < 0 else 'slower'} than {other}"
+            elif spec.get("kind", "amount_until_change") == "amount_until_change" and spec.get("noun", "base") == "base" and spec.get("quantity") == "base_ml":
+                item["headline"] = f"{cand.label} used {abs(pct):.0f}% {'less' if pct < 0 else 'more'} base than {other}"
+            else:
+                item["headline"] = f"{cand.label}: {spec['label'].lower()} {abs(pct):.0f}% {'lower' if pct < 0 else 'higher'} than {other}"
         item["result_is_outside_normal_variation"] = item["status"] == NOTABLE
     return item
 

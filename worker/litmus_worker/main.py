@@ -16,7 +16,7 @@ from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 
 from . import analysis, charts, db, evidence, lifecycle, media, store
-from .ai import chat, intro, narration, perception, video
+from .ai import chat, intro, narration, perception, setup, thermo, video
 from .ai.client import AIUnavailable
 from .config import settings
 
@@ -166,7 +166,7 @@ def ingest_events(run_id: str, body: EventsBatch, background: BackgroundTasks) -
 
 
 @app.post("/api/runs/{run_id}/frames", dependencies=[Depends(require_station)])
-def ingest_frame(run_id: str, file: UploadFile = File(...), meta: str = Form(...)) -> dict:
+def ingest_frame(run_id: str, background: BackgroundTasks, file: UploadFile = File(...), meta: str = Form(...)) -> dict:
     rid = parse_uuid(run_id)
     info = json.loads(meta)
     frame_id = uuid.UUID(info.get("id") or str(uuid.uuid4()))
@@ -176,7 +176,41 @@ def ingest_frame(run_id: str, file: UploadFile = File(...), meta: str = Form(...
         media.save_stream(file.file, path)
         row = store.insert_frame(conn, rid, frame_id, store.as_dt(info["t"]), url,
                                  info.get("reason"), info.get("roi"), info.get("metrics"))
+    if info.get("reason") in ("periodic", "start") and _thermo_due(rid):
+        background.add_task(_read_thermometer, rid, path, store.as_dt(info["t"]))
     return store.to_json(row)
+
+
+_THERMO: dict[uuid.UUID, dict] = {}
+
+
+def _thermo_due(run_id: uuid.UUID) -> bool:
+    """Read the thermometer every 20 s while it is visible, every 2 min while it is not."""
+    if not settings.ai_enabled:
+        return False
+    st = _THERMO.setdefault(run_id, {"last": 0.0, "misses": 0})
+    gap = 20 if st["misses"] < 3 else 120
+    now = datetime.now(timezone.utc).timestamp()
+    if now - st["last"] < gap:
+        return False
+    st["last"] = now
+    return True
+
+
+def _read_thermometer(run_id: uuid.UUID, path: Path, t: datetime) -> None:
+    try:
+        value = thermo.read(path.read_bytes())
+    except (AIUnavailable, RuntimeError, OSError):
+        return
+    st = _THERMO.setdefault(run_id, {"last": 0.0, "misses": 0})
+    if value is None:
+        st["misses"] += 1
+        return
+    st["misses"] = 0
+    with db.connect() as conn:
+        run = store.get_run(conn, run_id)
+        if run and run["status"] == "recording":
+            store.insert_readings(conn, run_id, [{"t": t, "sensor": "temp_c", "value": value, "unit": "°C", "provenance": "inferred"}])
 
 
 @app.post("/api/runs/{run_id}/video", dependencies=[Depends(require_station)])
@@ -501,7 +535,52 @@ def ingest_intro(run_id: str, file: UploadFile = File(...)) -> dict:
                            "summary": f"Stated hypothesis (spoken): {heard.hypothesis}",
                            "payload": {"text": heard.hypothesis, "source": "spoken intro", "audio_url": url}})
         store.append_events(conn, rid, events)
-    return {"understood": True, "audio_url": url, **heard.model_dump()}
+    out: dict[str, Any] = {"understood": True, "audio_url": url, **heard.model_dump()}
+    if exp["slug"] == "auto":
+        # Nothing was configured: set the experiment up from what the researcher just said and what the camera sees.
+        said = " ".join(x for x in (heard.transcript, heard.experiment) if x)
+        out["setup"] = run_setup(rid, said, _latest_frame(rid))
+    return out
+
+
+def _latest_frame(run_id: uuid.UUID) -> bytes | None:
+    with db.connect() as conn:
+        frames = store.get_frames(conn, run_id)
+    for f in reversed(frames):
+        if f.get("reason") in ("start", "periodic", "event") and (p := media.local_path(f["url"])) and p.exists():
+            return p.read_bytes()
+    return None
+
+
+def run_setup(run_id: uuid.UUID | None, said: str | None, image: bytes | None) -> dict:
+    """Gemini proposes the experiment; code validates it, reuses a matching experiment or records a new one."""
+    with db.connect() as conn:
+        existing = store.list_experiments(conn)
+    try:
+        proposal, protocol = setup.propose(said, image, existing)
+    except (AIUnavailable, RuntimeError) as exc:
+        return {"ok": False, "error": str(exc)}
+    with db.connect() as conn:
+        reused = next((e for e in existing if proposal.use_existing and e["slug"] == proposal.use_existing and e["slug"] != "auto"), None)
+        exp = reused or store.upsert_experiment(conn, protocol)
+        if run_id is not None:
+            store.update_run(conn, run_id, experiment_id=exp["id"])
+            store.append_events(conn, run_id, [{
+                "t": datetime.now(timezone.utc), "kind": "experiment_setup", "provenance": "inferred",
+                "summary": f"Set up as {exp['name']}" + (" (matches an earlier experiment)" if reused else f", {len(exp['protocol']['steps'])} steps"),
+                "payload": {"experiment": exp["slug"], "reused": bool(reused), "said": said, "model": settings.model_flash,
+                            "change": exp["protocol"].get("change"), "result": exp["protocol"]["result"]},
+            }])
+    return {"ok": True, "reused": bool(reused), "experiment": exp["slug"], "protocol": exp["protocol"]}
+
+
+@app.post("/api/setup", dependencies=[Depends(require_station)])
+def setup_endpoint(run_id: str | None = Form(default=None), said: str | None = Form(default=None),
+                   file: UploadFile | None = File(default=None)) -> dict:
+    """Set up an experiment on the fly from speech and/or a camera frame (no preconfigured protocol needed)."""
+    rid = parse_uuid(run_id) if run_id else None
+    image = file.file.read() if file is not None else (_latest_frame(rid) if rid else None)
+    return run_setup(rid, said, image)
 
 
 class IntroConfirmIn(BaseModel):

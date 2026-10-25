@@ -31,6 +31,8 @@ def detect_flips(conn: psycopg.Connection, rd: rundata.RunData, protocol: dict) 
     commit one, and always adds a flip_crosscheck event when both signals exist.
     """
     new_events: list[dict] = []
+    if not protocol.get("flip"):
+        return new_events  # the experiment has no visible change to detect
     flip_cfg = FlipConfig.from_dict(protocol.get("flip"))
     camera = rd.flip_event()
     series = rd.readings.get(flip_cfg.metric)
