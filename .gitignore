@@ -1,0 +1,46 @@
+# Planning docs (kept local)
+SPEC.md
+
+# Secrets
+.env
+.env.*
+!.env.example
+*.pem
+*service-account*.json
+gcp-key*.json
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# Node / Next.js
+node_modules/
+.next/
+out/
+*.tsbuildinfo
+next-env.d.ts
+.vercel/
+
+# Station runtime data
+station/data/
+*.sqlite
+*.sqlite3
+
+# Media produced at runtime (curated demo media lives in demo/)
+worker/media/
+*.log
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+# graphify output
+graphify-out/
