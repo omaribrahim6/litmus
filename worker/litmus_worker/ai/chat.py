@@ -20,7 +20,7 @@ from google.genai import types
 from .. import analysis, charts, evidence as ev, rundata, store
 from ..config import settings
 from . import cache
-from .client import AIUnavailable, client, embed
+from .client import AIUnavailable, embed, generate
 from .validator import has_probability_language
 
 log = logging.getLogger("litmus.chat")
@@ -348,7 +348,7 @@ def _ask_gemini(tb: Toolbox, experiment: dict, messages: list[dict], context: di
     registry = tb.registry()
     text = ""
     for _ in range(MAX_TOOL_ROUNDS):
-        resp = client().models.generate_content(model=settings.model_pro, contents=contents, config=config)
+        resp = generate(settings.model_pro, contents, config)
         calls = resp.function_calls or []
         if not calls:
             text = resp.text or ""

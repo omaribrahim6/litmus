@@ -83,7 +83,7 @@ def generate_json(model: str, contents: list, schema: type[T], system: str | Non
     last: Exception | None = None
     for attempt in range(retries + 1):
         try:
-            resp = client().models.generate_content(model=model, contents=contents, config=config)
+            resp = generate(model, contents, config)
             if resp.parsed is not None:
                 return resp.parsed if isinstance(resp.parsed, schema) else schema.model_validate(resp.parsed)
             return schema.model_validate(json.loads(resp.text))
@@ -94,6 +94,31 @@ def generate_json(model: str, contents: list, schema: type[T], system: str | Non
             log.warning("gemini %s attempt %d failed: %s", model, attempt + 1, exc)
             time.sleep(1.5 * (attempt + 1))
     raise RuntimeError(f"Gemini call failed: {last}")
+
+
+def _rate_limited(exc: Exception) -> bool:
+    return "429" in str(exc) or "RESOURCE_EXHAUSTED" in str(exc)
+
+
+def generate(model: str, contents: list, config: types.GenerateContentConfig):
+    """generate_content that falls back to the Flash model when the requested one is rate limited.
+
+    Preview and Pro-tier models share small quotas; a demo should degrade to a
+    faster model, not to an error.
+    """
+    try:
+        return client().models.generate_content(model=model, contents=contents, config=config)
+    except Exception as exc:  # noqa: BLE001
+        if not _rate_limited(exc) or model == settings.model_flash:
+            raise
+        log.warning("%s rate limited; retrying once, then falling back to %s", model, settings.model_flash)
+        time.sleep(3)
+        try:
+            return client().models.generate_content(model=model, contents=contents, config=config)
+        except Exception as exc2:  # noqa: BLE001
+            if not _rate_limited(exc2):
+                raise
+            return client().models.generate_content(model=settings.model_flash, contents=contents, config=config)
 
 
 def upload_file(path: Path, mime_type: str, timeout_s: float = 300) -> types.File:
