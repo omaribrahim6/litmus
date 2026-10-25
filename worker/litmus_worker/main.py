@@ -628,6 +628,8 @@ def ingest_narration(run_id: str, file: UploadFile = File(...), meta: str = Form
     """One utterance from the clearest mic. Lab-relevant statements become commits; the rest is discarded."""
     rid = parse_uuid(run_id)
     info = json.loads(meta or "{}")
+    with _RUN_LOCKS.setdefault(rid, threading.Lock()):
+        pass  # if the intro is still setting up the experiment, wait so this clip is read against the right protocol
     with db.connect() as conn:
         run = _open_run(conn, rid)
         exp = store.get_experiment(conn, run["experiment_id"])
