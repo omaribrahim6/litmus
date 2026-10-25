@@ -194,10 +194,14 @@ def build(diff_content: dict, protocol: dict, use_ai: bool = True) -> dict:
             rejected, relabeled = checked.rejected, checked.relabeled
             claims = checked.accepted
             covered = {c.get("variable_key") for c in claims}
+            cited = {i for c in claims for i in c["evidence_ids"] if not i.startswith("run:")}
             for t in template:  # guarantee coverage of every notable and missing variable
-                if t.get("variable_key") not in covered:
-                    claims.append(t)
-                    covered.add(t.get("variable_key"))
+                t_ev = {i for i in t["evidence_ids"] if not i.startswith("run:")}
+                if t.get("variable_key") in covered or (t_ev and t_ev & cited):
+                    continue  # the model already made this claim on the same evidence
+                claims.append(t)
+                covered.add(t.get("variable_key"))
+                cited |= t_ev
             if out.assumed_cause_statement and not has_probability_language(out.assumed_cause_statement):
                 statement = out.assumed_cause_statement
             if out.headline and not has_probability_language(out.headline):

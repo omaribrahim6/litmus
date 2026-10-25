@@ -25,7 +25,8 @@ from .validator import has_probability_language
 
 log = logging.getLogger("litmus.chat")
 
-CITATION = re.compile(r"\[((?:evt|frm|ser|rdg|run):[^\]\s]+)\]")
+CITATION = re.compile(r"\[((?:evt|frm|ser|rdg|run):[^\]]+)\]")
+ID_TOKEN = re.compile(r"(?:evt|frm|run):[0-9a-f-]{36}|(?:ser|rdg):[0-9a-f-]{36}:[A-Za-z0-9_]+(?::\d+){1,2}")
 MAX_TOOL_ROUNDS = 6
 
 
@@ -293,16 +294,22 @@ def _content_from_messages(messages: list[dict]) -> list[types.Content]:
 
 
 def finalize_answer(text: str, tb: Toolbox) -> dict:
-    """Keep only citations that exist; flag probability language."""
+    """Keep only citations that exist; flag probability language.
+
+    Gemini often groups citations ("[evt:a, frm:b]"); each ID is checked on
+    its own and the group is rewritten as one bracket per surviving ID.
+    """
     valid, dropped = [], []
     def keep(m: re.Match) -> str:  # noqa: E306
-        eid = m.group(1)
-        if eid in tb.seen_ids or ev.exists(tb.conn, eid):
-            if eid not in valid:
-                valid.append(eid)
-            return m.group(0)
-        dropped.append(eid)
-        return ""
+        kept = []
+        for eid in ID_TOKEN.findall(m.group(1)):
+            if eid in tb.seen_ids or ev.exists(tb.conn, eid):
+                kept.append(eid)
+                if eid not in valid:
+                    valid.append(eid)
+            else:
+                dropped.append(eid)
+        return " ".join(f"[{e}]" for e in kept)
     clean = CITATION.sub(keep, text or "").strip()
     return {"text": clean, "citations": valid, "dropped_citations": dropped,
             "flags": ["probability_language"] if has_probability_language(clean) else []}

@@ -89,6 +89,12 @@ export function DiffView({ verdict, reveal }: { verdict: Analysis<VerdictContent
   const [error, setError] = useState<string | null>(null);
   const [exclude, setExclude] = useState<string>("");
 
+  // Drop a claim that repeats an earlier one with the same label on mostly the same evidence.
+  const claims = v.claims.filter((c, idx) => !v.claims.slice(0, idx).some((p) => {
+    if (p.label !== c.label) return false;
+    const shared = c.evidence_ids.filter((e) => !e.startsWith("run:") && p.evidence_ids.includes(e)).length;
+    return shared > 0 && shared >= c.evidence_ids.filter((e) => !e.startsWith("run:")).length / 2;
+  }));
   const conditions = d.differences.filter((i) => i.role !== "outcome");
   const notable = conditions.filter((i) => i.status === "notable");
   const normal = conditions.filter((i) => i.status === "within_normal" || i.status === "same");
@@ -248,11 +254,11 @@ export function DiffView({ verdict, reveal }: { verdict: Analysis<VerdictContent
         <div>
           <h2 className="text-[18px] font-semibold">Verdict, claim by claim</h2>
           <p className="mt-1 text-[13px] text-ink-2">
-            {v.validator.accepted} claims, every one citing evidence. {v.validator.rejected ? `${v.validator.rejected} rejected by the validator.` : "None rejected."}
+            {claims.length} claims, every one citing evidence. {v.validator.rejected ? `${v.validator.rejected} rejected by the validator.` : "None rejected."}
             {v.validator.relabeled ? ` ${v.validator.relabeled} relabeled for lack of a measurement.` : ""} No probabilities are used.
           </p>
           <ul className="mt-4 space-y-3">
-            {v.claims.map((c, i) => (
+            {claims.map((c, i) => (
               <li key={i} className="flex gap-3">
                 <LabelChip label={c.label} className="mt-[2px]" />
                 <Blame ids={c.evidence_ids} title={LABEL_TEXT[c.label]} className="text-[14.5px] leading-relaxed">{c.text}</Blame>

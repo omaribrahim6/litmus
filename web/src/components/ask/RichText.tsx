@@ -3,12 +3,13 @@
 import { Fragment } from "react";
 import { useEvidence } from "@/components/evidence/EvidenceProvider";
 
-const CITE = /\[((?:evt|frm|ser|rdg|run):[^\]\s]+)\]/g;
+const CITE = /\[((?:evt|frm|ser|rdg|run):[^\]]+)\]/g;
+const ids = (group: string) => group.split(/[,\s]+/).filter((t) => /^(evt|frm|ser|rdg|run):/.test(t));
 
 /** Minimal markdown (paragraphs, bullets, bold) with evidence citations as numbered receipts. */
 export function RichText({ text, citations }: { text: string; citations: string[] }) {
   const { open, setHighlighted } = useEvidence();
-  const order = citations.length ? citations : [...text.matchAll(CITE)].map((m) => m[1]);
+  const order = citations.length ? citations : [...text.matchAll(CITE)].flatMap((m) => ids(m[1]));
 
   const inline = (line: string, key: string) => {
     const parts: React.ReactNode[] = [];
@@ -34,7 +35,7 @@ export function RichText({ text, citations }: { text: string; citations: string[
       } else if (before) {
         parts.push(before);
       }
-      pendingIds.push(m[1]);
+      pendingIds.push(...ids(m[1]));
       last = (m.index ?? 0) + m[0].length;
     }
     flush(`${key}-end`);
