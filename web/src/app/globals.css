@@ -1,26 +1,181 @@
 @import "tailwindcss";
 
+/* Litmus tokens. Cool enamel paper, blue-black ink, one accent: the endpoint
+   red phenol red turns at the flip. Labels and provenance carry their own
+   restrained hues so a claim's status is readable at a glance. */
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
-
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --paper: #f4f6f7;
+  --surface: #ffffff;
+  --sunken: #eaeef0;
+  --ink: #15202b;
+  --ink-2: #5b6873;
+  --ink-3: #8a96a0;
+  --rule: #dce1e5;
+  --rule-strong: #c3cbd1;
+  --accent: #c8264e;
+  --accent-soft: #f9e3e8;
+  --amber: #a8650f;
+  --amber-soft: #fbefdc;
+  --base: #2c63a8;
+  --base-soft: #e2ecf7;
+  --ok: #2f7a55;
+  --ok-soft: #e1f1e8;
+  --focus: #2c63a8;
+  --shadow: 0 1px 0 rgba(21, 32, 43, 0.04), 0 8px 24px -12px rgba(21, 32, 43, 0.18);
+  color-scheme: light;
 }
 
 @media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+  :root:not([data-theme="light"]) {
+    --paper: #0e151b;
+    --surface: #141d25;
+    --sunken: #0b1116;
+    --ink: #e4eaee;
+    --ink-2: #93a0aa;
+    --ink-3: #66727c;
+    --rule: #233039;
+    --rule-strong: #34434e;
+    --accent: #f0577a;
+    --accent-soft: #3a1620;
+    --amber: #e1a553;
+    --amber-soft: #33240f;
+    --base: #79a9e6;
+    --base-soft: #14263b;
+    --ok: #6cc497;
+    --ok-soft: #12291d;
+    --focus: #79a9e6;
+    --shadow: 0 1px 0 rgba(0, 0, 0, 0.3), 0 10px 30px -14px rgba(0, 0, 0, 0.7);
+    color-scheme: dark;
   }
 }
 
+:root[data-theme="dark"] {
+  --paper: #0e151b;
+  --surface: #141d25;
+  --sunken: #0b1116;
+  --ink: #e4eaee;
+  --ink-2: #93a0aa;
+  --ink-3: #66727c;
+  --rule: #233039;
+  --rule-strong: #34434e;
+  --accent: #f0577a;
+  --accent-soft: #3a1620;
+  --amber: #e1a553;
+  --amber-soft: #33240f;
+  --base: #79a9e6;
+  --base-soft: #14263b;
+  --ok: #6cc497;
+  --ok-soft: #12291d;
+  --focus: #79a9e6;
+  --shadow: 0 1px 0 rgba(0, 0, 0, 0.3), 0 10px 30px -14px rgba(0, 0, 0, 0.7);
+  color-scheme: dark;
+}
+
+@theme inline {
+  --color-paper: var(--paper);
+  --color-surface: var(--surface);
+  --color-sunken: var(--sunken);
+  --color-ink: var(--ink);
+  --color-ink-2: var(--ink-2);
+  --color-ink-3: var(--ink-3);
+  --color-rule: var(--rule);
+  --color-rule-strong: var(--rule-strong);
+  --color-accent: var(--accent);
+  --color-accent-soft: var(--accent-soft);
+  --color-amber: var(--amber);
+  --color-amber-soft: var(--amber-soft);
+  --color-base: var(--base);
+  --color-base-soft: var(--base-soft);
+  --color-ok: var(--ok);
+  --color-ok-soft: var(--ok-soft);
+  --font-sans: var(--font-archivo), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: var(--font-martian), ui-monospace, monospace;
+  --shadow-panel: var(--shadow);
+}
+
+html {
+  background: var(--paper);
+}
+
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--font-sans);
+  font-size: 15px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  font-feature-settings: "tnum" 1, "ss01" 1;
+}
+
+/* Measured values and hashes: compact Martian Mono. */
+.num {
+  font-family: var(--font-mono);
+  font-variation-settings: "wdth" 87.5;
+  font-feature-settings: "tnum" 1, "zero" 1;
+  letter-spacing: -0.01em;
+}
+
+/* Headline width: Archivo semi-expanded reads like an instrument faceplate. */
+.wide {
+  font-variation-settings: "wdth" 112;
+}
+
+.condensed {
+  font-variation-settings: "wdth" 84;
+}
+
+:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+::selection {
+  background: var(--base-soft);
+}
+
+.scroll-thin {
+  scrollbar-width: thin;
+  scrollbar-color: var(--rule-strong) transparent;
+}
+
+@keyframes stamp-in {
+  0% { opacity: 0; transform: scale(1.35) rotate(-9deg); }
+  60% { opacity: 1; transform: scale(0.96) rotate(-6deg); }
+  100% { opacity: 1; transform: scale(1) rotate(-6deg); }
+}
+
+@keyframes strike {
+  from { background-size: 0% 2px; }
+  to { background-size: 100% 2px; }
+}
+
+@keyframes live-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.35; }
+}
+
+.live-dot {
+  animation: live-pulse 1.6s ease-in-out infinite;
+}
+
+.struck {
+  background-image: linear-gradient(var(--accent), var(--accent));
+  background-repeat: no-repeat;
+  background-position: 0 55%;
+  background-size: 100% 2px;
+  animation: strike 520ms 900ms cubic-bezier(0.6, 0, 0.2, 1) both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 1ms !important;
+    animation-delay: 0ms !important;
+    transition-duration: 1ms !important;
+  }
+}
+
+@media print {
+  .no-print { display: none !important; }
+  body { background: white; color: black; }
 }
