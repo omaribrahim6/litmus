@@ -1,0 +1,100 @@
+{
+  "slug": "vinegar-titration",
+  "name": "Vinegar titration with phenol red",
+  "description": "A fixed volume of diluted vinegar is titrated with baking-soda solution until the phenol red indicator flips from yellow to red. The result is the volume of base added at the flip.",
+  "result": {
+    "key": "base_added_ml",
+    "label": "Base added at color flip",
+    "unit": "mL",
+    "quantity": "base_ml",
+    "decimals": 1
+  },
+  "roi": { "x": 0.42, "y": 0.38, "w": 0.16, "h": 0.30 },
+  "flip": { "metric": "lab_a", "direction": "rise", "delta": 12, "hold_s": 2, "baseline_s": 3, "smooth": 5 },
+  "light_flip": { "metric": "light", "direction": "fall", "delta": 0.06, "hold_s": 2, "baseline_s": 3, "smooth": 5 },
+  "flip_agreement_s": 1.0,
+  "mix": { "sensor": "mix_angle", "low_deg": 60, "high_deg": 150, "active_dps": 30 },
+  "steps": [
+    { "id": "sample", "title": "Measure the vinegar sample", "detail": "10 mL vinegar into the tube", "quantity": { "name": "sample_ml", "unit": "mL", "expected": 10 } },
+    { "id": "dilute", "title": "Dilute with distilled water", "detail": "20 mL distilled water", "quantity": { "name": "water_ml", "unit": "mL", "expected": 20 } },
+    { "id": "indicator", "title": "Add the indicator", "detail": "3 drops phenol red", "quantity": { "name": "indicator_drops", "unit": "drops", "expected": 3 } },
+    { "id": "titrate", "title": "Titrate", "detail": "Add base in 0.5 mL steps, invert the holder 3 times after each addition", "repeat": true, "quantity": { "name": "base_ml", "unit": "mL", "step": 0.5 } },
+    { "id": "endpoint", "title": "Stop at the color flip", "detail": "Hold until the station confirms the flip" }
+  ],
+  "variables": [
+    {
+      "key": "water_source", "label": "Water source", "type": "categorical",
+      "source": { "event": "reagent_used", "variable": "water_source" },
+      "expected": "distilled",
+      "aliases": ["water", "tap", "distilled", "dilut"]
+    },
+    {
+      "key": "vinegar_bottle", "label": "Vinegar bottle", "type": "categorical",
+      "source": { "event": "reagent_used", "variable": "vinegar_bottle" },
+      "aliases": ["vinegar", "bottle", "acid"]
+    },
+    {
+      "key": "base_solution", "label": "Base solution batch", "type": "categorical",
+      "source": { "event": "reagent_used", "variable": "base_solution" },
+      "aliases": ["baking soda", "base batch", "bicarbonate"]
+    },
+    {
+      "key": "mix_inversions", "label": "Mixing per addition (inversions)", "type": "numeric", "unit": "inversions",
+      "source": { "mix": "inversions", "per_addition": true }, "resolution": 0.5, "decimals": 1,
+      "aliases": ["stir", "mix", "shak", "invert", "agitat", "swirl"]
+    },
+    {
+      "key": "mix_active_s", "label": "Mixing time per addition", "type": "numeric", "unit": "s",
+      "source": { "mix": "active_s", "per_addition": true }, "resolution": 0.5, "decimals": 1,
+      "aliases": ["stir", "mix", "shak", "agitat", "swirl"]
+    },
+    {
+      "key": "temp_c", "label": "Liquid temperature", "type": "numeric", "unit": "°C",
+      "source": { "sensor": "temp_c", "agg": "mean" }, "resolution": 0.3,
+      "aliases": ["temp", "heat", "warm", "cold", "hot"]
+    },
+    {
+      "key": "humidity", "label": "Air humidity", "type": "numeric", "unit": "%RH",
+      "source": { "sensor": "humidity", "agg": "mean" }, "resolution": 2,
+      "aliases": ["humid"]
+    },
+    {
+      "key": "air_quality", "label": "Air quality", "type": "numeric", "unit": "raw",
+      "source": { "sensor": "air_quality", "agg": "mean" }, "resolution": 5,
+      "aliases": ["air", "fume", "smell"]
+    },
+    {
+      "key": "sample_ml", "label": "Sample volume", "type": "numeric", "unit": "mL",
+      "source": { "quantity": "sample_ml", "agg": "sum" }, "resolution": 0.5,
+      "aliases": ["sample volume", "amount of vinegar"]
+    },
+    {
+      "key": "water_ml", "label": "Dilution volume", "type": "numeric", "unit": "mL",
+      "source": { "quantity": "water_ml", "agg": "sum" }, "resolution": 0.5,
+      "aliases": ["dilution", "more water", "less water"]
+    },
+    {
+      "key": "indicator_drops", "label": "Indicator drops", "type": "numeric", "unit": "drops",
+      "source": { "quantity": "indicator_drops", "agg": "sum" }, "resolution": 1,
+      "aliases": ["indicator", "phenol", "drops"]
+    },
+    {
+      "key": "start_color_a", "label": "Starting color (a*)", "type": "numeric", "unit": "a*",
+      "source": { "sensor": "lab_a", "agg": "first" }, "resolution": 2,
+      "aliases": ["color", "colour"]
+    },
+    {
+      "key": "addition_count", "label": "Number of base additions", "type": "numeric", "unit": "additions",
+      "source": { "quantity": "base_ml", "agg": "count" }, "role": "outcome"
+    },
+    {
+      "key": "time_to_flip_s", "label": "Time to flip", "type": "numeric", "unit": "s",
+      "source": { "derived": "time_to_flip" }, "role": "outcome"
+    },
+    {
+      "key": "step_order", "label": "Protocol steps performed", "type": "sequence",
+      "source": { "steps": true },
+      "aliases": ["skip", "order", "step"]
+    }
+  ]
+}
