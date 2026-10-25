@@ -25,6 +25,9 @@ class Settings:
     model_embed: str = field(default_factory=lambda: _env("GEMINI_MODEL_EMBED", "gemini-embedding-001"))
     model_tts: str = field(default_factory=lambda: _env("GEMINI_MODEL_TTS", "gemini-2.5-flash-preview-tts"))
     use_vertex: bool = field(default_factory=lambda: _env("GOOGLE_GENAI_USE_VERTEXAI").lower() in ("1", "true"))
+    gcp_project: str = field(default_factory=lambda: _env("GOOGLE_CLOUD_PROJECT"))
+    gcp_location: str = field(default_factory=lambda: _env("GOOGLE_CLOUD_LOCATION", "global"))
+    gcp_credentials: str = field(default_factory=lambda: _env("GOOGLE_APPLICATION_CREDENTIALS"))
     worker_token: str = field(default_factory=lambda: _env("WORKER_TOKEN"))
     media_dir: Path = field(default_factory=lambda: Path(_env("MEDIA_DIR", str(ROOT / "worker" / "media"))))
     public_url: str = field(default_factory=lambda: _env("PUBLIC_WORKER_URL", "http://localhost:8000").rstrip("/"))
@@ -40,7 +43,12 @@ class Settings:
 
     @property
     def ai_enabled(self) -> bool:
-        return bool(self.gemini_api_key) or self.use_vertex
+        if self.use_vertex:
+            if not self.gcp_credentials:
+                return bool(self.gcp_project)  # application-default credentials
+            p = Path(self.gcp_credentials)
+            return (p if p.is_absolute() else ROOT / p).exists()
+        return bool(self.gemini_api_key)
 
 
 settings = Settings()

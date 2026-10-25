@@ -24,7 +24,7 @@ from pydantic import BaseModel, Field
 from .. import db, lifecycle, media, store
 from ..config import settings
 from . import cache
-from .client import AIUnavailable, generate_json, upload_file
+from .client import AIUnavailable, generate_json, video_part
 
 log = logging.getLogger("litmus.video")
 
@@ -88,8 +88,7 @@ def _analyze(path: Path, sha256: str, protocol: dict) -> dict:
     cached = cache.read("video", sha256)
     if cached:
         return cached
-    f = upload_file(path, "video/mp4")
-    out = generate_json(settings.model_flash, [f, _prompt(protocol)], VideoAnalysis, temperature=0.1)
+    out = generate_json(settings.model_flash, [video_part(path), _prompt(protocol)], VideoAnalysis, temperature=0.1)
     result = out.model_dump()
     result["model"] = settings.model_flash
     cache.write("video", sha256, result)
