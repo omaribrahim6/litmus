@@ -16,7 +16,7 @@ function ThemeToggle() {
   const [dark, setDark] = useState<boolean | null>(null);
   useEffect(() => {
     const el = document.documentElement;
-    setDark(el.dataset.theme === "dark");
+    setDark(el.dataset.theme ? el.dataset.theme === "dark" : window.matchMedia("(prefers-color-scheme: dark)").matches);
   }, []);
   const toggle = () => {
     const next = !dark;

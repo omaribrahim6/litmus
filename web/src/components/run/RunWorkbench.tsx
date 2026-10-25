@@ -2,12 +2,14 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import clsx from "clsx";
+import { Pause, Play, Receipt } from "lucide-react";
 import { labCss, type StripStop } from "@/lib/color";
 import type { Frame, LitmusEvent, ReadingBucket, Run } from "@/lib/types";
 import { fmtOffset, KIND_TEXT, shortHash } from "@/lib/format";
 import { ProvenanceIcon } from "@/components/ui";
 import { useEvidence } from "@/components/evidence/EvidenceProvider";
-import { Lanes, type LaneSeries } from "./Lanes";
+import type { LaneSeries } from "./Lanes";
+import { Timeline, type Mark } from "./Timeline";
 
 const SENSOR_LANES: { sensor: string; label: string }[] = [
   { sensor: "lab_a", label: "Color, red-green (a*)" },
@@ -98,6 +100,34 @@ export function RunWorkbench({ initialRun, initialEvents, initialReadings, initi
     if (v) setCursor(v.currentTime + (videoT0 - t0) / 1000);
   };
 
+  // Play / pause: drives the video when there is one, otherwise walks the keyframes in real time.
+  const [playing, setPlaying] = useState(false);
+  const toggle = () => {
+    const v = video.current;
+    if (v) {
+      if (v.paused) v.play(); else v.pause();
+      return;
+    }
+    setPlaying((p) => !p);
+  };
+  useEffect(() => {
+    if (!playing || video.current) return;
+    let raf = 0;
+    let last = performance.now();
+    const tick = (now: number) => {
+      setCursor((c) => {
+        const next = c + (now - last) / 1000;
+        if (next >= duration) { setPlaying(false); return duration; }
+        return next;
+      });
+      last = now;
+      raf = requestAnimationFrame(tick);
+    };
+    raf = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(raf);
+  }, [playing, duration]);
+  const [selected, setSelected] = useState<string | null>(null);
+
   const timeline = useMemo(() => events.filter((e) => e.kind !== "run_sealed").map((e) => ({ e, t: offset(e.t) })),
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [events, t0]);
@@ -154,80 +184,111 @@ export function RunWorkbench({ initialRun, initialEvents, initialReadings, initi
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [frames, cursor, t0]);
 
+  const shown = (selected && timeline.find((x) => x.e.id === selected)) || timeline.find((x) => x.e.id === active) || null;
+  const frameById = new Map(frames.map((f) => [f.id, f]));
+  const shownFrame = shown?.e.frame_ids?.map((id) => frameById.get(id)).find(Boolean) ?? null;
+  const still = live ? latestFrame : nearestFrame;
+  const hasVideo = Boolean(run.video_url && !live);
+
   return (
-    <div className="space-y-5">
-      <div className="grid gap-5 xl:grid-cols-[minmax(0,1.45fr)_minmax(320px,1fr)]">
-        <div className="relative overflow-hidden rounded-xl border border-rule bg-sunken">
-          {run.video_url && !live && actionVideo ? (
-            <div className="absolute right-3 top-3 z-10 flex overflow-hidden rounded-md border border-white/20 bg-black/60 text-[12px] text-white">
-              {(["bench", "action"] as const).map((c) => (
-                <button key={c} type="button" onClick={() => setCam(c)} className={clsx("px-2.5 py-1", cam === c ? "bg-white/25 font-medium" : "opacity-80 hover:opacity-100")}>
-                  {c === "bench" ? "Bench camera" : "Researcher camera"}
-                </button>
-              ))}
+    <div className="space-y-4">
+      <div className="grid gap-4 xl:grid-cols-[minmax(0,1.6fr)_minmax(320px,1fr)]">
+        {/* player */}
+        <div className="overflow-hidden rounded-xl bg-[#0e0e0e] ring-1 ring-black/10">
+          <div className="relative">
+            {hasVideo ? (
+              <video ref={video} src={cam === "action" && actionVideo ? actionVideo : run.video_url!} playsInline preload="metadata"
+                onTimeUpdate={onTime} onSeeked={onTime} onLoadedMetadata={() => seek(cursor)} onPlay={() => setPlaying(true)} onPause={() => setPlaying(false)}
+                onClick={toggle} className="aspect-video w-full cursor-pointer bg-black object-contain" />
+            ) : still ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={still.url} alt="Station camera" className="aspect-video w-full bg-black object-contain" />
+            ) : (
+              <div className="flex aspect-video items-center justify-center text-[13.5px] text-white/50">
+                {live ? "Waiting for the first frame from the station camera" : "No video was recorded for this run"}
+              </div>
+            )}
+            {live ? (
+              <span className="absolute left-3 top-3 inline-flex items-center gap-1.5 rounded-full bg-black/60 px-2.5 py-1 text-[12px] font-medium text-white backdrop-blur">
+                <span className="live-dot size-1.5 rounded-full bg-accent" /> Live from the station
+              </span>
+            ) : null}
+            {hasVideo && actionVideo ? (
+              <div className="absolute right-3 top-3 flex rounded-lg bg-black/55 p-0.5 text-[12px] text-white backdrop-blur">
+                {(["bench", "action"] as const).map((c) => (
+                  <button key={c} type="button" onClick={() => setCam(c)} className={clsx("rounded-md px-2.5 py-1", cam === c ? "bg-white/20 font-medium" : "opacity-70 hover:opacity-100")}>
+                    {c === "bench" ? "Bench" : "Researcher"}
+                  </button>
+                ))}
+              </div>
+            ) : null}
+          </div>
+          {!live ? (
+            <div className="flex h-11 items-center gap-3 border-t border-white/10 px-3 text-white">
+              <button type="button" onClick={toggle} aria-label={playing ? "Pause" : "Play"}
+                className="flex size-7 items-center justify-center rounded-full bg-white text-black transition hover:scale-105">
+                {playing ? <Pause size={13} fill="currentColor" /> : <Play size={13} fill="currentColor" className="translate-x-[1px]" />}
+              </button>
+              <span className="num text-[12px] text-white/80">{fmtOffset(cursor)} <span className="text-white/40">/ {fmtOffset(duration)}</span></span>
+              <span className="ml-auto truncate text-[12px] text-white/50">{hasVideo ? (cam === "action" ? "Researcher camera" : "Bench camera") : `${frames.length} keyframes`}</span>
             </div>
           ) : null}
-          {run.video_url && !live ? (
-            <video ref={video} src={cam === "action" && actionVideo ? actionVideo : run.video_url} controls playsInline preload="metadata"
-              onTimeUpdate={onTime} onSeeked={onTime} onLoadedMetadata={() => seek(cursor)}
-              className="aspect-video w-full bg-black" />
-          ) : (live ? latestFrame : nearestFrame) ? (
-            <div className="relative">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={(live ? latestFrame : nearestFrame)!.url} alt="Station camera" className="aspect-video w-full bg-black object-contain" />
-              {live ? (
-                <span className="absolute left-3 top-3 inline-flex items-center gap-1.5 rounded bg-black/60 px-2 py-0.5 text-[12px] font-medium text-white">
-                  <span className="live-dot size-1.5 rounded-full bg-accent" /> Live from the station
-                </span>
-              ) : null}
-            </div>
-          ) : (
-            <div className="flex aspect-video items-center justify-center text-[14px] text-ink-2">
-              {live ? "Waiting for the first frame from the station camera" : "No video was recorded for this run"}
-            </div>
-          )}
         </div>
 
-        <div className="flex max-h-[min(560px,calc((100vw-400px)*0.32))] min-h-[320px] flex-col rounded-xl border border-rule bg-surface">
-          <div className="flex items-baseline justify-between border-b border-rule px-4 py-2.5">
-            <h2 className="text-[14px] font-semibold">Commits</h2>
-            <span className="text-[12px] text-ink-2">{events.length} in the chain{live ? ", recording" : ""}</span>
+        {/* inspector: whatever is under the playhead */}
+        <div className="flex max-h-[min(600px,calc((100vw-300px)*0.36))] min-h-[340px] flex-col overflow-hidden rounded-xl border border-rule bg-surface">
+          {shown ? (
+            <div className="border-b border-rule p-4">
+              <div className="flex items-center gap-2 text-[12px]">
+                <span className="rounded-full bg-sunken px-2 py-0.5 font-medium text-ink-2">{KIND_TEXT[shown.e.kind] ?? shown.e.kind}</span>
+                <span className="num text-ink-3">{fmtOffset(shown.t)}</span>
+                <span className="ml-auto"><ProvenanceIcon p={shown.e.provenance} withText /></span>
+              </div>
+              <p className={clsx("mt-2 text-[15px] font-medium leading-snug", shown.e.kind === "flip_detected" && "text-accent")}>{shown.e.summary}</p>
+              {shownFrame ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={shownFrame.url} alt="" className="mt-3 aspect-video w-full rounded-lg object-cover ring-1 ring-rule" />
+              ) : null}
+              <div className="mt-3 flex items-center gap-2">
+                <span className="num truncate text-[11px] text-ink-3" title={shown.e.hash}>#{shortHash(shown.e.hash, 12)}</span>
+                <button type="button" onClick={() => open([`evt:${shown.e.id}`], shown.e.summary)}
+                  className="ml-auto inline-flex items-center gap-1.5 rounded-lg border border-rule px-2.5 py-1 text-[12px] font-medium hover:border-rule-strong">
+                  <Receipt size={12} /> Receipt
+                </button>
+              </div>
+            </div>
+          ) : null}
+          <div className="flex items-baseline justify-between px-4 pb-1 pt-3">
+            <h2 className="text-[12px] font-semibold text-ink-2">Commits</h2>
+            <span className="text-[11.5px] text-ink-3">{events.length} in the chain{live ? ", recording" : ""}</span>
           </div>
-          <ol ref={list} className="scroll-thin flex-1 overflow-y-auto py-1">
+          <ol ref={list} className="scroll-thin flex-1 overflow-y-auto px-2 pb-2">
             {timeline.map(({ e, t }) => (
               <li key={e.id} data-id={e.id}>
-                <div className={clsx("group grid cursor-pointer grid-cols-[54px_16px_minmax(0,1fr)] items-start gap-2 px-4 py-1.5 text-[13.5px] transition-colors",
-                  active === e.id ? "bg-base-soft" : "hover:bg-paper")}
-                  onClick={() => seek(t)} role="button" tabIndex={0} onKeyDown={(k) => k.key === "Enter" && seek(t)}>
-                  <span className="num pt-[2px] text-[11px] text-ink-3">{fmtOffset(t)}</span>
+                <button type="button" onClick={() => { setSelected(e.id); seek(t); }}
+                  className={clsx("grid w-full grid-cols-[44px_14px_minmax(0,1fr)] items-start gap-2 rounded-lg px-2 py-1.5 text-left text-[13px] transition-colors",
+                    (shown?.e.id ?? active) === e.id ? "bg-hover" : "hover:bg-side")}>
+                  <span className="num pt-[2px] text-[10.5px] text-ink-3">{fmtOffset(t)}</span>
                   <span className="pt-[3px]"><ProvenanceIcon p={e.provenance} /></span>
-                  <span className="min-w-0">
-                    <span className={clsx("leading-snug", e.kind === "flip_detected" && "font-semibold text-accent")}>
-                      <span className="text-ink-2">{KIND_TEXT[e.kind] ?? e.kind}. </span>{e.summary.replace(/^Step confirmed: /, "")}
-                    </span>
-                    <span className="mt-0.5 flex items-center gap-2">
-                      <span className="num text-[10.5px] text-ink-3">{shortHash(e.hash)}</span>
-                      {e.provenance === "inferred" && e.confidence != null && e.confidence < 0.6 ? <span className="text-[11px] text-amber">low confidence</span> : null}
-                      <button type="button" onClick={(ev) => { ev.stopPropagation(); open([`evt:${e.id}`], e.summary); }}
-                        className="text-[11px] text-base opacity-0 hover:underline focus:opacity-100 group-hover:opacity-100">
-                        evidence
-                      </button>
-                    </span>
+                  <span className={clsx("min-w-0 leading-snug", e.kind === "flip_detected" && "font-semibold text-accent")}>
+                    <span className="text-ink-3">{KIND_TEXT[e.kind] ?? e.kind} · </span>{e.summary.replace(/^Step (confirmed|seen): /, "")}
                   </span>
-                </div>
+                </button>
               </li>
             ))}
           </ol>
         </div>
       </div>
 
-      <Lanes duration={duration} cursor={cursor} onSeek={seek} events={timeline} strip={strip} series={series} flipAt={flipAt} activeId={active} />
+      <Timeline duration={duration} cursor={cursor} onSeek={(t) => { setSelected(null); seek(t); }} marks={timeline as Mark[]}
+        frames={frames} frameT={(f) => offset(f.t)} strip={strip} series={series} activeId={shown?.e.id ?? active}
+        onSelect={(m) => { setSelected(m.e.id); seek(m.t); }} />
 
-      <p className="flex flex-wrap gap-x-5 gap-y-1 text-[12px] text-ink-2">
+      <p className="flex flex-wrap gap-x-5 gap-y-1 text-[12px] text-ink-3">
         <span className="inline-flex items-center gap-1.5"><ProvenanceIcon p="measured" /> measured by a sensor or the camera</span>
         <span className="inline-flex items-center gap-1.5"><ProvenanceIcon p="reported" /> reported by the researcher</span>
-        <span className="inline-flex items-center gap-1.5"><ProvenanceIcon p="inferred" /> inferred by Gemini from video</span>
-        <span>Drag across the lanes to scrub the video.</span>
+        <span className="inline-flex items-center gap-1.5"><ProvenanceIcon p="inferred" /> inferred by Gemini</span>
+        <span>Drag the timeline to scrub.</span>
       </p>
     </div>
   );

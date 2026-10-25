@@ -22,8 +22,8 @@ export const viewport: Viewport = {
   ],
 };
 
-// Light by default; dark only when the viewer picked it.
-const themeScript = `try{var t=localStorage.getItem("litmus-theme");document.documentElement.dataset.theme=t==="dark"?"dark":"light"}catch(e){document.documentElement.dataset.theme="light"}`;
+// Follows the system theme unless the viewer picked one.
+const themeScript = `try{var t=localStorage.getItem("litmus-theme");if(t==="light"||t==="dark")document.documentElement.dataset.theme=t}catch(e){}`;
 
 function SidebarShell() {
   return <aside className="sticky top-0 hidden h-screen w-[248px] shrink-0 border-r border-rule bg-side md:block" />;

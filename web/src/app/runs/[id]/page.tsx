@@ -7,6 +7,7 @@ import { RunWorkbench } from "@/components/run/RunWorkbench";
 import { ChainBadge } from "@/components/run/ChainBadge";
 import { AssumedCauseForm } from "@/components/run/AssumedCauseForm";
 import { AskContext } from "@/components/ask/AskProvider";
+import { AskButton } from "@/components/ask/AskButton";
 import { Blame } from "@/components/evidence/Blame";
 import { ProvenanceIcon, RoleTag, Skeleton, SyntheticTag } from "@/components/ui";
 import { fmtDateTime, fmtValue, secondsBetween } from "@/lib/format";
@@ -30,59 +31,59 @@ async function RunPage({ params, searchParams }: { params: Promise<{ id: string 
   const duration = secondsBetween(run.started_at, run.ended_at);
 
   return (
-    <div className="mx-auto max-w-[1280px] px-8 pb-20 pt-7 max-md:px-4">
+    <div className="min-h-screen">
       <AskContext page="run" run_id={run.id} run_label={run.label ?? undefined} description={`${run.label} (${run.role})`} experiment={experiment?.slug} experiment_name={experiment?.name} result_label={experiment?.protocol.result.label} />
-      <nav className="mb-3 text-[13px] text-ink-2">
-        <Link href="/" className="hover:text-ink">{experiment?.name ?? "Lab history"}</Link>
-        <span className="mx-1.5 text-ink-3">/</span>
-        <span>{run.label}</span>
-      </nav>
+      <div className="flex h-12 items-center gap-2 px-6 text-[13px] text-ink-2 max-md:px-4">
+        <Link href={experiment ? `/?experiment=${experiment.slug}` : "/"} className="truncate hover:text-ink">{experiment?.name ?? "Lab history"}</Link>
+        <span className="text-ink-3">/</span>
+        <span className="truncate font-medium text-ink">{run.label}</span>
+        <div className="ml-auto flex items-center gap-1.5">
+          <Suspense fallback={<Skeleton className="h-7 w-36 rounded-full" />}>
+            <Verify runId={run.id} />
+          </Suspense>
+          <AskButton />
+        </div>
+      </div>
 
-      <header className="mb-6 flex flex-wrap items-end justify-between gap-x-8 gap-y-4">
+      <div className="mx-auto max-w-[1320px] px-6 pb-20 pt-4 max-md:px-4">
+      <header className="mb-5 flex flex-wrap items-start justify-between gap-x-8 gap-y-4">
         <div className="min-w-0">
-          <div className="flex flex-wrap items-center gap-3">
-            <h1 className="wide text-[32px] font-semibold leading-tight tracking-[-0.015em]">{run.label}</h1>
-            <RoleTag role={run.role} className="text-[15px]" />
+          <div className="flex flex-wrap items-center gap-2.5">
+            <h1 className="text-[26px] font-semibold leading-tight tracking-[-0.025em]">{run.label}</h1>
+            <RoleTag role={run.role} className="rounded-full bg-sunken px-2 py-0.5 text-[12px]" />
             {run.metadata?.synthetic ? <SyntheticTag /> : null}
+            {run.status === "recording" ? (
+              <span className="inline-flex items-center gap-1.5 rounded-full bg-accent-soft px-2 py-0.5 text-[12px] font-medium text-accent"><span className="live-dot size-1.5 rounded-full bg-accent" /> Recording</span>
+            ) : null}
           </div>
-          {run.metadata?.session_title || run.metadata?.researcher ? (
-            <p className="mt-1 text-[15px]">
-              {String(run.metadata.session_title ?? "")}
-              {run.metadata.researcher ? <span className="text-ink-2">{run.metadata.session_title ? ", " : ""}{String(run.metadata.researcher)}</span> : null}
-              {run.metadata.lab ? <span className="text-ink-2">, {String(run.metadata.lab)}</span> : null}
-              {!run.metadata.intro_confirmed ? <span className="ml-2 text-[12px] text-amber" title="Titled by Gemini from the spoken intro; not yet confirmed">from spoken intro</span> : null}
-            </p>
-          ) : null}
-          <p className="mt-1 text-[14px] text-ink-2">
-            {fmtDateTime(run.started_at)}
-            {duration ? `, ${Math.round(duration)} s` : ""}
-            {run.station_id ? `, station ${run.station_id}` : ""}
+          <p className="mt-1 text-[13.5px] text-ink-2">
+            {run.metadata?.session_title ? <>{String(run.metadata.session_title)}{run.metadata.researcher ? `, ${String(run.metadata.researcher)}` : ""}{run.metadata.lab ? `, ${String(run.metadata.lab)}` : ""} · </> : null}
+            {fmtDateTime(run.started_at)}{duration ? ` · ${Math.round(duration)} s` : ""}{run.station_id ? ` · station ${run.station_id}` : ""}
           </p>
           <div className="mt-3">
             <AssumedCauseForm runId={run.id} current={run.assumed_cause} />
           </div>
         </div>
-        <div className="flex flex-col items-end gap-3">
-          {result?.value != null ? (
-            <div className="text-right">
-              <div className="text-[12.5px] text-ink-2">{result.label}</div>
-              <Blame ids={result.evidence_ids} title={`Where ${result.label.toLowerCase()} came from`} quiet>
-                <span className="num text-[34px] leading-none">{fmtValue(result.value)}</span>
-                <span className="ml-1.5 text-[15px] text-ink-2">{typeof result.value === "number" ? result.unit : ""}</span>
-              </Blame>
-              <div className="mt-1 flex justify-end"><ProvenanceIcon p={result.provenance} withText /></div>
-            </div>
-          ) : (
-            <p className="max-w-[32ch] text-right text-[14px] text-ink-2">{run.status === "recording" ? "Recording" : result?.recorded ? `${result.recorded} values recorded` : result?.note ?? "Recorded"}</p>
-          )}
-          <div className="flex flex-wrap items-center justify-end gap-2">
-            <Suspense fallback={<Skeleton className="h-7 w-40 rounded-full" />}>
-              <Verify runId={run.id} />
-            </Suspense>
+        <div className="flex items-stretch gap-3">
+          <div className="min-w-[180px] rounded-xl border border-rule bg-surface px-4 py-3">
+            <p className="text-[12px] text-ink-2">{result?.label ?? "Result"}</p>
+            {result?.value != null ? (
+              <>
+                <Blame ids={result.evidence_ids} title={`Where ${result.label.toLowerCase()} came from`} quiet>
+                  <span className="num text-[26px] font-medium leading-tight">{fmtValue(result.value)}</span>
+                  <span className="ml-1 text-[13px] text-ink-2">{typeof result.value === "number" ? result.unit : ""}</span>
+                </Blame>
+                <div className="mt-0.5"><ProvenanceIcon p={result.provenance} withText /></div>
+              </>
+            ) : (
+              <p className="mt-1 max-w-[26ch] text-[13.5px] text-ink-2">{run.status === "recording" ? "Recording" : result?.recorded ? `${result.recorded} values recorded` : result?.note ?? "Recorded"}</p>
+            )}
+          </div>
+          <div className="flex flex-col justify-center gap-2">
             {verdict ? (
-              <Link href={`/compare/${verdict.id}`} className="rounded-md border border-rule-strong px-3 py-1.5 text-[13px] font-medium hover:bg-surface">Open verdict</Link>
+              <Link href={`/compare/${verdict.id}`} className="rounded-lg border border-rule bg-surface px-3 py-2 text-[13px] font-medium hover:border-rule-strong">Open verdict</Link>
             ) : run.status === "complete" && run.role !== "reference" ? (
-              <Link href={`/compare/start?candidate=${run.id}`} className="rounded-md bg-ink px-3 py-1.5 text-[13px] font-medium text-paper hover:opacity-90">Run the litmus test</Link>
+              <Link href={`/compare/start?candidate=${run.id}`} className="rounded-lg bg-ink px-3 py-2 text-[13px] font-medium text-paper hover:opacity-90">Run the litmus test</Link>
             ) : null}
           </div>
         </div>
@@ -90,6 +91,7 @@ async function RunPage({ params, searchParams }: { params: Promise<{ id: string 
 
       <RunWorkbench initialRun={run} initialEvents={events} initialReadings={readings} initialFrames={frames} initialAt={at ?? null} />
       <RecordedData events={events} startedAt={run.started_at} measurements={experiment?.protocol.measurements ?? []} />
+      </div>
     </div>
   );
 }
