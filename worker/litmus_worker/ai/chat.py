@@ -94,6 +94,22 @@ class Toolbox:
                         "synthetic": bool((r.get("metadata") or {}).get("synthetic"))})
         return {"runs": out}
 
+    def get_dataset(self) -> dict:
+        """Every completed run as a row, every recorded variable as a column, each value with provenance and evidence."""
+        from .. import dataset
+        table = dataset.experiment_table(self.conn, self.experiment)
+        rows = []
+        for r in table["rows"]:
+            cells = {}
+            for k, c in r["cells"].items():
+                if c["value"] is None:
+                    cells[k] = {"value": None, "note": c["note"]}
+                    continue
+                self._note(c["evidence_ids"][:3])
+                cells[k] = {"value": c["display"], "provenance": c["provenance"], "evidence_ids": c["evidence_ids"][:3]}
+            rows.append({"run": r["label"], "role": r["role"], "cells": cells})
+        return store.to_json({"columns": table["columns"], "rows": rows})
+
     def get_run_timeline(self, run: str) -> dict:
         r = resolve_run(self.conn, self.experiment["id"], run)
         if r is None:
@@ -230,7 +246,7 @@ class Toolbox:
         return store.to_json({k: v for k, v in found.items() if k != "points"})
 
     def registry(self) -> dict[str, Callable[..., dict]]:
-        return {n: getattr(self, n) for n in ("list_runs", "get_run_timeline", "query_readings", "search_events",
+        return {n: getattr(self, n) for n in ("list_runs", "get_dataset", "get_run_timeline", "query_readings", "search_events",
                                                "diff_runs", "make_chart", "get_evidence")}
 
 
@@ -241,6 +257,8 @@ def _decl(name: str, desc: str, props: dict, required: list[str] | None = None) 
 
 DECLARATIONS = [
     _decl("list_runs", "List every run of this experiment with its role, result and evidence IDs.", {}),
+    _decl("get_dataset", "The experiment's data table: one row per completed run, one column per recorded measurement and condition "
+                         "(values Gemini read off the bench, values said aloud, sensor summaries), each with provenance and evidence IDs.", {}),
     _decl("get_run_timeline", "The ordered commits (events) of one run with evidence IDs and seconds from start.",
           {"run": {"type": "string", "description": "run label (e.g. 'Method B', 'Reference 4'), ordinal ('trial 4') or UUID"}}, ["run"]),
     _decl("query_readings", "Sensor readings for one run from the 1-second continuous aggregate.",
@@ -280,6 +298,7 @@ Rules:
 - Cite evidence after the sentence it supports, in square brackets, using exact IDs from tool results: [evt:...], [frm:...], [ser:...], [rdg:...], [run:...].
 - No probabilities, confidence levels, or words like likely or probably. Say what was measured, what differed, and what was not measured.
 - When asked to graph or plot, call make_chart (style "paper" if they mention a paper or publication), then give a one or two sentence caption.
+- For questions about the data itself (tables, averages across runs, which run had the highest value), call get_dataset and quote its values; do not do arithmetic beyond what it returns.
 - For "why was X different" questions, call diff_runs and explain the notable differences and the verdict on the assumed cause.
 - For methods or report writing, use get_run_timeline and write what actually happened, in past tense, with citations.
 - Be concise: short paragraphs or a few bullets. Refer to runs by label."""
@@ -383,7 +402,7 @@ def fallback_answer(conn: psycopg.Connection, experiment: dict, question: str, c
         if r:
             tl = tb.get_run_timeline(str(r["id"]))
             for e in tl["events"]:
-                if e["kind"] in ("step_confirmed", "quantity_added", "reagent_used", "mix", "flip_detected", "reading_reported"):
+                if e["kind"] in ("step_confirmed", "quantity_added", "reagent_used", "measurement", "mix", "flip_detected", "reading_reported"):
                     lines.append(f"- {e['summary']}. [{e['id']}]")
     else:
         m = re.search(r"(method\s+\w|reference\s+\d+|trial\s+\d+|run\s+\w+)", q)

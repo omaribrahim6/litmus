@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import re
 import threading
 import uuid
 from contextlib import asynccontextmanager
@@ -12,11 +13,11 @@ from typing import Any
 
 from fastapi import BackgroundTasks, Depends, FastAPI, File, Form, Header, HTTPException, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import PlainTextResponse
+from fastapi.responses import PlainTextResponse, Response
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 
-from . import analysis, charts, db, evidence, lifecycle, media, store
+from . import analysis, charts, dataset, db, evidence, lifecycle, media, rundata, store
 from .ai import chat, intro, narration, observe, perception, setup, thermo, video
 from .ai.client import AIUnavailable
 from .config import settings
@@ -281,13 +282,38 @@ def run_detail(run_id: str) -> dict:
         run = store.get_run(conn, rid)
         if run is None:
             raise HTTPException(404, "run not found")
+        exp = store.get_experiment(conn, run["experiment_id"])
+        rd = rundata.load(conn, rid)
         return store.to_json({
             "run": run,
-            "events": store.get_events(conn, rid, order="time"),
-            "frames": store.get_frames(conn, rid),
+            "events": rd.events,
+            "frames": rd.frames,
             "readings": store.get_readings_1s(conn, rid),
             "verify": lifecycle.verify(conn, rid),
+            "data": {"columns": (cols := dataset.columns(exp["protocol"])), "row": dataset.row(rd, exp["protocol"], cols),
+                     "log": dataset.readings_log(rd), "measurements": exp["protocol"].get("measurements", [])},
         })
+
+
+@app.get("/api/experiments/{slug}/dataset")
+def experiment_dataset(slug: str) -> dict:
+    """Every completed run of the experiment as one table: a row per run, a column per recorded variable."""
+    with db.connect() as conn:
+        exp = store.get_experiment(conn, slug)
+        if exp is None:
+            raise HTTPException(404, "unknown experiment")
+        return store.to_json(dataset.experiment_table(conn, exp))
+
+
+@app.get("/api/experiments/{slug}/dataset.csv")
+def experiment_dataset_csv(slug: str) -> Response:
+    with db.connect() as conn:
+        exp = store.get_experiment(conn, slug)
+        if exp is None:
+            raise HTTPException(404, "unknown experiment")
+        body = dataset.to_csv(dataset.experiment_table(conn, exp))
+    return Response(body, media_type="text/csv",
+                    headers={"Content-Disposition": f'attachment; filename="{exp["slug"]}-data.csv"'})
 
 
 class AssumedCauseIn(BaseModel):
@@ -623,6 +649,74 @@ def confirm_intro(run_id: str, body: IntroConfirmIn) -> dict:
         return store.to_json(store.get_run(conn, rid))
 
 
+# ------------------------------------------------------- structured measurements
+
+_PROTOCOL_LOCK = threading.Lock()
+_NUMBER = re.compile(r"[-+]?(?:\d+\.?\d*|\.\d+)(?:[eE][-+]?\d+)?")
+
+
+def _parse_number(text: str) -> float | None:
+    """The number exactly as displayed or said ("2.31 g" -> 2.31). Nothing is rounded, converted or estimated."""
+    m = _NUMBER.search((text or "").replace(",", "").replace(" ", ""))
+    return float(m.group()) if m else None
+
+
+def record_measurements(rid: uuid.UUID, experiment_id: uuid.UUID, items: list[dict]) -> list[dict]:
+    """Turn values Gemini read off the bench or heard into measurement commits.
+
+    Each item: key, label, value (as text), unit, t, provenance, frame_ids, source, read_from, payload.
+    A key the experiment does not define yet is added to it (never removed), so the next run is
+    watched for it too and every run stays comparable on it. A number that cannot be parsed from a
+    numeric measurement is dropped, not guessed.
+    """
+    if not items:
+        return []
+    from .ai.setup import measurement_spec, measurement_variable
+    with _PROTOCOL_LOCK, db.connect() as conn:
+        exp = store.get_experiment(conn, experiment_id)
+        protocol = exp["protocol"]
+        defined = {m["key"]: m for m in protocol.get("measurements", [])}
+        added, events = [], []
+        for it in items:
+            raw = str(it.get("value") or "").strip()[:80]
+            if not raw:
+                continue
+            spec = defined.get(re.sub(r"[^a-z0-9]+", "_", (it.get("key") or "").lower()).strip("_"))
+            if spec is None:
+                guess = "number" if _parse_number(raw) is not None and len(raw) <= 16 else "text"
+                spec = measurement_spec(it.get("key") or "", it.get("label"), it.get("unit"), guess,
+                                        "camera" if it.get("source") == "camera" else "speech", it.get("read_from"))
+                if exp["slug"] != "auto":  # the unconfigured placeholder is shared: keep it generic
+                    defined[spec["key"]] = spec
+                    added.append(spec)
+            value: Any = raw
+            if spec["type"] == "number":
+                value = _parse_number(raw)
+                if value is None:
+                    continue
+            unit = spec["unit"] or (it.get("unit") or "").strip()[:12] or None
+            shown = f"{value:g}" if isinstance(value, float) else value
+            where = it.get("read_from") or it.get("source")
+            events.append({"t": it["t"], "kind": "measurement", "provenance": it.get("provenance", "inferred"),
+                           "frame_ids": it.get("frame_ids") or [],
+                           "summary": f"{spec['label']}: {shown}{' ' + unit if unit else ''}" + (f" ({where})" if where else ""),
+                           "payload": {"key": spec["key"], "label": spec["label"], "value": value, "raw": raw, "unit": unit,
+                                       "source": it.get("source"), "read_from": it.get("read_from"), **(it.get("payload") or {})}})
+        if added:
+            protocol = {**protocol, "measurements": [*protocol.get("measurements", []), *added],
+                        "variables": [*protocol["variables"], *[measurement_variable(m) for m in added]]}
+            store.upsert_experiment(conn, protocol)
+            store.append_events(conn, rid, [{
+                "t": datetime.now(timezone.utc), "kind": "note", "provenance": "inferred",
+                "summary": "Now also recording " + ", ".join(m["label"].lower() for m in added),
+                "payload": {"measurements_added": added}}])
+        if events:
+            events.sort(key=lambda e: e["t"])
+            store.append_events(conn, rid, events)
+    return [{"key": e["payload"]["key"], "label": e["payload"]["label"], "value": e["payload"]["value"],
+             "unit": e["payload"]["unit"], "source": e["payload"]["source"], "summary": e["summary"]} for e in events]
+
+
 @app.post("/api/runs/{run_id}/narration", dependencies=[Depends(require_station)])
 def ingest_narration(run_id: str, file: UploadFile = File(...), meta: str = Form("{}")) -> dict:
     """One utterance from the clearest mic. Lab-relevant statements become commits; the rest is discarded."""
@@ -649,7 +743,7 @@ def ingest_narration(run_id: str, file: UploadFile = File(...), meta: str = Form
     reagent_vars = {v["key"]: v for v in exp["protocol"]["variables"] if v["type"] == "categorical"}
     quantities = {s["quantity"]["name"]: s["quantity"] for s in exp["protocol"]["steps"] if s.get("quantity")}
     quantity_steps = {s["quantity"]["name"]: s["id"] for s in exp["protocol"]["steps"] if s.get("quantity")}
-    events, committed = [], []
+    events, committed, spoken = [], [], []
     for s in relevant:
         t = t0 + timedelta(seconds=max(0.0, s.t_offset_s))
         base = {"audio_url": url, "offset_s": round(s.t_offset_s, 2), "mic": info.get("source"), "mic_scores": info.get("scores"),
@@ -668,10 +762,14 @@ def ingest_narration(run_id: str, file: UploadFile = File(...), meta: str = Form
             events.append({"t": t, "kind": "reagent_used", "provenance": "inferred", "confidence": round(heard.clarity, 2),
                            "summary": f"{label}: {s.value} (said at the bench)",
                            "payload": {"variable": s.variable, "value": s.value, "source": "narration", "text": s.text, **base}})
+        if s.kind == "measurement" and s.key and s.reading:
+            spoken.append({"key": s.key, "label": s.label, "value": s.reading, "unit": s.unit, "t": t, "provenance": "inferred",
+                           "source": "speech", "read_from": "said at the bench", "payload": {"text": s.text, **base}})
         committed.append({"t_s": (t - run["started_at"]).total_seconds() if run["started_at"] else 0, "text": s.text, "kind": s.kind})
     with db.connect() as conn:
         store.append_events(conn, rid, events)
-    return {"committed": committed, "dropped": len(heard.statements) - len(relevant), "audio_url": url}
+    recorded = record_measurements(rid, run["experiment_id"], spoken)
+    return {"committed": committed, "recorded": recorded, "dropped": len(heard.statements) - len(relevant), "audio_url": url}
 
 
 # ------------------------------------------------------- hands-free step tracking
@@ -688,27 +786,31 @@ def observe_endpoint(run_id: str, body: ObserveIn) -> dict:
     """Gemini looks at the frames uploaded since the last look and commits what it saw (inferred, with the frame)."""
     rid = parse_uuid(run_id)
     st = _OBSERVED.setdefault(rid, {"since": None, "recent": []})
+    idle = {"current_step": body.current_step, "committed": [], "recorded": [], "scene": None, "activity": None}
     with db.connect() as conn:
         run = _open_run(conn, rid)
         exp = store.get_experiment(conn, run["experiment_id"])
-        frames = store.get_frames(conn, rid)
+        frames = [f for f in store.get_frames(conn, rid) if f.get("reason") != "thermometer"]
     new = [f for f in frames if st["since"] is None or f["t"] > st["since"]]
     if not new:
-        return {"current_step": body.current_step, "committed": []}
-    picks = new[-5:] if len(new) <= 5 else [new[int(i * (len(new) - 1) / 4)] for i in range(5)]
-    images = [p.read_bytes() for f in picks if (p := media.local_path(f["url"])) and p.exists()]
-    if not images:
-        return {"current_step": body.current_step, "committed": []}
+        return idle
+    n = 6
+    picks = new if len(new) <= n else [new[round(i * (len(new) - 1) / (n - 1))] for i in range(n)]
+    pairs = [(f, p.read_bytes()) for f in picks if (p := media.local_path(f["url"])) and p.exists()]
+    if not pairs:
+        return idle
+    picks = [f for f, _ in pairs]
     try:
-        seen = observe.look(images, exp["protocol"], body.current_step, st["recent"])
+        seen = observe.look([b for _, b in pairs], exp["protocol"], body.current_step, st["recent"])
     except (AIUnavailable, RuntimeError) as exc:
-        return {"current_step": body.current_step, "committed": [], "error": str(exc)}
+        return {**idle, "error": str(exc)}
     st["since"] = new[-1]["t"]
+    frame_at = lambda i: picks[min(max(i, 0), len(picks) - 1)]  # noqa: E731
     step_ids = {s["id"] for s in exp["protocol"]["steps"]}
     reagent_vars = {v["key"]: v for v in exp["protocol"]["variables"] if v.get("type") == "categorical"}
     events, done = [], set()
     for s in seen.seen:
-        f = picks[min(max(s.frame, 0), len(picks) - 1)]
+        f = frame_at(s.frame)
         base = {"t": f["t"], "provenance": "inferred", "frame_ids": [f["id"]],
                 "payload": {"source": "camera", "model": settings.model_flash}}
         if s.kind == "step" and s.step_id in step_ids and s.step_id not in done:
@@ -719,17 +821,50 @@ def observe_endpoint(run_id: str, body: ObserveIn) -> dict:
         elif s.kind == "reagent" and s.variable in reagent_vars and s.value:
             events.append({**base, "kind": "reagent_used", "summary": f"{reagent_vars[s.variable]['label']}: {s.value} ({s.summary})",
                            "payload": {**base["payload"], "variable": s.variable, "value": s.value, "observation": s.summary}})
-        elif s.kind in ("addition", "observation") and s.summary:
+        elif s.kind == "observation" and s.summary:
             events.append({**base, "kind": "note", "summary": s.summary, "payload": {**base["payload"], "seen": s.kind}})
     if seen.current_step in step_ids and seen.current_step != body.current_step and seen.current_step not in done:
         title = next(x["title"] for x in exp["protocol"]["steps"] if x["id"] == seen.current_step)
         f = picks[-1]
         events.append({"t": f["t"], "kind": "step_confirmed", "provenance": "inferred", "frame_ids": [f["id"]],
                        "summary": f"Step seen: {title}", "payload": {"step": seen.current_step, "source": "camera"}})
+    events += _mixing_from_activity(picks, seen.activity)
     if events:
         events.sort(key=lambda e: e["t"])
         with db.connect() as conn:
             store.append_events(conn, rid, events)
-        st["recent"] += [e["summary"] for e in events]
+    recorded = record_measurements(rid, run["experiment_id"], [
+        {"key": r.key, "label": r.label, "value": r.value, "unit": r.unit, "t": frame_at(r.frame)["t"], "provenance": "inferred",
+         "frame_ids": [frame_at(r.frame)["id"]], "source": "camera", "read_from": r.read_from,
+         "payload": {"model": settings.model_flash}}
+        for r in seen.readings])
+    st["recent"] += [e["summary"] for e in events if e["kind"] != "mix"] + [r["summary"] for r in recorded]
     current = seen.current_step if seen.current_step in step_ids else body.current_step
-    return {"current_step": current, "committed": [e["summary"] for e in events]}
+    return {"current_step": current, "committed": [e["summary"] for e in events], "recorded": recorded,
+            "scene": seen.scene, "activity": seen.activity[-1] if seen.activity else None}
+
+
+def _mixing_from_activity(frames: list[dict], labels: list[str]) -> list[dict]:
+    """Consecutive frames Gemini labeled 'mixing' become one mix commit. Code only measures the span,
+    from the frames' own timestamps (half-way to the neighboring frames on each side)."""
+    if len(labels) != len(frames):
+        return []
+    ts = [f["t"] for f in frames]
+    out, i = [], 0
+    while i < len(frames):
+        if labels[i] != "mixing":
+            i += 1
+            continue
+        j = i
+        while j + 1 < len(frames) and labels[j + 1] == "mixing":
+            j += 1
+        gap = lambda a, b: (ts[b] - ts[a]).total_seconds() / 2  # noqa: E731
+        before = gap(i - 1, i) if i > 0 else (gap(i, i + 1) if i + 1 < len(frames) else 1.0)
+        after = gap(j, j + 1) if j + 1 < len(frames) else (gap(j - 1, j) if j > 0 else 1.0)
+        dur = round((ts[j] - ts[i]).total_seconds() + before + after, 1)
+        out.append({"t": ts[i] - timedelta(seconds=before), "kind": "mix", "provenance": "inferred",
+                    "frame_ids": [frames[k]["id"] for k in range(i, j + 1)][:4],
+                    "summary": f"Mixing seen for about {dur:g} s",
+                    "payload": {"duration_s": dur, "frames": j - i + 1, "source": "camera/gemini", "model": settings.model_flash}})
+        i = j + 1
+    return out
