@@ -13,7 +13,8 @@ import type { VerdictContent } from "@/lib/types";
 async function History({ searchParams }: { searchParams: Promise<{ experiment?: string }> }) {
   await connection();
   const { experiment: wanted } = await searchParams;
-  const experiments = await getExperiments();
+  // "auto" is the placeholder every run starts on before Gemini sets up the real experiment.
+  const experiments = (await getExperiments()).filter((e) => e.slug !== "auto");
   if (!experiments.length) {
     return (
       <div className="mx-auto max-w-xl px-6 py-24">
