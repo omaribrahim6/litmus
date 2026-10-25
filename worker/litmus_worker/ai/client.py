@@ -72,13 +72,17 @@ def video_part(path: Path) -> types.Part | types.File:
 
 
 def generate_json(model: str, contents: list, schema: type[T], system: str | None = None,
-                  temperature: float = 0.2, retries: int = 2) -> T:
-    """Generate content constrained to a Pydantic schema and parse it."""
+                  temperature: float = 0.2, retries: int = 2, thinking: str | None = None) -> T:
+    """Generate content constrained to a Pydantic schema and parse it.
+
+    thinking: "MINIMAL" / "LOW" for quick perception calls (an audio intro drops from ~9 s to ~3 s).
+    """
     config = types.GenerateContentConfig(
         system_instruction=system,
         temperature=temperature,
         response_mime_type="application/json",
         response_schema=schema,
+        thinking_config=types.ThinkingConfig(thinking_level=thinking) if thinking else None,
     )
     last: Exception | None = None
     for attempt in range(retries + 1):
@@ -91,6 +95,9 @@ def generate_json(model: str, contents: list, schema: type[T], system: str | Non
             raise
         except Exception as exc:  # noqa: BLE001 - retried, then surfaced
             last = exc
+            if config.thinking_config is not None and "thinking" in str(exc).lower():
+                config.thinking_config = None  # this model doesn't take a thinking level: retry plainly
+                continue
             log.warning("gemini %s attempt %d failed: %s", model, attempt + 1, exc)
             time.sleep(1.5 * (attempt + 1))
     raise RuntimeError(f"Gemini call failed: {last}")

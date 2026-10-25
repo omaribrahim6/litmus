@@ -220,5 +220,5 @@ def propose(said: str | None, image: bytes | None, existing: list[dict]) -> tupl
     contents: list = [PROMPT.format(existing=catalog, said=json.dumps(said or ""))]
     if image:
         contents.insert(0, types.Part.from_bytes(data=image, mime_type="image/jpeg"))
-    out = generate_json(settings.model_flash, contents, SetupOut, temperature=0.1)
+    out = generate_json(settings.model_flash, contents, SetupOut, temperature=0.1, thinking="LOW")
     return out, build_protocol(out)

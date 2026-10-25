@@ -45,4 +45,4 @@ def understand(path: Path, experiment_name: str) -> Intro:
     mime = MIME.get(path.suffix.lower(), "audio/wav")
     return generate_json(settings.model_flash,
                          [types.Part.from_bytes(data=data, mime_type=mime), f"{PROMPT}\nStation protocol: {experiment_name}."],
-                         Intro, temperature=0.0)
+                         Intro, temperature=0.0, thinking="LOW")

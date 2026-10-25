@@ -95,6 +95,8 @@ class Session:
         self.cam_mix_since: float | None = None
         self.cam_mix_last: float | None = None
         self.setup: dict | None = None
+        self.setup_at: float | None = None
+        self.seen: list[dict] = []
 
     def snapshot(self) -> dict:
         with self.lock:
@@ -122,6 +124,8 @@ class Session:
                 "narration": self.narration[-4:],
                 "title": self.title,
                 "setup": self.setup,
+                "seen": self.seen,
+                "armed": self.flip_detector is not None,
                 "action_camera": {"available": self.action_camera.available, "detail": self.action_camera.detail} if self.action_camera else None,
             }
 
@@ -160,6 +164,7 @@ class Session:
                     max_s = float(self.cfg.hardware.get("intro_seconds", 15))
                     self.intro = {"state": "listening", "since": self.started, "until": self.started + max_s}
                 threading.Thread(target=self._listen_loop, args=(self.run_id,), daemon=True).start()
+            threading.Thread(target=self._observe_loop, args=(self.run_id,), daemon=True).start()
             return self.snapshot()
 
     # ------------------------------------------------- spoken intro and narration
@@ -246,8 +251,48 @@ class Session:
             self.action_camera.roi = self.protocol["roi"]
         self.step = 0
         self.flip_detector = None
+        self.setup_at = time.time()
         self.setup = {"experiment": setup["experiment"], "name": self.protocol["name"], "reused": setup.get("reused"),
                       "change": self.protocol.get("change")}
+
+    def _observe_loop(self, run_id: str) -> None:
+        """Hands-free: every ~12 s Gemini looks at the latest frames and says which step the researcher is on."""
+        while True:
+            time.sleep(12)
+            with self.lock:
+                if self.run_id != run_id or self.state != "recording":
+                    return
+                if self.intro.get("state") in ("listening", "stopping", "processing"):
+                    continue
+                steps = self.protocol["steps"]
+                current = steps[self.step]["id"] if self.step < len(steps) else None
+            try:
+                res = requests.post(f"{self.cfg.worker_url}/api/runs/{run_id}/observe", json={"current_step": current},
+                                    headers=self.outbox.headers, timeout=45)
+                res.raise_for_status()
+                out = res.json()
+            except requests.RequestException as exc:
+                log.info("observe skipped: %s", exc)
+                continue
+            with self.lock:
+                if self.run_id != run_id:
+                    return
+                ids = [s["id"] for s in self.protocol["steps"]]
+                if out.get("current_step") in ids:
+                    self.step = ids.index(out["current_step"])
+                self.seen = (self.seen + [{"t_s": round(time.time() - self.started), "text": c} for c in out.get("committed", [])])[-6:]
+                self._maybe_arm()
+
+    def _maybe_arm(self) -> None:
+        """Arm color-change detection on the step expected to show it, or 30 s after setup at the latest."""
+        if self.flip_detector is not None or not self.protocol.get("flip"):
+            return
+        steps = self.protocol["steps"]
+        on_arm_step = self.step < len(steps) and steps[self.step].get("arm_flip")
+        late = self.setup_at is not None and time.time() - self.setup_at > 30
+        if on_arm_step or late:
+            self.titrate_started = time.time()
+            self.flip_detector = FlipDetector(FlipConfig.from_dict(self.protocol["flip"]))
 
     def _auto_setup(self, run_id: str) -> None:
         """Nobody introduced the run: let Gemini set it up from what the camera sees."""

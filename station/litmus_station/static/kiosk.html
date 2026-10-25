@@ -126,8 +126,7 @@
       <div id="said" class="said hidden"></div>
       <div id="warns"></div>
       <div style="display:grid;grid-template-columns:1fr auto;gap:10px">
-        <button class="big" id="confirm">Confirm step</button>
-        <button class="ghost" id="end">End run</button>
+        <button class="big" id="end" style="grid-column:1 / -1;background:var(--accent);color:#fff">Stop recording</button>
       </div>
     </div>
 
@@ -201,9 +200,9 @@ function render(s) {
     ? `Listening on ${a.sources.map(m => m.name).join(" and ")}. You'll be asked to say who you are; anything you say about the experiment is added to the record.`
     : "No microphone connected. The run is labeled from the buttons above.";
   renderIntro(s);
-  const said = (s.narration || []).slice(-2);
+  const said = [...(s.narration || []).map(n => ({ text: `“${n.text}”`, by: n.mic })), ...(s.seen || []).map(n => ({ text: n.text, by: "camera" }))].slice(-3);
   $("said").classList.toggle("hidden", !said.length || s.state !== "recording");
-  $("said").innerHTML = said.map(n => `<div><b>“${n.text}”</b> <span class="num" style="font-size:12px">${n.mic}</span></div>`).join("");
+  $("said").innerHTML = said.map(n => `<div><b>${n.text}</b> <span class="num" style="font-size:12px">${n.by}</span></div>`).join("");
   $("timer").textContent = rec ? `${Math.floor(s.elapsed_s / 60)}:${String(Math.floor(s.elapsed_s % 60)).padStart(2, "0")}` : "";
   $("idle").classList.toggle("hidden", s.state !== "idle");
   $("recording").classList.toggle("hidden", !rec && s.state !== "finishing");
@@ -218,17 +217,16 @@ function render(s) {
   if (rec || s.state === "finishing") {
     tiles($("tiles-rec"), s);
     const st = s.current_step;
-    $("stepcount").textContent = st ? `Step ${s.step_index + 1} of ${s.steps.length}` : "All steps confirmed";
+    $("stepcount").textContent = st ? `Gemini sees step ${s.step_index + 1} of ${s.steps.length}${s.armed ? ", watching for the color change" : ""}` : "Protocol complete";
     $("steptitle").textContent = s.state === "finishing" ? "Uploading the record" : st ? st.title : "Protocol complete";
     $("stepdetail").textContent = st ? (st.detail || "") : "End the run when you are done.";
     const titrating = st && st.repeat && st.quantity;
   const q = (st && st.quantity) || {};
   window.addAmount = q.step || 1;
   $("add").textContent = `+ ${q.step || 1} ${q.unit || ""} added`;
-    $("titrate").classList.toggle("hidden", !titrating);
+    $("titrate").classList.add("hidden");
     $("total").textContent = `${fmt((s.totals || {})[q.name] || 0)} ${q.unit || ""}`;
-    $("confirm").textContent = titrating ? "Done titrating" : "Confirm step";
-    $("confirm").disabled = !st || s.state === "finishing";
+    $("end").disabled = s.state === "finishing";
     const w = [];
     if (s.no_flip_warning) w.push(`<div class="banner warn">No color flip after 10 minutes of titration.</div>`);
     for (const [n, x] of Object.entries(s.sensors)) if (!x.available && /failed|disconnected/.test(x.detail || "")) w.push(`<div class="banner warn">${NAMES[n] || n} missing: recorded as missing evidence, never estimated.</div>`);
@@ -294,9 +292,8 @@ document.querySelectorAll("#roles button").forEach(b => b.onclick = () => {
 let manual = false;
 $("manual").onclick = () => { manual = !manual; $("manualbox").classList.toggle("hidden", !manual); $("manual").textContent = manual ? "Let Gemini decide" : "Choose run type manually"; };
 $("start").onclick = () => post("/start", manual ? { label, role } : { label: "", role: "reference" });
-$("confirm").onclick = () => S && S.current_step && S.current_step.repeat ? post("/next") : post("/confirm");
 $("add").onclick = () => post("/add", { value: window.addAmount || 1 });
-$("end").onclick = () => { if (confirm("End this run and seal the record?")) post("/end"); };
+$("end").onclick = () => post("/end");
 $("new").onclick = () => post("/reset");
 
 const keys = ["7","8","9","4","5","6","1","2","3",".","0","⌫"];

@@ -27,7 +27,7 @@ def read(image: bytes) -> float | None:
                         [types.Part.from_bytes(data=image, mime_type="image/jpeg"),
                          "Is there a digital thermometer display in this lab bench photo? If clearly readable, give the number "
                          "and unit exactly as shown. Do not guess."],
-                        Display, temperature=0.0, retries=0)
+                        Display, temperature=0.0, retries=0, thinking="MINIMAL")
     if not out.visible or out.value is None:
         return None
     c = (out.value - 32) * 5 / 9 if out.unit == "F" or (out.unit == "unknown" and out.value > 60) else out.value

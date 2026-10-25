@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import threading
 import uuid
 from contextlib import asynccontextmanager
 from pathlib import Path
@@ -16,7 +17,7 @@ from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 
 from . import analysis, charts, db, evidence, lifecycle, media, store
-from .ai import chat, intro, narration, perception, setup, thermo, video
+from .ai import chat, intro, narration, observe, perception, setup, thermo, video
 from .ai.client import AIUnavailable
 from .config import settings
 
@@ -501,12 +502,22 @@ def job_status(job_id: str) -> dict:
 def ingest_intro(run_id: str, file: UploadFile = File(...)) -> dict:
     """The researcher's spoken intro. Gemini titles the run; the clip and transcript stay as evidence."""
     rid = parse_uuid(run_id)
+    with _RUN_LOCKS.setdefault(rid, threading.Lock()):  # a retry waits for the first attempt instead of redoing it
+        return _ingest_intro(rid, file)
+
+
+_RUN_LOCKS: dict[uuid.UUID, threading.Lock] = {}
+
+
+def _ingest_intro(rid: uuid.UUID, file: UploadFile) -> dict:
     suffix = Path(file.filename or "intro.wav").suffix.lower() or ".wav"
     with db.connect() as conn:
         run = store.get_run(conn, rid)
         if run is None:
             raise HTTPException(404, "run not found")
         exp = store.get_experiment(conn, run["experiment_id"])
+        if (run.get("metadata") or {}).get("intro_result"):
+            return run["metadata"]["intro_result"]  # a retried upload: answer once, never commit twice
         rel = f"runs/{rid}/intro{suffix}"
         media.save_stream(file.file, media.media_root() / rel)
     url = f"/media/{rel}"
@@ -540,6 +551,8 @@ def ingest_intro(run_id: str, file: UploadFile = File(...)) -> dict:
         # Nothing was configured: set the experiment up from what the researcher just said and what the camera sees.
         said = " ".join(x for x in (heard.transcript, heard.experiment) if x)
         out["setup"] = run_setup(rid, said, _latest_frame(rid))
+    with db.connect() as conn:
+        store.update_run(conn, rid, metadata={"intro_result": store.to_json(out)})
     return out
 
 
@@ -632,6 +645,8 @@ def ingest_narration(run_id: str, file: UploadFile = File(...), meta: str = Form
     t0 = store.as_dt(info["t_start"]) if info.get("t_start") else datetime.now(timezone.utc)
     url = f"/media/{rel}"
     reagent_vars = {v["key"]: v for v in exp["protocol"]["variables"] if v["type"] == "categorical"}
+    quantities = {s["quantity"]["name"]: s["quantity"] for s in exp["protocol"]["steps"] if s.get("quantity")}
+    quantity_steps = {s["quantity"]["name"]: s["id"] for s in exp["protocol"]["steps"] if s.get("quantity")}
     events, committed = [], []
     for s in relevant:
         t = t0 + timedelta(seconds=max(0.0, s.t_offset_s))
@@ -640,6 +655,12 @@ def ingest_narration(run_id: str, file: UploadFile = File(...), meta: str = Form
         kind = "hypothesis_stated" if s.kind == "hypothesis" else "narration"
         events.append({"t": t, "kind": kind, "provenance": "inferred", "confidence": round(heard.clarity, 2),
                        "summary": f"Said at the bench: \u201c{s.text}\u201d", "payload": {"text": s.text, **base}})
+        if s.kind == "quantity" and s.quantity_name in quantities and s.amount is not None and 0 < s.amount < 1e4:
+            q = quantities[s.quantity_name]
+            events.append({"t": t, "kind": "quantity_added", "provenance": "inferred", "confidence": round(heard.clarity, 2),
+                           "summary": f"Added {s.amount:g} {q.get('unit') or s.unit or ''} (said at the bench)".replace("  ", " "),
+                           "payload": {"quantity": s.quantity_name, "value": float(s.amount), "unit": q.get("unit") or s.unit,
+                                       "step": quantity_steps[s.quantity_name], "source": "narration", "text": s.text, **base}})
         if s.kind == "reagent" and s.variable in reagent_vars and s.value:
             label = reagent_vars[s.variable]["label"]
             events.append({"t": t, "kind": "reagent_used", "provenance": "inferred", "confidence": round(heard.clarity, 2),
@@ -649,3 +670,64 @@ def ingest_narration(run_id: str, file: UploadFile = File(...), meta: str = Form
     with db.connect() as conn:
         store.append_events(conn, rid, events)
     return {"committed": committed, "dropped": len(heard.statements) - len(relevant), "audio_url": url}
+
+
+# ------------------------------------------------------- hands-free step tracking
+
+_OBSERVED: dict[uuid.UUID, dict] = {}
+
+
+class ObserveIn(BaseModel):
+    current_step: str | None = None
+
+
+@app.post("/api/runs/{run_id}/observe", dependencies=[Depends(require_station)])
+def observe_endpoint(run_id: str, body: ObserveIn) -> dict:
+    """Gemini looks at the frames uploaded since the last look and commits what it saw (inferred, with the frame)."""
+    rid = parse_uuid(run_id)
+    st = _OBSERVED.setdefault(rid, {"since": None, "recent": []})
+    with db.connect() as conn:
+        run = _open_run(conn, rid)
+        exp = store.get_experiment(conn, run["experiment_id"])
+        frames = store.get_frames(conn, rid)
+    new = [f for f in frames if st["since"] is None or f["t"] > st["since"]]
+    if not new:
+        return {"current_step": body.current_step, "committed": []}
+    picks = new[-5:] if len(new) <= 5 else [new[int(i * (len(new) - 1) / 4)] for i in range(5)]
+    images = [p.read_bytes() for f in picks if (p := media.local_path(f["url"])) and p.exists()]
+    if not images:
+        return {"current_step": body.current_step, "committed": []}
+    try:
+        seen = observe.look(images, exp["protocol"], body.current_step, st["recent"])
+    except (AIUnavailable, RuntimeError) as exc:
+        return {"current_step": body.current_step, "committed": [], "error": str(exc)}
+    st["since"] = new[-1]["t"]
+    step_ids = {s["id"] for s in exp["protocol"]["steps"]}
+    reagent_vars = {v["key"]: v for v in exp["protocol"]["variables"] if v.get("type") == "categorical"}
+    events, done = [], set()
+    for s in seen.seen:
+        f = picks[min(max(s.frame, 0), len(picks) - 1)]
+        base = {"t": f["t"], "provenance": "inferred", "frame_ids": [f["id"]],
+                "payload": {"source": "camera", "model": settings.model_flash}}
+        if s.kind == "step" and s.step_id in step_ids and s.step_id not in done:
+            title = next(x["title"] for x in exp["protocol"]["steps"] if x["id"] == s.step_id)
+            events.append({**base, "kind": "step_confirmed", "summary": f"Step seen: {title}",
+                           "payload": {**base["payload"], "step": s.step_id}})
+            done.add(s.step_id)
+        elif s.kind == "reagent" and s.variable in reagent_vars and s.value:
+            events.append({**base, "kind": "reagent_used", "summary": f"{reagent_vars[s.variable]['label']}: {s.value} ({s.summary})",
+                           "payload": {**base["payload"], "variable": s.variable, "value": s.value, "observation": s.summary}})
+        elif s.kind in ("addition", "observation") and s.summary:
+            events.append({**base, "kind": "note", "summary": s.summary, "payload": {**base["payload"], "seen": s.kind}})
+    if seen.current_step in step_ids and seen.current_step != body.current_step and seen.current_step not in done:
+        title = next(x["title"] for x in exp["protocol"]["steps"] if x["id"] == seen.current_step)
+        f = picks[-1]
+        events.append({"t": f["t"], "kind": "step_confirmed", "provenance": "inferred", "frame_ids": [f["id"]],
+                       "summary": f"Step seen: {title}", "payload": {"step": seen.current_step, "source": "camera"}})
+    if events:
+        events.sort(key=lambda e: e["t"])
+        with db.connect() as conn:
+            store.append_events(conn, rid, events)
+        st["recent"] += [e["summary"] for e in events]
+    current = seen.current_step if seen.current_step in step_ids else body.current_step
+    return {"current_step": current, "committed": [e["summary"] for e in events]}

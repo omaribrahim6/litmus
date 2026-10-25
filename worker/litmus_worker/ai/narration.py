@@ -26,9 +26,12 @@ class Statement(BaseModel):
     t_offset_s: float = Field(description="seconds from the start of the clip when this statement begins")
     text: str = Field(description="what was said, lightly cleaned (no filler words), in the speaker's words")
     lab_relevant: bool = Field(description="true only if it is about the experiment, procedure, materials, measurements or observations")
-    kind: Literal["narration", "observation", "reagent", "hypothesis", "deviation", "other"]
+    kind: Literal["narration", "observation", "reagent", "quantity", "hypothesis", "deviation", "other"]
     variable: str | None = Field(default=None, description="for kind=reagent: the protocol variable key it identifies")
     value: str | None = Field(default=None, description="for kind=reagent: which choice, using the choice key")
+    quantity_name: str | None = Field(default=None, description="for kind=quantity: the protocol quantity name being added")
+    amount: float | None = Field(default=None, description="for kind=quantity: the amount they said they added")
+    unit: str | None = None
 
 
 class Narration(BaseModel):
@@ -39,11 +42,13 @@ class Narration(BaseModel):
 def _prompt(protocol: dict) -> str:
     reagents = {v["key"]: list((v.get("detect") or {}).get("choices", {}).keys())
                 for v in protocol["variables"] if v["type"] == "categorical"}
+    quantities = {s["quantity"]["name"]: s["quantity"].get("unit") for s in protocol["steps"] if s.get("quantity")}
     return f"""Audio from a lab bench during the experiment "{protocol['name']}". Researchers may narrate what they are doing.
 Transcribe each statement with its start time in the clip.
 Mark lab_relevant=true only for statements about the experiment: steps, materials, quantities, observations, problems, expectations.
 Small talk, personal conversation and anything unrelated must be lab_relevant=false.
 Use kind=reagent when they say which container or bottle they are using; variables and choices: {json.dumps(reagents)}.
+Use kind=quantity when they say how much they added (e.g. "adding half a mL"), with quantity_name from {json.dumps(quantities)} and the amount in that unit.
 Use kind=hypothesis for what they expect or suspect, kind=deviation for anything done differently from the protocol.
 Do not invent statements. If nothing intelligible was said, return an empty list."""
 
@@ -53,7 +58,7 @@ def understand(path: Path, protocol: dict) -> tuple[Narration, str]:
     last: Exception | None = None
     for model in (settings.model_flash_lite, settings.model_flash):
         try:
-            return generate_json(model, [part, _prompt(protocol)], Narration, temperature=0.0, retries=1), model
+            return generate_json(model, [part, _prompt(protocol)], Narration, temperature=0.0, retries=1, thinking="LOW"), model
         except AIUnavailable:
             raise
         except RuntimeError as exc:
