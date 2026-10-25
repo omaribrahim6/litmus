@@ -144,11 +144,11 @@ def insert_readings(conn: psycopg.Connection, run_id: uuid.UUID, readings: list[
             raise ValueError(f"bad provenance {prov}")
         rows.append((as_dt(r["t"]), run_id, r["sensor"], float(v), r.get("unit"), prov))
     if rows:
+        # COPY sends the whole batch in one round trip to Tiger Data.
         with conn.cursor() as cur:
-            cur.executemany(
-                "insert into readings (time, run_id, sensor, value, unit, provenance) values (%s, %s, %s, %s, %s, %s)",
-                rows,
-            )
+            with cur.copy("copy readings (time, run_id, sensor, value, unit, provenance) from stdin") as copy:
+                for row in rows:
+                    copy.write_row(row)
     return len(rows)
 
 
