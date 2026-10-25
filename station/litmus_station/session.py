@@ -91,6 +91,8 @@ class Session:
         self.intro: dict = {"state": None}
         self.title: dict = {}
         self.narration: list[dict] = []
+        self.cam_mix_since: float | None = None
+        self.cam_mix_last: float | None = None
 
     def snapshot(self) -> dict:
         with self.lock:
@@ -321,6 +323,8 @@ class Session:
             if self.state != "recording":
                 return self.snapshot()
             self._close_mix(time.time(), force=True)
+            if self.cam_mix_since is not None:  # close a camera mixing episode still in progress
+                self._camera_mixing(time.time() + 2.0, 0.0)
             self._flush_now()
             self.state = "finishing"
             run_id, started, role = self.run_id, self.started, self.role
@@ -443,15 +447,37 @@ class Session:
                     self._close_mix(t)
             time.sleep(max(0.0, period - (time.time() - t)))
 
+    def _camera_mixing(self, t: float, motion: float | None) -> bool:
+        """Mixing measured by the camera when there is no rotary sensor. Returns True while the tube is moving."""
+        threshold = float(self.cfg.hardware.get("mix_motion_threshold", 0.04))
+        moving = motion is not None and motion >= threshold
+        if moving:
+            self.cam_mix_since = self.cam_mix_since or t
+            self.cam_mix_last = t
+        elif self.cam_mix_since is not None and t - self.cam_mix_last > 1.0:
+            duration = round(self.cam_mix_last - self.cam_mix_since, 2)
+            if duration >= 1.0:
+                self._event("mix", f"Mixed for {duration:.1f} s (camera)", "measured",
+                            {"duration_s": duration, "source": "camera"}, t=self.cam_mix_last)
+            self.cam_mix_since = None
+        # Hold off color-based flip detection while moving and briefly after.
+        return moving or (self.cam_mix_last is not None and t - self.cam_mix_last < 1.5)
+
     def _color_loop(self) -> None:
         period = 1.0 / self.cfg.color_hz
         while True:
             t = time.time()
             m = self.camera.metrics()
+            motion = self.camera.motion()
             with self.lock:
                 self.color = m
+                moving = False
+                if self.state == "recording" and motion is not None:
+                    self.readings.append({"t": iso(t), "sensor": "mix_motion", "value": round(motion, 4), "unit": "ratio", "provenance": "measured"})
+                    if not self.sensors["mix_angle"].available:
+                        moving = self._camera_mixing(t, motion)
                 if m and self.state == "recording":
-                    if not m.get("blocked"):
+                    if not m.get("blocked") and not moving:
                         for sensor, unit in COLOR_SENSORS:
                             self.readings.append({"t": iso(t), "sensor": sensor, "value": m[sensor], "unit": unit, "provenance": "measured"})
                         if self.flip_detector and self.flip is None:

@@ -137,6 +137,28 @@ class Camera:
         m["blocked"] = blocked_or_dark(m)
         return m
 
+    def motion(self) -> float | None:
+        """How much the area around the tube changed since the last call (0-1).
+
+        Used to measure mixing without a rotary sensor: rotating the holder
+        moves the tube, so the region around it changes sharply.
+        """
+        frame, t = self.latest()
+        if frame is None or time.time() - t > 2.0:
+            return None
+        h, w = frame.shape[:2]
+        r = self.roi
+        cx, cy = (r["x"] + r["w"] / 2) * w, (r["y"] + r["h"] / 2) * h
+        hw, hh = r["w"] * w * 1.5, r["h"] * h * 1.2  # a box about 3x the ROI width around the tube
+        x0, x1 = int(max(0, cx - hw)), int(min(w, cx + hw))
+        y0, y1 = int(max(0, cy - hh)), int(min(h, cy + hh))
+        gray = cv2.cvtColor(frame[y0:y1, x0:x1], cv2.COLOR_BGR2GRAY)
+        gray = cv2.resize(gray, (64, 64), interpolation=cv2.INTER_AREA).astype(np.float32)
+        prev, self._motion_prev = getattr(self, "_motion_prev", None), gray
+        if prev is None:
+            return 0.0
+        return float(np.mean(np.abs(gray - prev)) / 255.0)
+
     def jpeg(self, quality: int = 82) -> tuple[bytes, float] | None:
         frame, t = self.latest()
         if frame is None:
