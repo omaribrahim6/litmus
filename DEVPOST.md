@@ -15,7 +15,7 @@ Litmus
 
 Git for research, except you never have to commit. A lab bench that records every run and tells you whether a breakthrough is real, with a receipt for every claim.
 
-*(176 characters)*
+*(163 characters)*
 
 ## Links
 
