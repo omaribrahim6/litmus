@@ -32,6 +32,7 @@ class SynthSpec:
     temp_c: float | None = 21.5
     air_quality: float = 118.0
     assumed_cause: str | None = None
+    planted_fault: str | None = None
     seed: int = 0
 
 
@@ -48,7 +49,8 @@ def demo_specs(day: datetime | None = None) -> list[SynthSpec]:
     control = SynthSpec("Method A", "control", t(80), 4.0, inversions=[3] * 8, temp_c=21.6, air_quality=120, seed=21)
     candidate = SynthSpec(
         "Method B", "candidate", t(96), 2.5, water="tap", inversions=[3, 3, 3, 3, 3], temp_c=22.6, air_quality=122,
-        assumed_cause="Method B neutralized with less base because I stirred longer after each addition.", seed=22,
+        assumed_cause="Method B neutralized with less base because I stirred longer after each addition.",
+        planted_fault="water_source", seed=22,
     )
     return refs + [control, candidate]
 
@@ -215,6 +217,7 @@ def generate(spec: SynthSpec, protocol: dict, fps: int = 10, width: int = 640, h
     run = {"id": run_id, "label": spec.label, "role": spec.role, "started_at": t0, "ended_at": T(end_at),
            "assumed_cause": spec.assumed_cause, "status": "recording",
            "metadata": {"synthetic": True, "video_started_at": t0.isoformat(),
+                        "ground_truth_flip_s": round(flip_at, 3), "planted_fault": spec.planted_fault,
                         "available_sensors": ["light", "air_quality", "mix_angle", "camera"],
                         "missing_sensors": ["temp_probe", "humidity"]}}
     return Synth(run, readings, events, frames, video_frames, fps)
