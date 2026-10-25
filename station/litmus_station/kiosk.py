@@ -55,6 +55,24 @@ def create_app(session: Session) -> FastAPI:
             return Response(status_code=204)
         return Response(content=shot[0], media_type="image/jpeg", headers={"cache-control": "no-store"})
 
+    @app.get("/stream.mjpg")
+    def stream():
+        """Live preview as MJPEG (about 12 fps): smoother than polling stills."""
+        import time
+
+        from fastapi.responses import StreamingResponse
+
+        def frames():
+            last = 0.0
+            while True:
+                shot = session.camera.jpeg(quality=65)
+                if shot is not None and shot[1] != last:
+                    last = shot[1]
+                    yield b"--frame\r\nContent-Type: image/jpeg\r\n\r\n" + shot[0] + b"\r\n"
+                time.sleep(1 / 12)
+
+        return StreamingResponse(frames(), media_type="multipart/x-mixed-replace; boundary=frame")
+
     @app.post("/start")
     def start(body: StartIn) -> dict:
         return session.start(body.label, body.role, body.assumed_cause, intro=body.intro)

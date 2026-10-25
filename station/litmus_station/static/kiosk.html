@@ -84,7 +84,7 @@
 </header>
 <main>
   <section class="panel camera">
-    <img id="cam" alt="Station camera" src="/frame.jpg">
+    <img id="cam" alt="Station camera" src="/stream.mjpg">
     <div id="camwarn" class="banner err hidden" style="position:absolute;left:12px;top:12px"></div>
   </section>
 
@@ -298,7 +298,7 @@ $("padok").onclick = () => { const v = parseFloat(padValue); $("modal").style.di
 
 async function tick() { try { render(await (await fetch("/state")).json()); } catch (e) { $("upload").textContent = "Station service not responding"; } }
 setInterval(tick, 500);
-setInterval(() => { $("cam").src = "/frame.jpg?t=" + Date.now(); }, 500);
+$("cam").onerror = () => setTimeout(() => { $("cam").src = "/stream.mjpg?t=" + Date.now(); }, 2000);
 tick();
 </script>
 </body>
