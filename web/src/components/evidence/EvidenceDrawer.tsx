@@ -53,7 +53,17 @@ function EvidenceCard({ id, e }: { id: string; e: Evidence | null | undefined })
             {e.summary}
           </p>
           {e.provenance === "inferred" && e.confidence != null && e.confidence < 0.6 ? (
-            <p className="text-[12px] text-amber">Low-confidence camera inference. Check the frame.</p>
+            <p className="text-[12px] text-amber">Low-confidence inference. Check the frame or recording.</p>
+          ) : null}
+          {typeof e.payload?.audio_url === "string" ? (
+            <div className="space-y-1">
+              {typeof e.payload?.transcript === "string" ? <p className="text-[13px] italic text-ink-2">“{e.payload.transcript}”</p> : null}
+              <audio controls preload="none" src={e.payload.audio_url} className="w-full" />
+              <p className="text-[11px] text-ink-3">
+                Recorded{typeof e.payload?.mic === "string" ? ` on the ${e.payload.mic} mic` : ""}, transcribed by Gemini
+                {typeof e.payload?.offset_s === "number" ? `, ${e.payload.offset_s}s into the clip` : ""}
+              </p>
+            </div>
           ) : null}
           {e.frames?.map((f) => (
             // eslint-disable-next-line @next/next/no-img-element

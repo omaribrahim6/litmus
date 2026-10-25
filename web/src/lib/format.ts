@@ -69,6 +69,9 @@ export const KIND_TEXT: Record<string, string> = {
   run_ended: "Run ended",
   run_sealed: "Sealed",
   pour: "Pour",
+  session_intro: "Intro",
+  intro_confirmed: "Confirmed",
+  narration: "Said",
 };
 
 export function plural(n: number, word: string, pluralWord?: string): string {

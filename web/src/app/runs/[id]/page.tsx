@@ -44,6 +44,14 @@ async function RunPage({ params, searchParams }: { params: Promise<{ id: string 
             <RoleTag role={run.role} className="text-[15px]" />
             {run.metadata?.synthetic ? <SyntheticTag /> : null}
           </div>
+          {run.metadata?.session_title || run.metadata?.researcher ? (
+            <p className="mt-1 text-[15px]">
+              {String(run.metadata.session_title ?? "")}
+              {run.metadata.researcher ? <span className="text-ink-2">{run.metadata.session_title ? ", " : ""}{String(run.metadata.researcher)}</span> : null}
+              {run.metadata.lab ? <span className="text-ink-2">, {String(run.metadata.lab)}</span> : null}
+              {!run.metadata.intro_confirmed ? <span className="ml-2 text-[12px] text-amber" title="Titled by Gemini from the spoken intro; not yet confirmed">from spoken intro</span> : null}
+            </p>
+          ) : null}
           <p className="mt-1 text-[14px] text-ink-2">
             {fmtDateTime(run.started_at)}
             {duration ? `, ${Math.round(duration)} s` : ""}

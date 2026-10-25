@@ -37,6 +37,8 @@ export function RunWorkbench({ initialRun, initialEvents, initialReadings, initi
   const list = useRef<HTMLOListElement>(null);
   const { open } = useEvidence();
   const live = run.status === "recording";
+  const actionVideo = typeof run.metadata?.action_video_url === "string" ? run.metadata.action_video_url : null;
+  const [cam, setCam] = useState<"bench" | "action">("bench");
 
   const t0 = useMemo(() => ms(run.started_at ?? events[0]?.t ?? new Date().toISOString()), [run.started_at, events]);
   const videoT0 = useMemo(() => (run.metadata?.video_started_at ? ms(run.metadata.video_started_at) : t0), [run.metadata, t0]);
@@ -155,9 +157,19 @@ export function RunWorkbench({ initialRun, initialEvents, initialReadings, initi
   return (
     <div className="space-y-5">
       <div className="grid gap-5 xl:grid-cols-[minmax(0,1.45fr)_minmax(320px,1fr)]">
-        <div className="overflow-hidden rounded-xl border border-rule bg-sunken">
+        <div className="relative overflow-hidden rounded-xl border border-rule bg-sunken">
+          {run.video_url && !live && actionVideo ? (
+            <div className="absolute right-3 top-3 z-10 flex overflow-hidden rounded-md border border-white/20 bg-black/60 text-[12px] text-white">
+              {(["bench", "action"] as const).map((c) => (
+                <button key={c} type="button" onClick={() => setCam(c)} className={clsx("px-2.5 py-1", cam === c ? "bg-white/25 font-medium" : "opacity-80 hover:opacity-100")}>
+                  {c === "bench" ? "Bench camera" : "Researcher camera"}
+                </button>
+              ))}
+            </div>
+          ) : null}
           {run.video_url && !live ? (
-            <video ref={video} src={run.video_url} controls playsInline preload="metadata" onTimeUpdate={onTime} onSeeked={onTime}
+            <video ref={video} src={cam === "action" && actionVideo ? actionVideo : run.video_url} controls playsInline preload="metadata"
+              onTimeUpdate={onTime} onSeeked={onTime} onLoadedMetadata={() => seek(cursor)}
               className="aspect-video w-full bg-black" />
           ) : (live ? latestFrame : nearestFrame) ? (
             <div className="relative">
