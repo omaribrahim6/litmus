@@ -55,15 +55,31 @@ class ADC(Protocol):
 
 
 class GroveADC:
-    """Seeed Grove Base HAT for Raspberry Pi (STM32 ADC on I2C 0x08)."""
+    """Seeed Grove Base HAT for Raspberry Pi (STM32 ADC on I2C 0x08, older boards 0x04).
+
+    Talks to the HAT directly over I2C with smbus2, so the grove.py package
+    (which often fails to install on a Pi 5) is not required.
+    """
 
     def __init__(self) -> None:
-        from grove.adc import ADC as _ADC  # type: ignore[import-not-found]
-        self._adc = _ADC()
+        from smbus2 import SMBus  # type: ignore[import-not-found]
+        self._bus = SMBus(1)
+        self._addr = None
+        for addr in (0x08, 0x04):
+            try:
+                self._bus.read_byte(addr)
+                self._addr = addr
+                break
+            except OSError:
+                continue
+        if self._addr is None:
+            raise RuntimeError("Grove Base HAT not found on I2C (expected 0x08 or 0x04)")
 
     def read_ratio(self, channel: int) -> float | None:
-        raw = self._adc.read(channel)  # 0..999 (per mille of 3.3 V)
-        return None if raw is None else raw / 999.0
+        reg = 0x30 + channel  # per-mille of the 3.3 V reference, 0..999
+        self._bus.write_byte(self._addr, reg)
+        raw = self._bus.read_word_data(self._addr, reg)
+        return raw / 999.0
 
 
 class ADS1115ADC:

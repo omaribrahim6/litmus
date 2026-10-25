@@ -30,7 +30,7 @@ sudo apt install -y python3-venv ffmpeg v4l-utils chromium-browser
 git clone https://github.com/omaribrahim6/litmus && cd litmus/station
 python3 -m venv .venv && . .venv/bin/activate
 pip install -r requirements.txt gpiozero lgpio
-pip install grove.py                              # Grove Base HAT, or: pip install adafruit-circuitpython-ads1x15
+pip install smbus2                                # Grove Base HAT, or: pip install adafruit-circuitpython-ads1x15
 cp station.example.json station.json              # edit channels to match the wiring
 ```
 

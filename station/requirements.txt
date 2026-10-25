@@ -9,5 +9,5 @@ python-dotenv>=1.0
 # Raspberry Pi only (install on the Pi):
 #   gpiozero lgpio            buttons, RC-timing light sensor
 #   adafruit-circuitpython-ads1x15   ADS1115 ADC over I2C
-#   grove.py                  Seeed Grove Base HAT ADC
+#   smbus2                    Seeed Grove Base HAT ADC (read directly over I2C)
 #   adafruit-circuitpython-dht       DHT22 air temperature / humidity
