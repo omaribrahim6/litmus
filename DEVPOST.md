@@ -108,7 +108,7 @@ Litmus is a bench station plus a pipeline that records every experimental run au
 - Provenance is a design problem as much as a data problem. A reading typed by a person, a reading from a sensor, and a guess from a model need to look different on screen.
 - Hardware forces honesty. When a sensor is unplugged, the software has to say so.
 
-## What's next
+## What's next for litmus
 
 - **Any protocol.** Experiments are configuration, not code: steps, tracked variables and the color-change rule live in a JSON file. Next, a researcher pastes a written protocol and Gemini drafts the configuration for them to review. A second experiment, the iodine clock, needs only a "time until the flip" result type.
 - **Where confounds cost millions.** The same pattern applies to cell cultures, where incubator temperature, reagent lot or passage number silently differ, and to preclinical results that fail in phase 3.
