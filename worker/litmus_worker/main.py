@@ -5,7 +5,8 @@ from __future__ import annotations
 import json
 import uuid
 from contextlib import asynccontextmanager
-from datetime import datetime, timezone
+from pathlib import Path
+from datetime import datetime, timedelta, timezone
 from typing import Any
 
 from fastapi import BackgroundTasks, Depends, FastAPI, File, Form, Header, HTTPException, UploadFile
@@ -15,7 +16,8 @@ from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 
 from . import analysis, charts, db, evidence, lifecycle, media, store
-from .ai import chat, perception, video
+from .ai import chat, intro, narration, perception, video
+from .ai.client import AIUnavailable
 from .config import settings
 
 
@@ -178,16 +180,23 @@ def ingest_frame(run_id: str, file: UploadFile = File(...), meta: str = Form(...
 
 
 @app.post("/api/runs/{run_id}/video", dependencies=[Depends(require_station)])
-def ingest_video(run_id: str, file: UploadFile = File(...), started_at: str | None = Form(default=None)) -> dict:
+def ingest_video(run_id: str, file: UploadFile = File(...), started_at: str | None = Form(default=None),
+                 camera: str = Form(default="bench")) -> dict:
+    """The run's video: the bench camera (color of record) or the researcher camera (actions)."""
     rid = parse_uuid(run_id)
     with db.connect() as conn:
         run = store.get_run(conn, rid)
         if run is None:
             raise HTTPException(404, "run not found")
-        path, url = media.video_path(rid)
-        digest = media.save_stream(file.file, path)
-        meta = {"video_sha256": digest, "video_started_at": started_at or (run["started_at"] and run["started_at"].isoformat())}
-        row = store.update_run(conn, rid, video_url=url, metadata=meta)
+        if camera == "action":
+            path, url = media.video_path(rid, "_action.mp4")
+            digest = media.save_stream(file.file, path)
+            row = store.update_run(conn, rid, metadata={"action_video_url": url, "action_video_sha256": digest})
+        else:
+            path, url = media.video_path(rid)
+            digest = media.save_stream(file.file, path)
+            meta = {"video_sha256": digest, "video_started_at": started_at or (run["started_at"] and run["started_at"].isoformat())}
+            row = store.update_run(conn, rid, video_url=url, metadata=meta)
     return store.to_json(row)
 
 
@@ -450,3 +459,114 @@ def job_status(job_id: str) -> dict:
     if job is None:
         raise HTTPException(404, "job not found")
     return job
+
+
+# --------------------------------------------------------- spoken intro
+
+@app.post("/api/runs/{run_id}/intro", dependencies=[Depends(require_station)])
+def ingest_intro(run_id: str, file: UploadFile = File(...)) -> dict:
+    """The researcher's spoken intro. Gemini titles the run; the clip and transcript stay as evidence."""
+    rid = parse_uuid(run_id)
+    suffix = Path(file.filename or "intro.wav").suffix.lower() or ".wav"
+    with db.connect() as conn:
+        run = store.get_run(conn, rid)
+        if run is None:
+            raise HTTPException(404, "run not found")
+        exp = store.get_experiment(conn, run["experiment_id"])
+        rel = f"runs/{rid}/intro{suffix}"
+        media.save_stream(file.file, media.media_root() / rel)
+    url = f"/media/{rel}"
+    try:
+        heard = intro.understand(media.media_root() / rel, exp["name"])
+    except (AIUnavailable, RuntimeError) as exc:
+        return {"understood": False, "audio_url": url, "error": str(exc)}
+    with db.connect() as conn:
+        fields: dict[str, Any] = {"metadata": {"researcher": heard.researcher, "lab": heard.lab, "session_title": heard.title,
+                                               "intro_audio_url": url, "intro_experiment": heard.experiment}}
+        if heard.run_label:
+            fields["label"] = heard.run_label
+        if heard.role != "unknown":
+            fields["role"] = heard.role
+        if heard.hypothesis and not run["assumed_cause"]:
+            fields["assumed_cause"] = heard.hypothesis
+        store.update_run(conn, rid, **fields)
+        events = [{
+            "t": run["started_at"] or datetime.now(timezone.utc), "kind": "session_intro", "provenance": "inferred",
+            "confidence": round(max(0.0, min(1.0, heard.clarity)), 2),
+            "summary": f"Session intro: {heard.title}",
+            "payload": {**heard.model_dump(), "audio_url": url, "model": settings.model_flash},
+        }]
+        if heard.hypothesis:
+            events.append({"t": datetime.now(timezone.utc), "kind": "hypothesis_stated", "provenance": "inferred",
+                           "summary": f"Stated hypothesis (spoken): {heard.hypothesis}",
+                           "payload": {"text": heard.hypothesis, "source": "spoken intro", "audio_url": url}})
+        store.append_events(conn, rid, events)
+    return {"understood": True, "audio_url": url, **heard.model_dump()}
+
+
+class IntroConfirmIn(BaseModel):
+    researcher: str | None = None
+    lab: str | None = None
+    title: str | None = None
+    run_label: str | None = None
+
+
+@app.post("/api/runs/{run_id}/intro/confirm", dependencies=[Depends(require_station)])
+def confirm_intro(run_id: str, body: IntroConfirmIn) -> dict:
+    """The researcher confirmed (or corrected) the title on the touchscreen: now it is reported, not inferred."""
+    rid = parse_uuid(run_id)
+    with db.connect() as conn:
+        if store.get_run(conn, rid) is None:
+            raise HTTPException(404, "run not found")
+        fields: dict[str, Any] = {"metadata": {k: v for k, v in {"researcher": body.researcher, "lab": body.lab,
+                                                                  "session_title": body.title, "intro_confirmed": True}.items() if v is not None}}
+        if body.run_label:
+            fields["label"] = body.run_label
+        store.update_run(conn, rid, **fields)
+        store.append_events(conn, rid, [{
+            "t": datetime.now(timezone.utc), "kind": "intro_confirmed", "provenance": "reported",
+            "summary": f"Researcher confirmed the session title: {body.title or body.run_label or 'as heard'}",
+            "payload": body.model_dump(),
+        }])
+        return store.to_json(store.get_run(conn, rid))
+
+
+@app.post("/api/runs/{run_id}/narration", dependencies=[Depends(require_station)])
+def ingest_narration(run_id: str, file: UploadFile = File(...), meta: str = Form("{}")) -> dict:
+    """One utterance from the clearest mic. Lab-relevant statements become commits; the rest is discarded."""
+    rid = parse_uuid(run_id)
+    info = json.loads(meta or "{}")
+    with db.connect() as conn:
+        run = _open_run(conn, rid)
+        exp = store.get_experiment(conn, run["experiment_id"])
+    rel = f"runs/{rid}/audio/{uuid.uuid4().hex[:12]}.wav"
+    path = media.media_root() / rel
+    media.save_stream(file.file, path)
+    try:
+        heard, model = narration.understand(path, exp["protocol"])
+    except (AIUnavailable, RuntimeError) as exc:
+        return {"committed": [], "error": str(exc), "audio_url": f"/media/{rel}"}
+    relevant = [s for s in heard.statements if s.lab_relevant and s.text.strip()]
+    if not relevant:
+        path.unlink(missing_ok=True)  # nothing about the lab was said: keep no audio
+        return {"committed": [], "dropped": len(heard.statements)}
+    t0 = store.as_dt(info["t_start"]) if info.get("t_start") else datetime.now(timezone.utc)
+    url = f"/media/{rel}"
+    reagent_vars = {v["key"]: v for v in exp["protocol"]["variables"] if v["type"] == "categorical"}
+    events, committed = [], []
+    for s in relevant:
+        t = t0 + timedelta(seconds=max(0.0, s.t_offset_s))
+        base = {"audio_url": url, "offset_s": round(s.t_offset_s, 2), "mic": info.get("source"), "mic_scores": info.get("scores"),
+                "model": model, "statement_kind": s.kind}
+        kind = "hypothesis_stated" if s.kind == "hypothesis" else "narration"
+        events.append({"t": t, "kind": kind, "provenance": "inferred", "confidence": round(heard.clarity, 2),
+                       "summary": f"Said at the bench: \u201c{s.text}\u201d", "payload": {"text": s.text, **base}})
+        if s.kind == "reagent" and s.variable in reagent_vars and s.value:
+            label = reagent_vars[s.variable]["label"]
+            events.append({"t": t, "kind": "reagent_used", "provenance": "inferred", "confidence": round(heard.clarity, 2),
+                           "summary": f"{label}: {s.value} (said at the bench)",
+                           "payload": {"variable": s.variable, "value": s.value, "source": "narration", "text": s.text, **base}})
+        committed.append({"t_s": (t - run["started_at"]).total_seconds() if run["started_at"] else 0, "text": s.text, "kind": s.kind})
+    with db.connect() as conn:
+        store.append_events(conn, rid, events)
+    return {"committed": committed, "dropped": len(heard.statements) - len(relevant), "audio_url": url}

@@ -51,7 +51,8 @@ def detect_reagents_for_step(run_id: uuid.UUID, step_event: dict, wait_s: float 
         frames = store.get_frames(conn, run_id)
         t = step_event["t"]
         window = [f for f in frames if t - timedelta(seconds=2) <= f["t"] <= t + timedelta(seconds=8)]
-        window.sort(key=lambda f: abs((f["t"] - (t + timedelta(seconds=2))).total_seconds()))
+        # The researcher camera (reason "action") has the better view of jugs and bottles.
+        window.sort(key=lambda f: (f.get("reason") != "action", abs((f["t"] - (t + timedelta(seconds=2))).total_seconds())))
         for var in targets:
             det = var["detect"]
             for f in window[:3]:
