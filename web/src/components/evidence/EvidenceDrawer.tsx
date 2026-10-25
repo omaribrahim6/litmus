@@ -6,7 +6,7 @@ import { X } from "lucide-react";
 import { fetchEvidence } from "./EvidenceProvider";
 import { ProvenanceIcon } from "@/components/ui";
 import { Sparkline } from "@/components/charts/Sparkline";
-import { fmtNumber, KIND_TEXT, shortHash } from "@/lib/format";
+import { fmtNumber, fmtValue, KIND_TEXT, shortHash } from "@/lib/format";
 import type { Evidence } from "@/lib/types";
 
 function TypeName({ e }: { e: Evidence }) {
@@ -117,7 +117,7 @@ function EvidenceCard({ id, e }: { id: string; e: Evidence | null | undefined })
           {e.assumed_cause ? <p className="text-ink-2">Assumed cause, as entered: “{e.assumed_cause}”</p> : null}
           {e.result?.value != null ? (
             <p className="text-ink-2">
-              {e.result.label}: <span className="num text-ink">{fmtNumber(e.result.value)} {e.result.unit}</span>
+              {e.result.label}: <span className="num text-ink">{fmtValue(e.result.value)} {typeof e.result.value === "number" ? e.result.unit : ""}</span>
             </p>
           ) : null}
         </div>

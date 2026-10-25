@@ -2,7 +2,7 @@ import Link from "next/link";
 import clsx from "clsx";
 import type { StripStop } from "@/lib/color";
 import type { Run } from "@/lib/types";
-import { fmtClock, fmtNumber, secondsBetween, shortHash } from "@/lib/format";
+import { fmtClock, fmtValue, secondsBetween, shortHash } from "@/lib/format";
 import { LitmusStrip, ROLE_DOT, RoleTag, SyntheticTag } from "@/components/ui";
 
 export interface LogRow {
@@ -60,7 +60,7 @@ export function CommitLog({ rows, unit }: { rows: LogRow[]; unit?: string }) {
                 <LitmusStrip stops={strip} duration={duration} height={12} />
               </span>
               <span className="num text-right text-[17px]">
-                {value != null ? <>{fmtNumber(value)}<span className="ml-1 text-[12px] text-ink-2">{unit}</span></> : <span className="text-[13px] text-ink-3">{recording ? "running" : "no flip"}</span>}
+                {value != null ? <>{fmtValue(value)}<span className="ml-1 text-[12px] text-ink-2">{typeof value === "number" ? unit : ""}</span></> : <span className="text-[13px] text-ink-3" title={run.result?.note ?? undefined}>{recording ? "running" : run.result?.recorded ? `${run.result.recorded} values` : "recorded"}</span>}
               </span>
               <span className="num text-right text-[12px] text-ink-3 max-lg:hidden">{fmtClock(run.started_at)}</span>
             </Link>

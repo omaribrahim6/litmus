@@ -4,6 +4,7 @@ import Link from "next/link";
 import { getExperiments, getLatestAnalysisFor, getRuns, getStrips } from "@/lib/data";
 import { CommitLog, type LogRow } from "@/components/history/CommitLog";
 import { ResultLine } from "@/components/history/ResultLine";
+import { DataTable } from "@/components/history/DataTable";
 import { LiveRefresh } from "@/components/LiveRefresh";
 import { AskContext } from "@/components/ask/AskProvider";
 import { Skeleton } from "@/components/ui";
@@ -54,10 +55,16 @@ async function History({ searchParams }: { searchParams: Promise<{ experiment?: 
         ) : null}
         <h1 className="wide text-[34px] font-semibold leading-[1.1] tracking-[-0.015em]">{p.name}</h1>
         <p className="mt-2 max-w-[68ch] text-[15px] text-ink-2">{p.description}</p>
-        <div className="mt-8 rounded-xl border border-rule bg-surface px-6 pb-4 pt-5">
-          <ResultLine runs={runs} unit={p.result.unit} label={p.result.label} />
-        </div>
+        {p.result.kind !== "none" && p.result.type !== "text" ? (
+          <div className="mt-8 rounded-xl border border-rule bg-surface px-6 pb-4 pt-5">
+            <ResultLine runs={runs} unit={p.result.unit} label={p.result.label} />
+          </div>
+        ) : null}
       </section>
+
+      <Suspense fallback={<Skeleton className="mb-10 h-40 w-full" />}>
+        <DataTable slug={exp.slug} />
+      </Suspense>
 
       <section>
         <div className="mb-2 flex items-baseline justify-between">

@@ -9,7 +9,8 @@ import { AssumedCauseForm } from "@/components/run/AssumedCauseForm";
 import { AskContext } from "@/components/ask/AskProvider";
 import { Blame } from "@/components/evidence/Blame";
 import { ProvenanceIcon, RoleTag, Skeleton, SyntheticTag } from "@/components/ui";
-import { fmtDateTime, fmtNumber, secondsBetween } from "@/lib/format";
+import { fmtDateTime, fmtValue, secondsBetween } from "@/lib/format";
+import { RecordedData } from "@/components/run/RecordedData";
 import type { VerdictContent } from "@/lib/types";
 
 async function Verify({ runId }: { runId: string }) {
@@ -65,14 +66,14 @@ async function RunPage({ params, searchParams }: { params: Promise<{ id: string 
           {result?.value != null ? (
             <div className="text-right">
               <div className="text-[12.5px] text-ink-2">{result.label}</div>
-              <Blame ids={result.evidence_ids} title={`How ${result.label.toLowerCase()} was computed: additions up to the detected flip`} quiet>
-                <span className="num text-[34px] leading-none">{fmtNumber(result.value)}</span>
-                <span className="ml-1.5 text-[15px] text-ink-2">{result.unit}</span>
+              <Blame ids={result.evidence_ids} title={`Where ${result.label.toLowerCase()} came from`} quiet>
+                <span className="num text-[34px] leading-none">{fmtValue(result.value)}</span>
+                <span className="ml-1.5 text-[15px] text-ink-2">{typeof result.value === "number" ? result.unit : ""}</span>
               </Blame>
               <div className="mt-1 flex justify-end"><ProvenanceIcon p={result.provenance} withText /></div>
             </div>
           ) : (
-            <p className="text-[14px] text-ink-2">{run.status === "recording" ? "Waiting for the color flip" : result?.note ?? "No result"}</p>
+            <p className="max-w-[32ch] text-right text-[14px] text-ink-2">{run.status === "recording" ? "Recording" : result?.recorded ? `${result.recorded} values recorded` : result?.note ?? "Recorded"}</p>
           )}
           <div className="flex flex-wrap items-center justify-end gap-2">
             <Suspense fallback={<Skeleton className="h-7 w-40 rounded-full" />}>
@@ -88,6 +89,7 @@ async function RunPage({ params, searchParams }: { params: Promise<{ id: string 
       </header>
 
       <RunWorkbench initialRun={run} initialEvents={events} initialReadings={readings} initialFrames={frames} initialAt={at ?? null} />
+      <RecordedData events={events} startedAt={run.started_at} measurements={experiment?.protocol.measurements ?? []} />
     </div>
   );
 }

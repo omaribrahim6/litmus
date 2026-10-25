@@ -55,13 +55,21 @@ export const PROVENANCE_TEXT: Record<Provenance, string> = {
   inferred: "Inferred by Gemini from video",
 };
 
+/** A recorded value as stored: numbers formatted, qualitative values (e.g. "cloudy") shown as they are. */
+export function fmtValue(v: number | string | null | undefined, decimals = 1): string {
+  if (v === null || v === undefined) return "";
+  return typeof v === "number" ? fmtNumber(v, decimals) : v;
+}
+
 export const KIND_TEXT: Record<string, string> = {
+  measurement: "Recorded",
+  experiment_setup: "Set up",
   run_started: "Run started",
   step_confirmed: "Step",
   quantity_added: "Added",
   reagent_used: "Reagent",
   mix: "Mixed",
-  flip_detected: "Color flip",
+  flip_detected: "Color change",
   flip_crosscheck: "Cross-check",
   reading_reported: "Reading",
   hypothesis_stated: "Hypothesis",

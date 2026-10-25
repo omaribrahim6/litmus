@@ -6,10 +6,10 @@ import { ROLE_DOT } from "@/components/ui";
 /** Every run's result on one number line, with the reference runs' normal variation shaded. */
 export function ResultLine({ runs, unit, label }: { runs: Run[]; unit?: string; label: string }) {
   const pts = runs
-    .filter((r) => r.result?.value != null)
+    .filter((r) => typeof r.result?.value === "number")
     .map((r) => ({ run: r, v: r.result!.value as number }));
   if (pts.length === 0) {
-    return <p className="text-[14px] text-ink-2">Results appear here once a run reaches its color flip.</p>;
+    return <p className="text-[14px] text-ink-2">The {label.toLowerCase()} of each run appears here once it has been recorded.</p>;
   }
   const refs = pts.filter((p) => p.run.role === "reference").map((p) => p.v);
   const mean = refs.length ? refs.reduce((a, b) => a + b, 0) / refs.length : null;

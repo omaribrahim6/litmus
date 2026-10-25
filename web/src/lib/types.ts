@@ -10,11 +10,26 @@ export interface ProtocolVariable {
   role?: "condition" | "outcome";
 }
 
+export interface Measurement {
+  key: string;
+  label: string;
+  unit?: string | null;
+  type: "number" | "text";
+  read_from?: "camera" | "speech" | "either";
+  look_for?: string | null;
+  role?: "outcome" | "condition" | "observation";
+}
+
 export interface Protocol {
   slug: string;
   name: string;
   description?: string;
-  result: { key: string; label: string; unit?: string; quantity: string; decimals?: number };
+  result: {
+    key: string; label: string; unit?: string; decimals?: number;
+    kind?: "measurement" | "amount_until_change" | "time_until_change" | "none";
+    quantity?: string; measurement?: string; type?: "number" | "text";
+  };
+  measurements?: Measurement[];
   steps: { id: string; title: string; detail?: string }[];
   variables: ProtocolVariable[];
   roi: { x: number; y: number; w: number; h: number };
@@ -32,11 +47,12 @@ export interface RunResult {
   metric: string;
   label: string;
   unit?: string | null;
-  value: number | null;
+  value: number | string | null;
   available: boolean;
   provenance?: Provenance | null;
   evidence_ids: string[];
   note?: string | null;
+  recorded?: number;
 }
 
 export interface Run {
