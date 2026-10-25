@@ -256,13 +256,13 @@ def _result_compare(protocol: dict, cand: RunData, ctrls: list[RunData], refs: l
     return item
 
 
-def _follow_up(protocol: dict, result: dict, assumed: dict, ranked: list[dict], cand: RunData) -> dict:
+def _follow_up(protocol: dict, result: dict, assumed: dict, ranked: list[dict], cand_label: str) -> dict:
     confound = next((i for i in ranked if i["status"] == NOTABLE and i.get("role") != "outcome"
                      and i["key"] not in assumed.get("variable_keys", [])), None)
     result_label = protocol["result"]["label"].lower()
     if confound is None:
         return {
-            "check": f"Repeat {cand.label} with every recorded variable matched to the control.",
+            "check": f"Repeat {cand_label} with every recorded variable matched to the control.",
             "outcomes": [
                 {"if": f"the {result_label} matches the control within normal variation", "means": "explained_by_confound", "text": "The original difference was run-to-run variation or an unrecorded factor."},
                 {"if": f"the {result_label} again differs from the control", "means": "supported", "text": "The method difference is reproducible and worth following up."},
@@ -275,7 +275,7 @@ def _follow_up(protocol: dict, result: dict, assumed: dict, ranked: list[dict], 
     mapped_labels = [by_key[k]["label"].lower() for k in assumed.get("variable_keys", []) if k in by_key]
     cause_name = (" or ".join(dict.fromkeys(mapped_labels)) if mapped_labels else "the stated cause")
     return {
-        "check": f"Matched rerun: repeat {cand.label} exactly, but with {confound['label'].lower()} set to {ctrl_value} (as in the control). Optional swap run: repeat the control with {confound['label'].lower()} set to {cand_value}.",
+        "check": f"Matched rerun: repeat {cand_label} exactly, but with {confound['label'].lower()} set to {ctrl_value} (as in the control). Optional swap run: repeat the control with {confound['label'].lower()} set to {cand_value}.",
         "variable_key": confound["key"],
         "outcomes": [
             {"if": f"the {result_label} returns to the control level (within normal variation)", "means": "explained_by_confound",
@@ -333,5 +333,22 @@ def diff(protocol: dict, candidate: RunData, controls: list[RunData], references
         "notable": [i["key"] for i in ranked if i["status"] == NOTABLE],
         "within_normal": [i["key"] for i in ranked if i["status"] in (WITHIN, SAME)],
         "missing_evidence": [i["key"] for i in ranked if i["status"] == MISSING],
-        "follow_up": _follow_up(protocol, result, assumed, ranked, candidate),
+        "follow_up": _follow_up(protocol, result, assumed, ranked, candidate.label),
     }
+
+
+def reassess(content: dict, keys: list[str], protocol: dict, run_text: str | None = None) -> dict:
+    """Recompute the assumed-cause label and follow-up for a different variable mapping.
+
+    Used when the verdict step maps the researcher's free text onto variables
+    with a model; the label itself is still decided here, from the diff only.
+    """
+    items = {i["key"]: i for i in content["differences"]}
+    text = run_text if run_text is not None else content["assumed_cause"].get("text")
+    assumed = assess_assumed_cause(text, [k for k in keys if k in items], items)
+    if assumed["text"]:
+        assumed["evidence_ids"] = [ev.run(content["candidate"]["run_id"])] + assumed["evidence_ids"]
+    out = dict(content)
+    out["assumed_cause"] = assumed
+    out["follow_up"] = _follow_up(protocol, content["result"], assumed, content["differences"], content["candidate"]["label"])
+    return out
