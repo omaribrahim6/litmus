@@ -315,7 +315,7 @@ def build_sensors(hw: dict, simulate: SimulatedBench | None = None) -> dict[str,
             log.warning("RC sensor %s unavailable: %s", name, exc)
             sensors[name] = Missing(name, unit, f"RC timing failed: {exc}")
     try:
-        sensors["temp_c"] = DS18B20() if hw.get("ds18b20", True) else Missing("temp_c", "°C")
+        sensors["temp_c"] = DS18B20() if hw.get("ds18b20", True) else Missing("temp_c", "°C", "read from a thermometer in camera view")
     except Exception:  # noqa: BLE001 - probe absent: temperature is entered by hand or missing
         sensors["temp_c"] = Missing("temp_c", "°C", "no probe; enter from a thermometer")
     if hw.get("dht22_pin") is not None:

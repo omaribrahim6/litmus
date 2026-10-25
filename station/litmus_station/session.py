@@ -112,6 +112,7 @@ class Session:
                            "blocked": bool(self.color and self.color.get("blocked")),
                            "rgb": [self.color["r"], self.color["g"], self.color["b"]] if self.color else None},
                 "mix_inversions": self._mix_count_live(),
+                "mixing_now": self.cam_mix_since is not None,
                 "flip": self.flip, "result": self.result, "verdict": self.verdict, "message": self.message,
                 "no_flip_warning": bool(self.titrate_started and not self.flip and time.time() - self.titrate_started > 600),
                 "upload": {"online": self.outbox.online, "pending": self.outbox.pending(), "error": self.outbox.last_error},
@@ -136,7 +137,7 @@ class Session:
             if self.bench:
                 self.bench.reset()
             self.run_id = str(uuid.uuid4())
-            self.label, self.role, self.started, self.state = label or "Untitled run", role, time.time(), "recording"
+            self.label, self.role, self.started, self.state = label or time.strftime("Run %H:%M"), role, time.time(), "recording"
             available = [n for n, s in self.sensors.items() if s.available] + (["camera"] if self.camera.available else [])
             if self.action_camera and self.action_camera.available:
                 available.append("action_camera")
