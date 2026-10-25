@@ -41,12 +41,16 @@ Done and committed:
 - Station: sensor drivers (Grove/ADS1115/RC LDR/DS18B20/DHT22, missing never faked), camera with exposure lock + wall-clock-locked video, live flip detector, mixing episodes, coalescing SQLite outbox, kiosk (1024x600 Waveshare 7" C), multi-mic hub picking the clearest mic per utterance, optional phone camera.
 - Web: history (commit graph + litmus strips + result line), run view (video synced both ways with lanes, live polling), diff view (verdict reveal), report (hover receipts, Markdown/PDF), Ask panel, upload, validation page, light/dark, offline snapshot fallback.
 
-In progress / next:
-1. Deploy worker to VPS (`ssh altair@23.95.188.69` via WSL, Docker, nginx-proxy on network `webnet` with acme-companion). Host: `litmus-worker.23-95-188-69.sslip.io`. Files: `worker/Dockerfile`, `deploy/docker-compose.yml`. Sudo needs a password: never type it; ask Omar to run any sudo step.
-2. Set Vercel env `WORKER_URL=https://litmus-worker.23-95-188-69.sslip.io`, then `vercel deploy --prod` from `web/` (Omar approved production deploys).
-3. Real runs: Lina records 5+ reference runs, Method A control, Method B with tap water, at the station. Then `seed --reset-synthetic` (removes synthetic runs only), `prepare_demo`, commit `web/demo-data` + `web/public/media`.
-4. Fill `demo/validation/manual_flips.csv` (`run_id,manual_flip_s`) from video review of 10 runs, then `validate`.
-5. Devpost text + demo video (README is the source).
+Deployed:
+- Web (production): https://litmus-rosy.vercel.app (Vercel env `DATABASE_URL`, `WORKER_URL`). Redeploy: `cd web; vercel deploy --prod --yes`.
+- Worker: https://litmus-worker.23-95-188-69.sslip.io on the VPS (`wsl ssh altair@23.95.188.69`, key auth). Docker container `litmus_worker` on network `webnet` behind nginx-proxy + acme-companion. Redeploy after pushing: `wsl -e ssh altair@23.95.188.69 "bash ~/litmus/deploy/vps-up.sh"`. Server-only files: `~/litmus/deploy/.env.vps`, `~/litmus/deploy/secrets/vertex.json`, media in `~/litmus/data/media`. Sudo needs a password: never type it; ask Omar.
+- Station token: `WORKER_TOKEN` in the root `.env` and the VPS `.env.vps`; put the same value in `station/.env` on the Pi with `WORKER_URL=https://litmus-worker.23-95-188-69.sslip.io`.
+
+Next:
+1. Real runs: Lina records 5+ reference runs, Method A control, Method B with tap water, at the station. Then `seed --reset-synthetic` (removes synthetic runs only), `prepare_demo` (a few Gemini calls), commit `web/demo-data` + `web/public/media`, redeploy.
+2. Fill `demo/validation/manual_flips.csv` (`run_id,manual_flip_s`) from video review of 10 runs, then `validate`.
+3. Devpost text (`DEVPOST.md` draft) + demo video.
+4. Careful with deletes: analyses list every reference run in `run_ids`; deleting a run cascades to its verdicts. Prefer `seed --reset-synthetic`.
 
 Known gaps / caveats:
 - Synthetic runs exist only for development and are labeled "synthetic" in the UI. Replace before judging.
