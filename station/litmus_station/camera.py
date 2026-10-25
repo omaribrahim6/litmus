@@ -21,11 +21,24 @@ from litmus_core.color import blocked_or_dark, roi_metrics
 log = logging.getLogger("litmus.camera")
 
 
-def lock_exposure(index: int) -> None:
+def resolve_device(source: int | str) -> int | str:
+    """'auto' (or an index on Linux) -> the webcam's current /dev/video node via its stable USB id.
+
+    USB webcams change /dev/videoN when replugged; /dev/v4l/by-id names do not.
+    """
+    if platform.system() != "Linux" or not (source == "auto" or isinstance(source, int)):
+        return 0 if source == "auto" else source
+    ids = sorted(Path("/dev/v4l/by-id").glob("*-video-index0")) if Path("/dev/v4l/by-id").exists() else []
+    if ids:
+        return str(ids[0].resolve())
+    return source if isinstance(source, int) else 0
+
+
+def lock_exposure(device: int | str) -> None:
     """Disable auto exposure / white balance on a UVC webcam (Linux, v4l2-ctl)."""
     if platform.system() != "Linux" or not shutil.which("v4l2-ctl"):
         return
-    dev = f"/dev/video{index}"
+    dev = device if isinstance(device, str) else f"/dev/video{device}"
     for ctrl in ("auto_exposure=1", "exposure_auto=1", "white_balance_automatic=0", "white_balance_temperature_auto=0", "focus_automatic_continuous=0"):
         subprocess.run(["v4l2-ctl", "-d", dev, "-c", ctrl], capture_output=True)
 
@@ -45,21 +58,31 @@ class Camera:
         self.video_started_at: float | None = None
         self.fps = 15
         self._stream = isinstance(source, str) and source.startswith(("http://", "https://", "rtsp://"))
-        self._replay = isinstance(source, str) and not self._stream
+        self._usb = source == "auto" or isinstance(source, int) or (isinstance(source, str) and source.startswith("/dev/"))
+        self._replay = isinstance(source, str) and not self._stream and not self._usb
         if simulate is None:
-            if lock and isinstance(source, int):
-                lock_exposure(source)
-            self._cap = cv2.VideoCapture(source)
-            if self._cap.isOpened():
-                self._cap.set(cv2.CAP_PROP_FRAME_WIDTH, 1280)
-                self._cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 720)
-                self.available, self.detail = True, f"camera {source}"
-            else:
-                self.detail = "camera not found"
+            self._open()
+            self.detail = f"camera {self._device}" if self._cap.isOpened() else "camera not found"
+            self.available = self._cap.isOpened()
         else:
             self.available, self.detail = True, "simulated camera"
         self._thread = threading.Thread(target=self._loop, daemon=True)
         self._thread.start()
+
+    def _open(self) -> None:
+        """(Re)open the source; USB webcams are re-resolved since their /dev node can change."""
+        if self._cap is not None:
+            self._cap.release()
+        self._device = resolve_device(self.source) if self._usb else self.source
+        if self._usb and self.lock:
+            lock_exposure(self._device)
+        if self._usb and isinstance(self._device, str):
+            self._cap = cv2.VideoCapture(self._device, cv2.CAP_V4L2)
+        else:
+            self._cap = cv2.VideoCapture(self._device)
+        if self._cap.isOpened() and not self._stream:
+            self._cap.set(cv2.CAP_PROP_FRAME_WIDTH, 1280)
+            self._cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 720)
 
     def _render_sim(self) -> np.ndarray:
         p = self.simulate.flip_progress()
@@ -85,14 +108,7 @@ class Camera:
                     self.available, self.detail = False, "camera disconnected"
                     time.sleep(1.0)
                     # Unplugged USB webcam or dropped phone stream: reopen until it comes back.
-                    if self._cap is not None:
-                        self._cap.release()
-                    if isinstance(self.source, int) and self.lock:
-                        lock_exposure(self.source)
-                    self._cap = cv2.VideoCapture(self.source)
-                    if self._cap.isOpened() and not self._stream:
-                        self._cap.set(cv2.CAP_PROP_FRAME_WIDTH, 1280)
-                        self._cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 720)
+                    self._open()
                     continue
                 if self._replay:
                     time.sleep(period)
