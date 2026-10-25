@@ -44,14 +44,16 @@ export function CommitLog({ rows, unit }: { rows: LogRow[]; unit?: string }) {
               className="grid grid-cols-[72px_minmax(0,1.3fr)_minmax(140px,1fr)_96px_64px] items-center gap-4 border-b border-rule py-3.5 pr-3 transition-colors hover:bg-surface max-lg:grid-cols-[64px_minmax(0,1fr)_88px]">
               <span className="num text-[12px] text-ink-3" title={run.head_hash ?? undefined}>{shortHash(run.head_hash)}</span>
               <span className="min-w-0">
-                <span className="flex items-center gap-2">
+                <span className="flex items-baseline gap-2">
                   <span className="truncate text-[15px] font-medium">{run.label ?? "Unlabeled run"}</span>
-                  <RoleTag role={run.role} />
-                  {run.metadata?.synthetic ? <SyntheticTag /> : null}
-                  {recording ? <span className="text-[12px] font-medium text-accent">recording</span> : null}
+                  {recording ? <span className="shrink-0 text-[12px] font-medium text-accent">recording</span> : null}
                 </span>
-                <span className="mt-0.5 block truncate text-[13px] text-ink-2">
-                  {verdictLabel ? verdictLabel : run.assumed_cause ? `Assumed cause: ${run.assumed_cause}` : `${run.event_count ?? 0} commits`}
+                <span className="mt-0.5 flex min-w-0 items-center gap-2 text-[13px] text-ink-2">
+                  <RoleTag role={run.role} className="shrink-0 text-[12.5px]" />
+                  {run.metadata?.synthetic ? <SyntheticTag /> : null}
+                  <span className="truncate">
+                    {verdictLabel ? verdictLabel : run.assumed_cause ? `Assumed cause: ${run.assumed_cause}` : `${run.event_count ?? 0} commits`}
+                  </span>
                 </span>
               </span>
               <span className="max-lg:hidden">
