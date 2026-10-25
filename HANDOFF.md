@@ -6,6 +6,11 @@ Deadline: Devpost submission Sunday Oct 25, 12:00 PM ET (edits until 1:45 PM).
 
 **The GitHub repo is PRIVATE until submission. Make it public again before 12:00 PM ET** (Devpost requires a public repo): `gh repo edit omaribrahim6/litmus --visibility public --accept-visibility-change-consequences`. While private, deploy the worker with `wsl -e bash deploy/sync-to-vps.sh` (the VPS cannot `git pull`), and copy code to the Pi with scp or `gh repo clone`.
 
+## Branches
+
+- `main`: full station with breadboard sensors and the preconfigured vinegar-titration protocol.
+- `scenario-b` (**currently deployed on the VPS worker**): no breadboard. Hardware is the Pi, webcam (camera + mic), the phone (camera + mic streams), and a digital thermometer in camera view (Gemini Flash-Lite reads it every 20 s, stored as inferred). Nothing is preconfigured: every run starts on the generic `auto` experiment; the spoken intro, or the camera frame alone if nobody speaks, is sent to Gemini (`worker/litmus_worker/ai/setup.py`), which proposes steps, result type (amount until change / time until change / none), reagents to watch, vessel box and expected colors. Code validates it, computes the flip rule in Lab, and reuses a matching experiment so runs stay comparable. Mixing is measured by camera motion around the tube. Pi needs `EXPERIMENT_ID=auto` in `station/.env`.
+
 ## Where things run
 
 | Piece | Where | How |
