@@ -1,7 +1,9 @@
 """Deterministic measurement of protocol variables and results for one run.
 
 Every value returned here comes from sensor readings, camera metrics or
-committed events, and carries the evidence IDs it was computed from.
+committed events (including values Gemini read off the bench, which are
+inferred commits with the frame they were read from), and carries the
+evidence IDs it was computed from. Code only aggregates; it never estimates.
 """
 
 from __future__ import annotations
@@ -94,13 +96,52 @@ def change_start(rd: RunData, protocol: dict) -> dict | None:
     return starts[0] if starts else (rd.events[0] if rd.events else None)
 
 
+def measurement_events(rd: RunData, key: str | None = None) -> list[dict]:
+    """Values Gemini read off the bench (camera) or heard (narration), or the station measured, in time order."""
+    return [e for e in rd.events_of("measurement") if key is None or (e.get("payload") or {}).get("key") == key]
+
+
+def _number(v) -> float | None:
+    try:
+        x = float(v)
+    except (TypeError, ValueError):
+        return None
+    return x if x == x and abs(x) != float("inf") else None
+
+
+def measure_recorded(rd: RunData, key: str, agg: str, unit: str | None, numeric: bool) -> Measure:
+    hits = measurement_events(rd, key)
+    if not hits:
+        return Measure(False, unit=unit, note="not recorded in this run")
+    ids = _event_ids(hits, 12) + _frame_ids(hits, 2)
+    prov = weakest(e["provenance"] for e in hits)
+    if not numeric:
+        values = [str((e["payload"] or {}).get("value")) for e in hits]
+        note = f"{len(set(values))} different values recorded" if len(set(values)) > 1 else None
+        return Measure(True, values[-1], None, prov, ids, note)
+    if agg == "count":
+        return Measure(True, float(len(hits)), unit, prov, ids)
+    nums = [(e, x) for e in hits if (x := _number((e["payload"] or {}).get("value"))) is not None]
+    if not nums:
+        return Measure(False, unit=unit, note="recorded, but not as a number")
+    values = [x for _, x in nums]
+    value = {"first": values[0], "last": values[-1], "mean": statistics.fmean(values), "max": max(values),
+             "min": min(values), "sum": sum(values)}.get(agg, values[-1])
+    note = f"{agg} of {len(values)} readings" if len(values) > 1 else None
+    return Measure(True, round(float(value), 6), unit, weakest(e["provenance"] for e, _ in nums),
+                   _event_ids([e for e, _ in nums], 12) + _frame_ids([e for e, _ in nums], 2), note)
+
+
 def measure_result(rd: RunData, protocol: dict) -> Measure:
-    """Result of a run, by the protocol's result kind:
-    amount added until the camera-detected change (default), time until the change, or none."""
+    """Result of a run, by the protocol's result kind: a recorded outcome measurement,
+    the amount added until a camera-detected color change, the time until that change, or none."""
     spec = protocol["result"]
     kind = spec.get("kind", "amount_until_change")
     if kind == "none":
-        return Measure(False, unit=spec.get("unit"), note="this experiment has no single numeric result")
+        return Measure(False, unit=spec.get("unit"), note="this experiment has no single outcome")
+    if kind == "measurement":
+        m = next((x for x in protocol.get("measurements", []) if x["key"] == spec["measurement"]), {})
+        return measure_recorded(rd, spec["measurement"], m.get("agg", "last"), spec.get("unit"), spec.get("type", "number") == "number")
     flip = rd.flip_event()
     if flip is None:
         return Measure(False, unit=spec.get("unit"), note="no color change was detected in this run")
@@ -182,11 +223,14 @@ def measure_variable(rd: RunData, var: dict, protocol: dict) -> Measure:
     if "sensor" in src:
         return _series_measure(rd, src["sensor"], src.get("agg", "mean"), unit)
 
+    if "measurement" in src:
+        return measure_recorded(rd, src["measurement"], src.get("agg", "last"), unit, var["type"] == "numeric")
+
     if "mix" in src:
         # src["mix"]: inversions | active_s, optionally normalized per base addition.
         what = src["mix"]
         per_addition = bool(src.get("per_addition"))
-        adds = quantity_events(rd, protocol["result"]["quantity"]) if per_addition else []
+        adds = quantity_events(rd, protocol["result"].get("quantity", "")) if per_addition else []
         if per_addition and not adds:
             return Measure(False, unit=unit, note="no additions to normalize mixing by")
         mix_cfg = protocol.get("mix", {})

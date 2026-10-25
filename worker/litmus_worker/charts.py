@@ -48,8 +48,8 @@ def results_by_run(conn: psycopg.Connection, experiment: dict, run_ids: list[str
     data = []
     for i, r in enumerate(_runs(conn, experiment["id"], run_ids), 1):
         res = r.get("result") or {}
-        if res.get("value") is None:
-            continue
+        if not isinstance(res.get("value"), (int, float)):
+            continue  # not measured, or a qualitative result that has no place on a numeric axis
         data.append({"run": r["label"], "role": r["role"], "order": i, "value": res["value"],
                      "evidence_id": (res.get("evidence_ids") or [ev.run(r["id"])])[0], "run_id": str(r["id"])})
     refs = [d["value"] for d in data if d["role"] == "reference"]

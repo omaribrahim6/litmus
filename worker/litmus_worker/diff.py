@@ -250,6 +250,13 @@ def _result_compare(protocol: dict, cand: RunData, ctrls: list[RunData], refs: l
     cm = measure_result(cand, protocol)
     km = [measure_result(r, protocol) for r in ctrls]
     rm = [(r, measure_result(r, protocol)) for r in refs]
+    if spec.get("type") == "text":
+        # A qualitative outcome (e.g. "precipitate formed"): compared by value, never turned into a number.
+        item = _categorical_compare(spec["key"], spec["label"], None, cm, km, rm)
+        if item["status"] == NOTABLE:
+            item["headline"] = f"{cand.label}: {spec['label'].lower()} was {cm.value}, not {item['control']['display']}"
+        item["result_is_outside_normal_variation"] = item["status"] == NOTABLE
+        return item
     item = _numeric_compare(spec["key"], spec["label"], spec.get("unit"), cm, km, rm, spec.get("resolution", 0.0), dec)
     if item["status"] != MISSING:
         k = statistics.fmean(float(m.value) for m in km if m.available)

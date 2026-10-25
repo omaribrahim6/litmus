@@ -1,16 +1,19 @@
 """On-the-fly experiment setup: no lab-specific configuration.
 
-The researcher says what they are doing ("titrating vinegar with phenol red",
-"iodine clock, method B"), or says nothing. Gemini Flash looks at what was
-said and at a frame from the bench camera and proposes the experiment: steps,
-what result to watch for, which containers or reagents matter, where the
-vessel is, and the colors it expects before and after the change.
+The researcher says what they are doing ("weighing seedlings for the growth
+study", "measuring resistor voltages", "iodine clock, method B"), or says
+nothing. Gemini Flash looks at what was said and at a frame from the bench
+camera and proposes the experiment: its steps, the measurements worth
+recording and where each one can be read (an instrument display, a scale, a
+ruler, a count, or what the researcher says), which of them is the outcome,
+and which containers or materials matter.
 
-Code then builds the protocol: it validates every field, maps the expected
-colors to a measurable color channel and threshold (CIE Lab, computed here,
-not by the model), turns the vessel box into the measurement region, and adds
-the variables Litmus always tracks. If the description matches an experiment
-already on record, that experiment is reused so runs stay comparable.
+Code then builds the protocol: it validates every field, turns each
+measurement into a variable the diff engine can compare across runs, and adds
+what Litmus always tracks. Only if the outcome is a visible color change does
+it map the expected colors to a color channel and threshold (CIE Lab, computed
+here, not by the model). If the description matches an experiment already on
+record, that experiment is reused so runs stay comparable.
 """
 
 from __future__ import annotations
@@ -56,13 +59,29 @@ class ReagentOut(BaseModel):
     expected: str | None = Field(default=None, description="the choice the protocol calls for, if any")
 
 
+class MeasurementOut(BaseModel):
+    key: str = Field(description="snake_case name including the unit if any, e.g. 'mass_g', 'voltage_v', 'colony_count', 'precipitate'")
+    label: str = Field(description="human label, e.g. 'Seedling mass'")
+    unit: str | None = Field(default=None, description="unit symbol, e.g. 'g', 'V', 'mL', 'cm'; null for counts and text")
+    type: Literal["number", "text"] = Field(description="number for anything numeric (including counts); text for categories or descriptions")
+    read_from: Literal["camera", "speech", "either"] = Field(description="where it can be captured: read off something visible, said aloud, or both")
+    look_for: str = Field(description="what to read it from, e.g. 'digital scale display', 'graduation on the cylinder', 'researcher says it'")
+    role: Literal["outcome", "condition", "observation"] = Field(
+        description="outcome = what the run is measuring; condition = a setting that could explain differences; observation = anything else noted")
+    agg: Literal["last", "first", "mean", "max", "min", "sum", "count"] = Field(
+        default="last", description="how to summarize several readings in one run into one value")
+
+
 class SetupOut(BaseModel):
     use_existing: str | None = Field(default=None, description="slug of an existing experiment if this is clearly the same experiment")
     name: str = Field(description="short experiment name, e.g. 'Vinegar titration with phenol red'")
     description: str
-    result: Literal["amount_until_change", "time_until_change", "none"] = Field(
-        description="what the outcome of a run is: total amount added until the visible change, time until the change, or nothing measurable")
-    result_label: str | None = Field(default=None, description="e.g. 'Base added at color change' or 'Time to color change'")
+    measurements: list[MeasurementOut] = Field(default_factory=list, description="what is worth recording in every run of this experiment")
+    result: Literal["measurement", "amount_until_change", "time_until_change", "none"] = Field(
+        description="the outcome of a run: one of the measurements, the total amount added until a visible color change, "
+                    "the time until a visible color change, or nothing single and numeric")
+    result_measurement: str | None = Field(default=None, description="for result=measurement: the key of the outcome measurement")
+    result_label: str | None = Field(default=None, description="e.g. 'Final mass', 'Base added at color change'")
     result_unit: str | None = None
     result_quantity: str | None = Field(default=None, description="for amount_until_change: the quantity_name being added")
     change_description: str | None = Field(default=None, description="the visible change, e.g. 'yellow to pink'")
@@ -70,20 +89,30 @@ class SetupOut(BaseModel):
     color_after_hex: str | None = Field(default=None, description="expected liquid color after the change, as #rrggbb")
     vessel_box: list[int] | None = Field(default=None, description="[ymin, xmin, ymax, xmax] of the liquid in the main vessel, 0-1000, if visible")
     thermometer_visible: bool = False
+    mixing_matters: bool = Field(default=False, description="true if stirring, swirling or shaking is part of the procedure")
     steps: list[StepOut]
     reagents: list[ReagentOut] = Field(default_factory=list)
 
 
-PROMPT = """You are setting up an automatic lab recorder at a bench. Nothing is configured in advance.
+PROMPT = """You are setting up an automatic lab recorder at a bench. Nothing is configured in advance, and the lab can be anything:
+chemistry, biology, physics, electronics, materials, plant science, food science, an engineering test.
 From what the researcher said (may be empty) and the bench camera frame (may be missing), propose the experiment.
 
 - If what they described clearly matches one of the existing experiments, set use_existing to its slug and still fill the other fields.
-- Steps: the protocol as it will actually be done, in order, short and imperative. Mark the step that is repeated until a change (if any) and the step during which the visible change is expected.
-- Result: if they add something until a visible change (titration), result=amount_until_change with the quantity being added; if they wait for a change (clock reactions), result=time_until_change; otherwise none.
-- Expected colors before and after the change, as hex, from chemistry knowledge (e.g. phenol red: yellow #e8c33a to pink-red #d6336c).
-- Reagents: only containers or materials whose identity matters and that the camera could tell apart (e.g. which water jug, which bottle). Give recognizable choices.
-- vessel_box: where the liquid being watched is in the frame.
-If nothing was said and the frame is unclear, propose a generic 'Bench observation' with one step 'Observe the sample' and result=none.
+- Steps: the protocol as it will actually be done, in order, short and imperative.
+- Measurements: everything worth recording so runs can be compared later. Instrument readings (scale, meter, thermometer,
+  multimeter, pH meter, timer, spectrophotometer), amounts used, lengths, counts, and qualitative observations (color, clarity,
+  precipitate, growth, failure mode). For each, where it can be read: off something the camera can see, from what the researcher
+  says, or either. Mark what the run is ultimately measuring as role=outcome, and settings that could explain differences between
+  runs as role=condition. Prefer 3 to 8 measurements.
+- Result: normally result=measurement with the key of the main outcome measurement. Only use amount_until_change (adding something
+  until a visible color change, e.g. titration) or time_until_change (waiting for a visible color change, e.g. clock reactions) when
+  the outcome really is a color change; then give the expected colors before and after as hex from domain knowledge
+  (e.g. phenol red: yellow #e8c33a to pink-red #d6336c) and the vessel_box of the liquid. If there is no single outcome, result=none.
+- Reagents: only containers or materials whose identity matters and that the camera could tell apart (e.g. which bottle, which
+  sample tray). Give recognizable choices.
+If nothing was said and the frame is unclear, propose a generic 'Bench session' with one step 'Work at the bench', an observation
+measurement 'notes' (text, either), and result=none.
 Existing experiments: {existing}
 What the researcher said: {said}"""
 
@@ -132,6 +161,33 @@ def roi_from_box(box: list[int] | None) -> dict:
     return {"x": round(cx - w / 2, 4), "y": round(cy - h / 2, 4), "w": round(w, 4), "h": round(h, 4)}
 
 
+_AGGS = {"last", "first", "mean", "max", "min", "sum", "count"}
+
+
+def measurement_spec(key: str, label: str | None, unit: str | None, type_: str | None = "number", read_from: str | None = "either",
+                     look_for: str | None = None, role: str | None = "observation", agg: str | None = "last") -> dict:
+    """A validated measurement definition, used at setup and when Gemini records something new mid-run."""
+    k = _snake(key, "measurement")
+    return {"key": k, "label": (label or k.replace("_", " ").capitalize()).strip()[:48],
+            "unit": (unit or "").strip()[:12] or None, "type": "number" if type_ == "number" else "text",
+            "read_from": read_from if read_from in ("camera", "speech", "either") else "either",
+            "look_for": (look_for or "").strip()[:120] or None,
+            "role": role if role in ("outcome", "condition", "observation") else "observation",
+            "agg": agg if agg in _AGGS else "last"}
+
+
+def measurement_variable(m: dict) -> dict:
+    """The diff-engine variable for a measurement: numbers are compared against normal variation, text by value."""
+    var = {"key": m["key"], "label": m["label"], "unit": m["unit"], "role": "outcome" if m["role"] == "outcome" else "condition",
+           "source": {"measurement": m["key"], "agg": m["agg"] if m["type"] == "number" else "last"},
+           "aliases": list(dict.fromkeys([m["key"].replace("_", " "), m["label"].lower()]))}
+    if m["type"] == "number":
+        var.update(type="numeric", resolution=0.0, decimals=2)
+    else:
+        var.update(type="categorical", expected=None)
+    return var
+
+
 def build_protocol(out: SetupOut) -> dict:
     """Validated protocol from Gemini's proposal. Unknown or unsafe fields are dropped, never trusted."""
     steps, used = [], set()
@@ -158,8 +214,23 @@ def build_protocol(out: SetupOut) -> dict:
         target["arm_flip"] = True
 
     quantities = {st["quantity"]["name"]: st for st in steps if st.get("quantity")}
+    measurements: list[dict] = []
+    for mo in out.measurements[:12]:
+        spec = measurement_spec(mo.key, mo.label, mo.unit, mo.type, mo.read_from, mo.look_for, mo.role, mo.agg)
+        if spec["key"] not in {x["key"] for x in measurements} and spec["key"] not in quantities:
+            measurements.append(spec)
+    keys = {m["key"] for m in measurements}
+
     flip = flip_rule(out.color_before_hex, out.color_after_hex)
-    result_kind = out.result if flip or out.result == "none" else "none"
+    result_kind = out.result
+    if result_kind in ("amount_until_change", "time_until_change") and not flip:
+        result_kind = "measurement"  # no expected colors means nothing visible to detect: fall back to a recorded outcome
+    rm = _snake(out.result_measurement or "", "")
+    if result_kind == "measurement" and rm not in keys:
+        rm = next((m["key"] for m in measurements if m["role"] == "outcome" and m["type"] == "number"), None) \
+            or next((m["key"] for m in measurements if m["role"] == "outcome"), None)
+        if rm is None:
+            result_kind = "none"
     rq = _snake(out.result_quantity or "", "")
     if result_kind == "amount_until_change" and rq not in quantities:
         rq = next((n for n, st in quantities.items() if st.get("repeat")), None) or next(iter(quantities), None)
@@ -171,6 +242,11 @@ def build_protocol(out: SetupOut) -> dict:
         result.update(key=f"{rq}_at_change", quantity=rq, unit=quantities[rq]["quantity"]["unit"] or result["unit"])
     elif result_kind == "time_until_change":
         result.update(key="time_to_change_s", unit="s", label=out.result_label or "Time to color change")
+    elif result_kind == "measurement":
+        m = next(x for x in measurements if x["key"] == rm)
+        m["role"] = "outcome"
+        result.update(key=rm, measurement=rm, label=(out.result_label or m["label"]).strip()[:60], unit=m["unit"],
+                      decimals=2, type=m["type"])
 
     variables = []
     for r in out.reagents[:5]:
@@ -190,23 +266,28 @@ def build_protocol(out: SetupOut) -> dict:
         variables.append({"key": name, "label": st["title"][:40], "type": "numeric", "unit": st["quantity"]["unit"],
                           "source": {"quantity": name, "agg": "sum"}, "resolution": 0.0,
                           "aliases": [name.replace("_", " ")]})
-    # Always tracked, whatever the experiment.
-    variables += [
-        {"key": "mix_active_s", "label": "Mixing time", "type": "numeric", "unit": "s", "source": {"mix": "active_s"},
-         "resolution": 1, "aliases": ["stir", "mix", "shak", "swirl", "agitat"]},
-        {"key": "temp_c", "label": "Temperature", "type": "numeric", "unit": "°C", "source": {"sensor": "temp_c", "agg": "mean"},
-         "resolution": 0.3, "aliases": ["temp", "heat", "warm", "cold", "hot"]},
-        {"key": "start_color", "label": "Starting color", "type": "numeric", "unit": flip["metric"].replace("lab_", "") + "*" if flip else "a*",
-         "source": {"sensor": flip["metric"] if flip else "lab_a", "agg": "first"}, "resolution": 2, "aliases": ["color", "colour"]},
-        {"key": "step_order", "label": "Steps performed", "type": "sequence", "source": {"steps": True}, "aliases": ["skip", "order", "step"]},
-    ]
-    if result_kind != "none":
+    # The outcome measurement is the result; every other measurement is a variable runs are compared on.
+    variables += [measurement_variable(m) for m in measurements if m["key"] != result.get("measurement")]
+    # Tracked whenever it applies: mixing only when the procedure involves it, starting color only for a color change.
+    if out.mixing_matters or flip:
+        variables.append({"key": "mix_active_s", "label": "Mixing time", "type": "numeric", "unit": "s", "source": {"mix": "active_s"},
+                          "resolution": 1, "aliases": ["stir", "mix", "shak", "swirl", "agitat"]})
+    if not any(m["unit"] in ("°C", "C", "degC") for m in measurements):
+        variables.append({"key": "temp_c", "label": "Temperature", "type": "numeric", "unit": "°C",
+                          "source": {"sensor": "temp_c", "agg": "mean"}, "resolution": 0.3,
+                          "aliases": ["temp", "heat", "warm", "cold", "hot"]})
+    if flip:
+        variables.append({"key": "start_color", "label": "Starting color", "type": "numeric", "unit": flip["metric"].replace("lab_", "") + "*",
+                          "source": {"sensor": flip["metric"], "agg": "first"}, "resolution": 2, "aliases": ["color", "colour"]})
+    variables.append({"key": "step_order", "label": "Steps performed", "type": "sequence", "source": {"steps": True},
+                      "aliases": ["skip", "order", "step"]})
+    if result_kind in ("amount_until_change", "time_until_change"):
         variables.append({"key": "time_to_flip_s", "label": "Time to change", "type": "numeric", "unit": "s",
                           "source": {"derived": "time_to_flip"}, "role": "outcome"})
     protocol = {
         "slug": _slug(out.name), "name": out.name.strip()[:80], "description": out.description.strip()[:400],
-        "generated": True, "change": out.change_description, "result": result, "roi": roi_from_box(out.vessel_box),
-        "steps": steps, "variables": variables, "mix": {"source": "camera"},
+        "generated": True, "change": out.change_description if flip else None, "result": result, "roi": roi_from_box(out.vessel_box),
+        "steps": steps, "measurements": measurements, "variables": variables, "mix": {"source": "camera"},
     }
     if flip:
         protocol["flip"] = flip

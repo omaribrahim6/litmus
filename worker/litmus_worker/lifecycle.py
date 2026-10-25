@@ -103,10 +103,15 @@ def finalize(conn: psycopg.Connection, run_id: uuid.UUID, ended_at: datetime | N
               "value": m.value if m.available else None, "available": m.available,
               "provenance": m.provenance, "evidence_ids": m.evidence_ids, "note": m.note}
 
+    recorded = rd.events_of("measurement")
+    result["recorded"] = len(recorded)
     if not rd.events_of("run_ended"):
+        names = list(dict.fromkeys((e.get("payload") or {}).get("label") or "" for e in recorded))
+        data_note = f" {len(recorded)} values recorded ({', '.join(n.lower() for n in names[:6] if n)})." if recorded else ""
         store.append_events(conn, run_id, [{
             "t": ended_at, "kind": "run_ended", "provenance": "measured",
-            "summary": f"Run ended. {spec['label']}: {m.display(spec.get('decimals', 1))}" if m.available else f"Run ended. {m.note}",
+            "summary": (f"Run ended. {spec['label']}: {m.display(spec.get('decimals', 1))}." if m.available
+                        else "Run ended." if spec.get("kind") == "none" else f"Run ended. {m.note}.") + data_note,
             "payload": {"result": result},
         }])
     seal(conn, run_id)
