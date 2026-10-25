@@ -58,6 +58,18 @@
   .rec { color: var(--accent); font-weight: 600; }
   @keyframes pulse { 50% { opacity: .3 } }
   .pulse { animation: pulse 1.4s infinite; }
+  .intro { background: var(--sunken); border: 1px solid var(--base); border-radius: 12px; padding: 14px 16px; }
+  .intro .q { font-size: 21px; font-weight: 600; line-height: 1.25; }
+  .intro .t { font-size: 24px; font-weight: 650; line-height: 1.2; }
+  .intro .row { display: flex; gap: 8px; margin-top: 12px; }
+  .intro .row button { flex: 1; padding: 12px; font-size: 17px; }
+  .mics { display: flex; gap: 14px; margin-top: 10px; font-size: 13px; color: var(--ink-2); }
+  .mics .bar { width: 70px; height: 8px; background: var(--rule); border-radius: 4px; overflow: hidden; display: inline-block; vertical-align: middle; margin-left: 6px; }
+  .mics .bar i { display: block; height: 100%; background: var(--ink-3); }
+  .mics .on { color: var(--ink); }
+  .mics .on .bar i { background: var(--ok); }
+  .said { font-size: 15px; color: var(--ink-2); border-left: 3px solid var(--amber); padding: 2px 0 2px 10px; line-height: 1.35; }
+  .said b { color: var(--ink); font-weight: 500; }
   .hidden { display: none !important; }
 </style>
 </head>
@@ -89,12 +101,14 @@
         <div class="labels" id="labels"></div>
       </div>
       <div class="tiles grow" id="tiles-idle"></div>
-      <button class="big" id="start">Start run</button>
+      <div class="muted" id="micline" style="font-size:14px"></div>
+      <button class="big" id="start">Start recording</button>
     </div>
 
     <!-- recording -->
     <div id="recording" class="stack hidden">
-      <div>
+      <div id="introbox" class="intro hidden"></div>
+      <div id="steparea">
         <div class="muted num" id="stepcount" style="font-size:14px"></div>
         <div class="step-title" id="steptitle"></div>
         <div class="step-detail" id="stepdetail"></div>
@@ -104,6 +118,7 @@
         <button class="big" id="add" style="margin-top:10px;background:var(--base)">+ 0.5 mL added</button>
       </div>
       <div class="tiles grow" id="tiles-rec"></div>
+      <div id="said" class="said hidden"></div>
       <div id="warns"></div>
       <div style="display:grid;grid-template-columns:1fr auto;gap:10px">
         <button class="big" id="confirm">Confirm step</button>
@@ -172,7 +187,15 @@ function render(s) {
     : `<span class="dot" style="background:var(--amber)"></span>Saved locally, ${up.pending} waiting`;
   const rec = s.state === "recording";
   $("rec").classList.toggle("hidden", !rec);
-  $("label").textContent = s.label;
+  $("label").textContent = (s.title && s.title.title) ? `${s.title.title}${s.title.researcher ? ", " + s.title.researcher : ""}` : s.label;
+  const a = s.audio || { sources: [] };
+  $("micline").textContent = a.available
+    ? `Listening on ${a.sources.map(m => m.name).join(" and ")}. You'll be asked to say who you are; anything you say about the experiment is added to the record.`
+    : "No microphone connected. The run is labeled from the buttons above.";
+  renderIntro(s);
+  const said = (s.narration || []).slice(-2);
+  $("said").classList.toggle("hidden", !said.length || s.state !== "recording");
+  $("said").innerHTML = said.map(n => `<div><b>“${n.text}”</b> <span class="num" style="font-size:12px">${n.mic}</span></div>`).join("");
   $("timer").textContent = rec ? `${Math.floor(s.elapsed_s / 60)}:${String(Math.floor(s.elapsed_s % 60)).padStart(2, "0")}` : "";
   $("idle").classList.toggle("hidden", s.state !== "idle");
   $("recording").classList.toggle("hidden", !rec && s.state !== "finishing");
@@ -210,6 +233,37 @@ function render(s) {
     $("resultlabel").textContent = r ? r.label : "Waiting for the worker";
     $("verdict").textContent = s.verdict ? s.verdict.summary : (s.role === "candidate" ? "Running the litmus test…" : "");
     $("finmsg").textContent = s.message || "Sealed in the record. Open the web app to see every commit.";
+  }
+}
+
+function micBars(s) {
+  const a = s.audio || { sources: [] };
+  return `<div class="mics">${a.sources.map(m => `<span class="${m.name === a.active ? "on" : ""}">${m.name}${m.available ? "" : " (offline)"}<span class="bar"><i style="width:${Math.round(m.level * 100)}%"></i></span></span>`).join("")}</div>`;
+}
+
+function renderIntro(s) {
+  const box = $("introbox"), it = s.intro || {};
+  const show = ["listening", "stopping", "processing", "ready", "failed", "queued"].includes(it.state);
+  box.classList.toggle("hidden", !show);
+  $("steparea").classList.toggle("hidden", ["listening", "stopping", "processing", "ready"].includes(it.state));
+  if (!show) return;
+  if (it.state === "listening" || it.state === "stopping") {
+    const left = Math.max(0, Math.ceil((it.until || 0) - Date.now() / 1000));
+    box.innerHTML = `<div class="q">Say who you are, your lab, and what you're starting.</div>
+      <div class="muted" style="margin-top:4px">For example: “I'm Dr. Chen, this is the Rivera lab, and we're running Method B.” <span class="num">${left}s</span></div>
+      ${micBars(s)}
+      <div class="row"><button class="big" style="padding:12px;font-size:18px" onclick="post('/intro/stop')">Done</button><button class="ghost" onclick="post('/intro/skip')">Skip</button></div>`;
+  } else if (it.state === "processing") {
+    box.innerHTML = `<div class="q">Gemini is listening back<span class="pulse">…</span></div><div class="muted" style="margin-top:4px">Picked the clearest mic: ${s.audio.active || "station mic"}</div>`;
+  } else if (it.state === "ready") {
+    const r = it.result || {};
+    box.innerHTML = `<div class="muted" style="font-size:13px">Heard on the ${it.mic || "station"} mic</div>
+      <div class="t">${r.title || "Untitled session"}</div>
+      <div class="muted" style="margin-top:4px;font-size:16px">${[r.researcher, r.lab, r.run_label].filter(Boolean).join(", ") || "No names heard"}</div>
+      ${r.hypothesis ? `<div style="margin-top:6px;font-size:15px">Expecting: “${r.hypothesis}”</div>` : ""}
+      <div class="row"><button class="big" style="padding:12px;font-size:18px" onclick="post('/intro/confirm')">Looks right</button><button class="ghost" onclick="post('/intro/dismiss')">Dismiss</button></div>`;
+  } else {
+    box.innerHTML = `<div class="muted">${it.error || "No introduction recorded."}</div><div class="row"><button class="ghost" onclick="post('/intro/dismiss')">OK</button></div>`;
   }
 }
 

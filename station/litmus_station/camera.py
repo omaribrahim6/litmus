@@ -44,6 +44,8 @@ class Camera:
         self._video_path: Path | None = None
         self.video_started_at: float | None = None
         self.fps = 15
+        self._stream = isinstance(source, str) and source.startswith(("http://", "https://", "rtsp://"))
+        self._replay = isinstance(source, str) and not self._stream
         if simulate is None:
             if lock and isinstance(source, int):
                 lock_exposure(source)
@@ -77,13 +79,16 @@ class Camera:
             else:
                 ok, frame = self._cap.read() if self._cap else (False, None)
                 if not ok:
-                    if isinstance(self.source, str):  # replaying a recorded file: loop it
+                    if self._replay:  # replaying a recorded file: loop it
                         self._cap.set(cv2.CAP_PROP_POS_FRAMES, 0)
                         continue
                     self.available, self.detail = False, "camera disconnected"
                     time.sleep(0.5)
+                    if self._stream and self._cap is not None:  # phone stream dropped: reconnect
+                        self._cap.release()
+                        self._cap = cv2.VideoCapture(self.source)
                     continue
-                if isinstance(self.source, str):
+                if self._replay:
                     time.sleep(period)
             with self._lock:
                 self._frame, self._frame_t = frame, time.time()

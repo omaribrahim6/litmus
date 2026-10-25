@@ -50,6 +50,23 @@ python -m litmus_station
 chromium-browser --kiosk --noerrdialogs --disable-infobars http://localhost:8080
 ```
 
+## Voice: spoken intro and narration
+
+Tap **Start recording** and say who you are, your lab and what you are starting ("I'm Dr. Chen, this is the Rivera lab, and we're running Method B"). Gemini titles the run on the touchscreen and in the web app; tap **Looks right** to confirm it. After that, anything said about the experiment ("switching to the tap jug", "it's turning pink") is transcribed and committed with the audio clip as evidence. Small talk is dropped and its audio is not kept.
+
+Every configured mic records continuously. Each utterance is cut at a pause and taken from whichever mic heard it most clearly (speech peaks over that mic's own noise floor), so a researcher near the phone is transcribed from the phone and one near the webcam from the webcam.
+
+```json
+"mics": [
+  { "name": "webcam", "device": null },
+  { "name": "phone", "url": "http://<phone-ip>:8080/audio.wav" }
+]
+```
+
+## Second camera (researcher view)
+
+A mounted phone running an IP-camera app (for example IP Webcam on Android) gives a stream URL. Set `"action_camera": "http://<phone-ip>:8080/video"`. It adds a frame to every step, addition and note, records its own video (switchable in the run view), and is what Gemini looks at to identify which jug or bottle was used. Color is always measured from the fixed bench camera.
+
 ## Without hardware
 
 ```bash

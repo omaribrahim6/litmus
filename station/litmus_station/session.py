@@ -8,10 +8,12 @@ import threading
 import time
 import uuid
 from datetime import datetime, timezone
+from pathlib import Path
 
 import requests
 from litmus_core.signals import FlipConfig, FlipDetector, MixConfig, summarize_mixing
 
+from .audio import AudioHub
 from .camera import Camera
 from .config import ROOT, StationConfig
 from .outbox import Outbox
@@ -50,6 +52,11 @@ class Session:
         self.sensors = build_sensors(cfg.hardware, self.bench)
         self.camera = Camera(cfg.hardware.get("camera", 0), self.protocol["roi"], simulate=self.bench,
                              lock=cfg.hardware.get("lock_exposure", True))
+        # Optional second camera (e.g. a mounted phone streaming MJPEG/RTSP) with a better view
+        # of the researcher's hands: a frame at every event, its own video, never used for color.
+        action_src = cfg.hardware.get("action_camera")
+        self.action_camera = Camera(action_src, self.protocol["roi"], lock=False) if action_src not in (None, "") else None
+        self.audio = AudioHub(cfg.hardware.get("mics"))
         self.outbox = Outbox(cfg.data_dir / "outbox.sqlite", cfg.worker_url, cfg.worker_token)
         self.lock = threading.RLock()
         self.latest: dict[str, float | None] = {}
@@ -81,6 +88,9 @@ class Session:
         self.verdict: dict | None = None
         self.message: str | None = None
         self.titrate_started: float | None = None
+        self.intro: dict = {"state": None}
+        self.title: dict = {}
+        self.narration: list[dict] = []
 
     def snapshot(self) -> dict:
         with self.lock:
@@ -101,11 +111,16 @@ class Session:
                 "no_flip_warning": bool(self.titrate_started and not self.flip and time.time() - self.titrate_started > 600),
                 "upload": {"online": self.outbox.online, "pending": self.outbox.pending(), "error": self.outbox.last_error},
                 "simulated": self.bench is not None,
+                "intro": {k: v for k, v in self.intro.items() if k != "since"},
+                "audio": {"available": self.audio.available, "active": self.audio.active, "sources": self.audio.status()},
+                "narration": self.narration[-4:],
+                "title": self.title,
+                "action_camera": {"available": self.action_camera.available, "detail": self.action_camera.detail} if self.action_camera else None,
             }
 
     # ------------------------------------------------------------ actions
 
-    def start(self, label: str, role: str, assumed_cause: str | None = None) -> dict:
+    def start(self, label: str, role: str, assumed_cause: str | None = None, intro: bool = True) -> dict:
         with self.lock:
             if self.state == "recording":
                 return self.snapshot()
@@ -115,6 +130,8 @@ class Session:
             self.run_id = str(uuid.uuid4())
             self.label, self.role, self.started, self.state = label or "Untitled run", role, time.time(), "recording"
             available = [n for n, s in self.sensors.items() if s.available] + (["camera"] if self.camera.available else [])
+            if self.action_camera and self.action_camera.available:
+                available.append("action_camera")
             missing = [n if n != "temp_c" else "temp_probe" for n, s in self.sensors.items() if not s.available]
             meta = {"available_sensors": available, "missing_sensors": missing, "video_started_at": iso(self.started)}
             if self.bench:
@@ -122,9 +139,121 @@ class Session:
             self.outbox.put("/api/runs", {"id": self.run_id, "experiment": self.cfg.experiment, "label": self.label, "role": role,
                                           "station_id": self.cfg.station_id, "started_at": iso(self.started),
                                           "assumed_cause": assumed_cause or None, "metadata": meta})
-            self.camera.start_recording(self.cfg.data_dir / "runs" / self.run_id / "video.mp4", self.cfg.video_fps)
+            run_dir = self.cfg.data_dir / "runs" / self.run_id
+            self.camera.start_recording(run_dir / "video.mp4", self.cfg.video_fps)
             self.camera.video_started_at = self.started
+            if self.action_camera and self.action_camera.available:
+                self.action_camera.start_recording(run_dir / "video_action.mp4", self.cfg.video_fps)
+                self.action_camera.video_started_at = self.started
             self._keyframe("start")
+            if self.audio.available:
+                if intro:
+                    max_s = float(self.cfg.hardware.get("intro_seconds", 15))
+                    self.intro = {"state": "listening", "since": self.started, "until": self.started + max_s}
+                threading.Thread(target=self._listen_loop, args=(self.run_id,), daemon=True).start()
+            return self.snapshot()
+
+    # ------------------------------------------------- spoken intro and narration
+
+    def stop_intro(self, skip: bool = False) -> dict:
+        with self.lock:
+            if self.intro.get("state") == "listening":
+                self.intro = {**self.intro, "state": "skipped" if skip else "stopping"}
+        return self.snapshot()
+
+    def _listen_loop(self, run_id: str) -> None:
+        """While recording: first the intro, then every lab-relevant utterance, from the clearest mic."""
+        seg_start = self.seg_start = self.started
+        n = 0
+        while True:
+            time.sleep(0.25)
+            now = time.time()
+            with self.lock:
+                if self.run_id != run_id or self.state != "recording":
+                    return
+                intro = self.intro.get("state")
+            if intro in ("listening", "stopping", "skipped"):
+                done = intro != "listening" or now >= self.intro.get("until", now) or \
+                    (now - seg_start >= 5 and self.audio.segment_ready(seg_start, now))
+                if not done:
+                    continue
+                utt = self.audio.best(seg_start, now) if intro != "skipped" else None
+                seg_start = self.seg_start = now
+                with self.lock:
+                    if intro == "skipped":
+                        self.intro = {"state": "skipped"}
+                        continue
+                    self.intro = {"state": "processing"} if utt else {"state": "failed", "error": "Didn't hear an introduction"}
+                if utt:
+                    threading.Thread(target=self._send_intro, args=(run_id, utt), daemon=True).start()
+                continue
+            if self.audio.segment_ready(seg_start, now):
+                utt = self.audio.best(seg_start, now)
+                seg_start = self.seg_start = now
+                if utt:
+                    n += 1
+                    threading.Thread(target=self._send_narration, args=(run_id, utt, n), daemon=True).start()
+
+    def _utterance_file(self, run_id: str, utt, name: str) -> Path:
+        return utt.write(self.cfg.data_dir / "runs" / run_id / "audio" / f"{name}.wav")
+
+    def _send_intro(self, run_id: str, utt) -> None:
+        path = self._utterance_file(run_id, utt, "intro")
+        self.outbox.flush(timeout_s=15)  # the run must exist on the worker first
+        try:
+            with open(path, "rb") as fh:
+                res = requests.post(f"{self.cfg.worker_url}/api/runs/{run_id}/intro", files={"file": ("intro.wav", fh, "audio/wav")},
+                                    headers=self.outbox.headers, timeout=60)
+            res.raise_for_status()
+            heard = res.json()
+        except requests.RequestException as exc:
+            self.outbox.put(f"/api/runs/{run_id}/intro", {}, str(path))
+            with self.lock:
+                self.intro = {"state": "queued", "error": f"Offline: the run will be titled when the worker is reachable ({exc.__class__.__name__})"}
+            return
+        with self.lock:
+            if self.run_id != run_id:
+                return
+            if not heard.get("understood"):
+                self.intro = {"state": "failed", "error": heard.get("error", "Gemini could not understand the clip")}
+                return
+            self.intro = {"state": "ready", "result": heard, "mic": utt.source}
+            self.title = {k: heard.get(k) for k in ("title", "researcher", "lab", "experiment")}
+            if heard.get("run_label"):
+                self.label = heard["run_label"]
+            if heard.get("role") and heard["role"] != "unknown":
+                self.role = heard["role"]
+
+    def _send_narration(self, run_id: str, utt, n: int) -> None:
+        path = self._utterance_file(run_id, utt, f"narration_{n:03d}")
+        meta = {"t_start": iso(utt.t0), "t_end": iso(utt.t1), "source": utt.source, "scores": utt.scores}
+        try:
+            with open(path, "rb") as fh:
+                res = requests.post(f"{self.cfg.worker_url}/api/runs/{run_id}/narration",
+                                    files={"file": (path.name, fh, "audio/wav")}, data={"meta": json.dumps(meta)},
+                                    headers=self.outbox.headers, timeout=60)
+            res.raise_for_status()
+            out = res.json()
+        except requests.RequestException:
+            self.outbox.put(f"/api/runs/{run_id}/narration", meta, str(path))
+            return
+        with self.lock:
+            for c in out.get("committed", []):
+                self.narration.append({"t_s": round(c.get("t_s", 0), 1), "text": c["text"], "mic": utt.source})
+
+    def confirm_intro(self) -> dict:
+        with self.lock:
+            if self.intro.get("state") == "ready" and self.run_id:
+                r = self.intro["result"]
+                self.outbox.put(f"/api/runs/{self.run_id}/intro/confirm",
+                                {"researcher": r.get("researcher"), "lab": r.get("lab"), "title": r.get("title"), "run_label": r.get("run_label")})
+                self.intro = {"state": "confirmed"}
+            return self.snapshot()
+
+    def dismiss_intro(self) -> dict:
+        with self.lock:
+            if self.intro.get("state") in ("ready", "failed", "queued"):
+                self.intro = {"state": "dismissed"}
             return self.snapshot()
 
     def confirm_step(self) -> dict:
@@ -194,9 +323,20 @@ class Session:
             self._flush_now()
             self.state = "finishing"
             run_id, started, role = self.run_id, self.started, self.role
+        # Whatever was said since the last pause is committed before the run ends.
+        if self.audio.available and run_id:
+            tail = self.audio.best(getattr(self, "seg_start", time.time() - 25), time.time())
+            if tail:
+                path = self._utterance_file(run_id, tail, "narration_final")
+                self.outbox.put(f"/api/runs/{run_id}/narration",
+                                {"t_start": iso(tail.t0), "t_end": iso(tail.t1), "source": tail.source, "scores": tail.scores}, str(path))
         video = self.camera.stop_recording()
         if video:
             self.outbox.put(f"/api/runs/{run_id}/video", {"started_at": iso(started)}, str(video))
+        if self.action_camera:
+            action_video = self.action_camera.stop_recording()
+            if action_video:
+                self.outbox.put(f"/api/runs/{run_id}/video", {"started_at": iso(started), "camera": "action"}, str(action_video))
         self.outbox.put(f"/api/runs/{run_id}/end", {"ended_at": iso(time.time())})
         threading.Thread(target=self._after_end, args=(run_id, role), daemon=True).start()
         return self.snapshot()
@@ -231,13 +371,19 @@ class Session:
 
     def _event(self, kind: str, summary: str, provenance: str, payload: dict | None = None,
                frame_ids: list[str] | None = None, t: float | None = None) -> None:
+        frame_ids = list(frame_ids or [])
+        if kind in ("step_confirmed", "quantity_added", "note", "flip_detected"):
+            action = self._keyframe("action", camera=self.action_camera)
+            if action:
+                frame_ids.append(action)
         self.events.append({"id": str(uuid.uuid4()), "t": iso(t or time.time()), "kind": kind, "summary": summary,
-                            "provenance": provenance, "payload": payload, "frame_ids": frame_ids or []})
+                            "provenance": provenance, "payload": payload, "frame_ids": frame_ids})
 
-    def _keyframe(self, reason: str) -> str | None:
-        if self.run_id is None:
+    def _keyframe(self, reason: str, camera: Camera | None = None) -> str | None:
+        cam = camera if camera is not None else (None if reason == "action" else self.camera)
+        if self.run_id is None or cam is None:
             return None
-        shot = self.camera.jpeg()
+        shot = cam.jpeg()
         if shot is None:
             return None
         data, t = shot
@@ -245,9 +391,11 @@ class Session:
         path = self.cfg.data_dir / "runs" / self.run_id / "frames" / f"{fid}.jpg"
         path.parent.mkdir(parents=True, exist_ok=True)
         path.write_bytes(data)
+        metrics = self.color if cam is self.camera else None
         self.outbox.put(f"/api/runs/{self.run_id}/frames",
-                        {"id": fid, "t": iso(t), "reason": reason, "roi": self.protocol["roi"], "metrics": self.color}, str(path))
-        self.last_keyframe = time.time()
+                        {"id": fid, "t": iso(t), "reason": reason, "roi": self.protocol["roi"] if metrics else None, "metrics": metrics}, str(path))
+        if cam is self.camera:
+            self.last_keyframe = time.time()
         return fid
 
     def _mix_count_live(self) -> int:

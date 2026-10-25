@@ -49,8 +49,8 @@ class Outbox:
             meta = json.loads(body) if body else {}
             with open(file, "rb") as fh:
                 field = "file"
-                mime = "video/mp4" if file.endswith(".mp4") else "image/jpeg"
-                data = {"meta": json.dumps(meta)} if path.endswith("/frames") else {k: str(v) for k, v in meta.items()}
+                mime = {".mp4": "video/mp4", ".wav": "audio/wav"}.get(Path(file).suffix.lower(), "image/jpeg")
+                data = {"meta": json.dumps(meta)} if path.endswith(("/frames", "/narration")) else {k: str(v) for k, v in meta.items()}
                 res = requests.post(url, files={field: (Path(file).name, fh, mime)}, data=data, headers=self.headers, timeout=120)
         else:
             res = requests.post(url, data=body, headers={**self.headers, "content-type": "application/json"}, timeout=15)

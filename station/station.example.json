@@ -8,5 +8,10 @@
   "dht22_pin": null,
   "confirm_button_pin": 17,
   "camera": 0,
-  "lock_exposure": true
+  "lock_exposure": true,
+  "action_camera": null,
+  "mics": [
+    { "name": "webcam", "device": null }
+  ],
+  "intro_seconds": 15
 }

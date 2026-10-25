@@ -18,6 +18,7 @@ class StartIn(BaseModel):
     label: str = ""
     role: str = "reference"
     assumed_cause: str | None = None
+    intro: bool = True
 
 
 class AddIn(BaseModel):
@@ -56,7 +57,23 @@ def create_app(session: Session) -> FastAPI:
 
     @app.post("/start")
     def start(body: StartIn) -> dict:
-        return session.start(body.label, body.role, body.assumed_cause)
+        return session.start(body.label, body.role, body.assumed_cause, intro=body.intro)
+
+    @app.post("/intro/stop")
+    def intro_stop() -> dict:
+        return session.stop_intro()
+
+    @app.post("/intro/skip")
+    def intro_skip() -> dict:
+        return session.stop_intro(skip=True)
+
+    @app.post("/intro/confirm")
+    def intro_confirm() -> dict:
+        return session.confirm_intro()
+
+    @app.post("/intro/dismiss")
+    def intro_dismiss() -> dict:
+        return session.dismiss_intro()
 
     @app.post("/confirm")
     def confirm() -> dict:
