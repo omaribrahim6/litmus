@@ -6,6 +6,7 @@ Entirely deterministic. The verdict model only ever sees this output.
 
 from __future__ import annotations
 
+import math
 import re
 import statistics
 from typing import Iterable
@@ -30,9 +31,14 @@ def _fmt(x: float | None, decimals: int = 2) -> str | None:
 
 
 def variation_band(values: list[float], resolution: float) -> tuple[float, str]:
-    """Normal run-to-run variation: 2 SD with 3+ references, the range with 2, else the resolution."""
+    """How far two runs of the same protocol normally differ.
+
+    With 3+ references: 2 SD of the difference between two runs, which is
+    sqrt(2) times the single-run SD (the candidate and the control each vary).
+    With 2 references: their range. Otherwise: the measurement resolution.
+    """
     if len(values) >= 3:
-        band, method = 2 * statistics.stdev(values), "2sd"
+        band, method = 2 * math.sqrt(2) * statistics.stdev(values), "2sd"
     elif len(values) == 2:
         band, method = abs(values[0] - values[1]), "range"
     else:
@@ -81,7 +87,7 @@ def _numeric_compare(key, label, unit, cand: Measure, ctrls: list[Measure], refs
 
     dec = decimals
     band_text = {
-        "2sd": f"±{_fmt(band, dec)} (2 SD across {len(values)} reference runs)",
+        "2sd": f"±{_fmt(band, dec)} (how far two runs normally differ, from {len(values)} reference runs)",
         "range": f"±{_fmt(band, dec)} (range of 2 reference runs)",
         "resolution": f"±{_fmt(band, dec)} (measurement resolution; fewer than 2 reference runs)" if len(values) < 2 else f"±{_fmt(band, dec)} (measurement resolution)",
     }[method]
