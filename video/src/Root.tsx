@@ -2,6 +2,7 @@ import React from "react";
 import { Composition } from "remotion";
 import { FPS, H, W } from "./theme";
 import { Main, MAIN_FRAMES } from "./Main";
+import { Edit, EDIT_FRAMES } from "./Edit";
 import { Pipeline, PIPELINE_FRAMES } from "./Pipeline";
 import { Brand, EndCard, Opening } from "./Cards";
 import { ColorChange, CommitLog, Detection, NameTags, Sealed, SessionTitle, SpeechCommit, TapStart } from "./Overlays";
@@ -9,6 +10,7 @@ import { ColorChange, CommitLog, Detection, NameTags, Sealed, SessionTitle, Spee
 /** Every piece renders on its own too (overlays with transparency), for editing in CapCut if preferred. */
 export const Root: React.FC = () => (
   <>
+    <Composition id="Edit" component={Edit} durationInFrames={EDIT_FRAMES} fps={FPS} width={W} height={H} />
     <Composition id="Main" component={Main} durationInFrames={MAIN_FRAMES} fps={FPS} width={W} height={H} defaultProps={{ music: undefined as string | undefined, names: "Omar Ibrahim · Lena · Mark" }} />
     <Composition id="Pipeline" component={Pipeline} durationInFrames={PIPELINE_FRAMES} fps={FPS} width={W} height={H} />
     <Composition id="Opening" component={Opening} durationInFrames={180} fps={FPS} width={W} height={H} />
