@@ -180,7 +180,7 @@ function tiles(el, s) {
 
 function render(s) {
   S = s;
-  $("exp").textContent = s.experiment + (s.simulated ? " (simulated bench)" : "");
+  $("exp").textContent = ((s.setup && s.setup.name) || s.experiment) + (s.simulated ? " (simulated bench)" : "");
   const up = s.upload;
   $("upload").innerHTML = up.online || up.pending === 0
     ? `<span class="dot" style="background:var(--ok)"></span>${up.pending ? up.pending + " uploading" : "Synced"}`
@@ -213,9 +213,12 @@ function render(s) {
     $("stepcount").textContent = st ? `Step ${s.step_index + 1} of ${s.steps.length}` : "All steps confirmed";
     $("steptitle").textContent = s.state === "finishing" ? "Uploading the record" : st ? st.title : "Protocol complete";
     $("stepdetail").textContent = st ? (st.detail || "") : "End the run when you are done.";
-    const titrating = st && st.repeat;
+    const titrating = st && st.repeat && st.quantity;
+  const q = (st && st.quantity) || {};
+  window.addAmount = q.step || 1;
+  $("add").textContent = `+ ${q.step || 1} ${q.unit || ""} added`;
     $("titrate").classList.toggle("hidden", !titrating);
-    $("total").textContent = `${fmt(s.totals.base_ml || 0)} mL`;
+    $("total").textContent = `${fmt((s.totals || {})[q.name] || 0)} ${q.unit || ""}`;
     $("confirm").textContent = titrating ? "Done titrating" : "Confirm step";
     $("confirm").disabled = !st || s.state === "finishing";
     const w = [];
@@ -282,7 +285,7 @@ document.querySelectorAll("#roles button").forEach(b => b.onclick = () => {
 });
 $("start").onclick = () => post("/start", { label, role });
 $("confirm").onclick = () => S && S.current_step && S.current_step.repeat ? post("/next") : post("/confirm");
-$("add").onclick = () => post("/add", { value: 0.5 });
+$("add").onclick = () => post("/add", { value: window.addAmount || 1 });
 $("end").onclick = () => { if (confirm("End this run and seal the record?")) post("/end"); };
 $("new").onclick = () => post("/reset");
 
