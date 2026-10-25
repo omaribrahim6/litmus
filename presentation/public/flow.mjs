@@ -1,0 +1,23 @@
+export const VERSION = 'hot-water-v1';
+export const STEPS = [
+  { title: 'Set the question', action: 'Begin paired run', cue: 'Introduce the reference and the hot-water sample.', headline: 'Same recipe. Different result.', detail: 'Can the lab record help explain why two starch–iodine samples look different?', event: 'Paired comparison prepared', note: 'Reference A: room-temperature preparation. Sample B: hot-water preparation. These conditions are presenter-reported.' },
+  { title: 'Record the baseline', action: 'Mark iodine added', cue: 'Show both samples, then add iodine. Advance only when the iodine is in.', headline: 'Start with the same baseline.', detail: 'Keep both containers in view. Describe what you changed before adding iodine.', event: 'Baseline marked by presenter', note: 'The demonstration compares two sample conditions. No temperature or air-quality sensor measurement has been supplied.' },
+  { title: 'Follow the reaction', action: 'Reveal color difference', cue: 'Let the audience watch the physical reaction. Advance when you are ready to discuss the difference.', headline: 'Watch the reaction unfold.', detail: 'Iodine addition is marked. The presentation waits here for the physical experiment.', event: 'Iodine addition marked by presenter', note: 'The preview is either a live browser camera or a clearly labeled illustration. The prepared comparison is not computed from the camera.' },
+  { title: 'Notice the difference', action: 'Compare runs', cue: 'Point to the darker reference and the paler hot-water sample. If the real outcome differs, describe that honestly.', headline: 'A visible difference. A recorded context.', detail: 'In this rehearsed scenario, the reference develops a darker blue color and the hot-water sample stays paler.', event: 'Expected divergence revealed', note: 'Illustrative outcome for the presentation, not a measured result. The real cups may behave differently.' },
+  { title: 'Explain with evidence', action: 'Show next experiment', cue: 'Explain that heat is a hypothesis supported by the reported preparation, not a proved cause.', headline: 'A possible explanation, with its limits.', detail: 'Heating can weaken the blue starch–iodine color. The reported preparation makes heat a plausible explanation; the picture alone cannot establish it.', event: 'Prepared comparison opened', note: 'No probe reading is available. Differences in concentration, mixing and lighting have not been ruled out.' },
+  { title: 'Choose the next experiment', action: 'Download demo record', cue: 'Close on the next scientific decision: cool the sample and repeat under matched conditions.', headline: 'Turn a surprising result into a better experiment.', detail: 'Cool the heated sample and compare again. Match reagent amounts, mixing, containers and lighting; measure liquid temperature if a suitable probe is available.', event: 'Follow-up experiment proposed', note: 'A repeat with controlled conditions can test the heat hypothesis. This demo does not claim experimental validation or model accuracy.' },
+];
+export function initialState() { return { version: VERSION, step: 0, events: [] }; }
+export function advance(state, at = new Date().toISOString()) {
+  if (state.step >= STEPS.length - 1) return state;
+  const next = state.step + 1;
+  return { version: VERSION, step: next, events: [...state.events, { id: `demo-step-${next}`, step: next, at, kind: 'presenter_marker', text: STEPS[next].event }].filter((v, i, a) => a.findIndex(e => e.id === v.id) === i) };
+}
+export function back(state) { return { ...state, step: Math.max(0, state.step - 1), events: state.events.filter(e => e.step < state.step) }; }
+export function restore(value) {
+  if (!value || value.version !== VERSION || !Number.isInteger(value.step) || value.step < 0 || value.step >= STEPS.length || !Array.isArray(value.events)) return initialState();
+  return { version: VERSION, step: value.step, events: value.events.filter(e => Number.isInteger(e.step) && e.step > 0 && e.step <= value.step && typeof e.at === 'string').map(e => ({ id: `demo-step-${e.step}`, step: e.step, at: e.at, kind: 'presenter_marker', text: STEPS[e.step].event })) };
+}
+export function record(state) {
+  return { demo: true, scenario: 'starch-iodine / reported hot-water preparation', ...restore(state), provenance: { narrative: 'prepared rehearsal content', chart: 'illustrative, not measured', camera: 'optional browser preview; not used to infer results', temperature: 'not measured', air_quality: 'not measured', gemini: 'no live model request made' }, hypothesis: 'Heat may weaken the starch–iodine color; causation is unverified.', next_experiment: STEPS[5].detail };
+}

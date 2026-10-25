@@ -1,0 +1,4 @@
+import { createServer } from 'node:http';
+import { readFile } from 'node:fs/promises';
+const files = new Map([['/', ['index.html','text/html']], ['/index.html',['index.html','text/html']], ['/app.mjs',['app.mjs','text/javascript']], ['/flow.mjs',['flow.mjs','text/javascript']], ['/style.css',['style.css','text/css']], ['/sw.js',['sw.js','text/javascript']]]);
+createServer(async (req,res) => { const file = files.get(new URL(req.url, 'http://localhost').pathname); if (!file) { res.writeHead(404).end('Not found'); return; } try { const content = await readFile(new URL(`public/${file[0]}`, import.meta.url)); res.writeHead(200, { 'Content-Type': file[1], 'Cache-Control': 'no-store' }).end(content); } catch { res.writeHead(500).end('Unable to read asset'); } }).listen(Number(process.env.PORT || 18350), '127.0.0.1', () => console.log('Demo: http://127.0.0.1:' + (process.env.PORT || 18350)));
