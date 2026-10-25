@@ -22,6 +22,7 @@ class FlipConfig:
     baseline_s: float = 3.0   # window after arming used as the baseline
     smooth: int = 5           # trailing median window, in samples
     circular: bool = False    # hue in degrees wraps at 360
+    onset_fraction: float = 0.3  # the reported flip time is where the change first passed this share of delta
 
     @classmethod
     def from_dict(cls, d: dict | None) -> "FlipConfig":
@@ -69,13 +70,14 @@ class FlipDetector:
         values = list(values)
         return _circular_median(values) if self.cfg.circular else statistics.median(values)
 
-    def _exceeds(self, value: float) -> bool:
+    def _exceeds(self, value: float, fraction: float = 1.0) -> bool:
         d = _diff(value, self.baseline, self.cfg.circular)
+        threshold = self.cfg.delta * fraction
         if self.cfg.direction == "rise":
-            return d >= self.cfg.delta
+            return d >= threshold
         if self.cfg.direction == "fall":
-            return -d >= self.cfg.delta
-        return abs(d) >= self.cfg.delta
+            return -d >= threshold
+        return abs(d) >= threshold
 
     def feed(self, t: float, value: float) -> Flip | None:
         """Add one sample. Returns the Flip the first time it is confirmed."""
@@ -100,11 +102,12 @@ class FlipDetector:
         if t - self._streak_start < self.cfg.hold_s:
             return None
 
-        # Confirmed. The trailing median lags, so walk back through raw samples
-        # to the first one of the unbroken run that already exceeded threshold.
+        # Confirmed. The trailing median lags and the threshold is crossed partway
+        # through the change, so walk back through raw samples to where the
+        # change began (the first of the unbroken run past onset_fraction of delta).
         onset = t
         for rt, rv in reversed(self._raw):
-            if not self._exceeds(rv):
+            if not self._exceeds(rv, self.cfg.onset_fraction):
                 break
             onset = rt
         self.flip = Flip(
