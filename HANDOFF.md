@@ -48,6 +48,8 @@ Deployed:
 - Worker: https://litmus-worker.23-95-188-69.sslip.io on the VPS (`wsl ssh altair@23.95.188.69`, key auth). Docker container `litmus_worker` on network `webnet` behind nginx-proxy + acme-companion. Redeploy after pushing: `wsl -e ssh altair@23.95.188.69 "bash ~/litmus/deploy/vps-up.sh"`. Server-only files: `~/litmus/deploy/.env.vps`, `~/litmus/deploy/secrets/vertex.json`, media in `~/litmus/data/media`. Sudo needs a password: never type it; ask Omar.
 - Station token: `WORKER_TOKEN` in the root `.env` and the VPS `.env.vps`; put the same value in `station/.env` on the Pi with `WORKER_URL=https://litmus-worker.23-95-188-69.sslip.io`.
 
+Pi station (set up Oct 25, 1 AM): `ssh aditya@172.20.10.12` from WSL (key auth; Mark's iPhone hotspot; Proton VPN must be off or allow LAN). Code in `~/litmus` (copied by rsync; repo is private), venv `~/litmus/station/.venv` (Python 3.13, Debian trixie). Station runs as user service `litmus-station` (`systemctl --user status litmus-station`), kiosk autostarts via `~/.config/autostart/litmus-kiosk.desktop` (`~/litmus/station/kiosk.sh`). Verified: Brio 101 camera + mic, display 1024x600, uploads "Synced". Not yet: no ADC on I2C (light/rotary/air show "missing"), touchscreen USB not plugged in, camera not aimed at a tube, `roi` not calibrated. Sudo needs a password; don't type it.
+
 Next:
 1. Real runs: Lina records 5+ reference runs, Method A control, Method B with tap water, at the station. Then `seed --reset-synthetic` (removes synthetic runs only), `prepare_demo` (a few Gemini calls), commit `web/demo-data` + `web/public/media`, redeploy.
 2. Fill `demo/validation/manual_flips.csv` (`run_id,manual_flip_s`) from video review of 10 runs, then `validate`.
