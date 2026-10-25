@@ -52,3 +52,6 @@ station/station.json
 deploy/secrets/
 deploy/.env.vps
 data/
+
+# Demo tamper stash
+demo/cache/tamper.json

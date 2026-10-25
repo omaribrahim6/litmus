@@ -1,0 +1,242 @@
+{
+ "experiment": "Vinegar titration with phenol red",
+ "runs": 7,
+ "synthetic_runs": 7,
+ "flip_timing": {
+  "n": 7,
+  "within_1s": 7,
+  "mean_abs_error_s": 0.36,
+  "max_abs_error_s": 0.65,
+  "sources": [
+   "synthetic ground truth"
+  ],
+  "rows": [
+   {
+    "run": "Reference 1",
+    "run_id": "45b7a006-19c9-4ca7-bb12-b152d8a72983",
+    "detected_s": 110.5,
+    "truth_s": 109.94,
+    "error_s": 0.56,
+    "source": "synthetic ground truth"
+   },
+   {
+    "run": "Reference 2",
+    "run_id": "47fed71c-1d1e-41c7-9133-23f28bcd9833",
+    "detected_s": 123.5,
+    "truth_s": 123.38,
+    "error_s": 0.12,
+    "source": "synthetic ground truth"
+   },
+   {
+    "run": "Reference 3",
+    "run_id": "190f5fa4-c3fc-4abd-a717-02072c60edf1",
+    "detected_s": 109.0,
+    "truth_s": 108.72,
+    "error_s": 0.28,
+    "source": "synthetic ground truth"
+   },
+   {
+    "run": "Reference 4",
+    "run_id": "4ee0490a-c7bd-4451-bc86-52553596c8dc",
+    "detected_s": 101.5,
+    "truth_s": 100.85,
+    "error_s": 0.65,
+    "source": "synthetic ground truth"
+   },
+   {
+    "run": "Reference 5",
+    "run_id": "8e3521a4-87d8-494a-b862-979f59bcae56",
+    "detected_s": 110.5,
+    "truth_s": 110.22,
+    "error_s": 0.28,
+    "source": "synthetic ground truth"
+   },
+   {
+    "run": "Method A",
+    "run_id": "25949a39-66ab-4bd2-80f0-331cfee7bcbd",
+    "detected_s": 112.0,
+    "truth_s": 111.67,
+    "error_s": 0.33,
+    "source": "synthetic ground truth"
+   },
+   {
+    "run": "Method B",
+    "run_id": "14e8634f-e2a3-4bb7-82f4-df0e4b24d797",
+    "detected_s": 76.0,
+    "truth_s": 75.71,
+    "error_s": 0.29,
+    "source": "synthetic ground truth"
+   }
+  ]
+ },
+ "probe_agreement": {
+  "n": 7,
+  "agree": 7,
+  "mean_abs_delta_s": 0.29,
+  "tolerance_s": 1.0,
+  "rows": [
+   {
+    "run": "Reference 1",
+    "delta_s": 0.0,
+    "agree": true
+   },
+   {
+    "run": "Reference 2",
+    "delta_s": 0.5,
+    "agree": true
+   },
+   {
+    "run": "Reference 3",
+    "delta_s": 0.5,
+    "agree": true
+   },
+   {
+    "run": "Reference 4",
+    "delta_s": 0.0,
+    "agree": true
+   },
+   {
+    "run": "Reference 5",
+    "delta_s": 0.5,
+    "agree": true
+   },
+   {
+    "run": "Method A",
+    "delta_s": 0.0,
+    "agree": true
+   },
+   {
+    "run": "Method B",
+    "delta_s": 0.5,
+    "agree": true
+   }
+  ]
+ },
+ "hidden_faults": {
+  "n": 1,
+  "found": 1,
+  "rows": [
+   {
+    "run": "Method B",
+    "planted": "water_source",
+    "top_difference": "water_source",
+    "found": true
+   }
+  ]
+ },
+ "false_alarms": {
+  "pairs": 10,
+  "pairs_with_alarm": 2,
+  "total_alarms": 2,
+  "comparisons": 110,
+  "rows": [
+   {
+    "a": "Reference 1",
+    "b": "Reference 2",
+    "false_alarms": [],
+    "comparisons": 11
+   },
+   {
+    "a": "Reference 1",
+    "b": "Reference 3",
+    "false_alarms": [],
+    "comparisons": 11
+   },
+   {
+    "a": "Reference 1",
+    "b": "Reference 4",
+    "false_alarms": [],
+    "comparisons": 11
+   },
+   {
+    "a": "Reference 1",
+    "b": "Reference 5",
+    "false_alarms": [],
+    "comparisons": 11
+   },
+   {
+    "a": "Reference 2",
+    "b": "Reference 3",
+    "false_alarms": [],
+    "comparisons": 11
+   },
+   {
+    "a": "Reference 2",
+    "b": "Reference 4",
+    "false_alarms": [
+     "temp_c"
+    ],
+    "comparisons": 11
+   },
+   {
+    "a": "Reference 2",
+    "b": "Reference 5",
+    "false_alarms": [],
+    "comparisons": 11
+   },
+   {
+    "a": "Reference 3",
+    "b": "Reference 4",
+    "false_alarms": [
+     "air_quality"
+    ],
+    "comparisons": 11
+   },
+   {
+    "a": "Reference 3",
+    "b": "Reference 5",
+    "false_alarms": [],
+    "comparisons": 11
+   },
+   {
+    "a": "Reference 4",
+    "b": "Reference 5",
+    "false_alarms": [],
+    "comparisons": 11
+   }
+  ]
+ },
+ "traceability": {
+  "claims": 59,
+  "traced": 59,
+  "flagged_gaps": 0,
+  "percent": 100.0
+ },
+ "results": [
+  {
+   "run": "Reference 1",
+   "role": "reference",
+   "value": 4.0
+  },
+  {
+   "run": "Reference 2",
+   "role": "reference",
+   "value": 4.5
+  },
+  {
+   "run": "Reference 3",
+   "role": "reference",
+   "value": 4.0
+  },
+  {
+   "run": "Reference 4",
+   "role": "reference",
+   "value": 3.5
+  },
+  {
+   "run": "Reference 5",
+   "role": "reference",
+   "value": 4.0
+  },
+  {
+   "run": "Method A",
+   "role": "control",
+   "value": 4.0
+  },
+  {
+   "run": "Method B",
+   "role": "candidate",
+   "value": 2.5
+  }
+ ]
+}

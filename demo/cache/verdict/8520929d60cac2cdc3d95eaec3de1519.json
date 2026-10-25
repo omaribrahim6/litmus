@@ -1,0 +1,1848 @@
+{
+ "candidate": {
+  "role": "candidate",
+  "label": "Method B",
+  "run_id": "14e8634f-e2a3-4bb7-82f4-df0e4b24d797"
+ },
+ "controls": [
+  {
+   "role": "control",
+   "label": "Method A",
+   "run_id": "25949a39-66ab-4bd2-80f0-331cfee7bcbd"
+  }
+ ],
+ "headline": "Method B used 38% less base than Method A, but water source also differed (tap vs distilled) and the assumed cause (mixing time per addition) is contradicted.",
+ "station_summary": "Assumed cause (mixing time per addition): not supported. Notable difference: water source. Temperature: within normal variation.",
+ "result": {
+  "key": "base_added_ml",
+  "band": 1.0000000000000002,
+  "type": "numeric",
+  "unit": "mL",
+  "delta": -1.5,
+  "label": "Base added at color flip",
+  "ratio": 1.5,
+  "status": "notable",
+  "control": {
+   "note": null,
+   "unit": "mL",
+   "value": 4.0,
+   "display": "4.0 mL",
+   "available": true,
+   "provenance": "reported",
+   "evidence_ids": [
+    "evt:e8fbac95-fdbd-4ce4-893a-2f208da14e3e",
+    "frm:c70a62a3-2a72-42c2-9cbe-963e2c9966f1",
+    "evt:c2e28b82-6242-4a80-a30f-b18e32b9f041",
+    "evt:722a0f34-0f07-4f85-8e7c-a542ecd59475",
+    "evt:7e1c74d7-2f05-4130-9ebd-ef1f5eb24bae",
+    "evt:28da04d8-f817-43c9-ada0-e34ca7d60d65",
+    "evt:1bb74a5d-e07b-4000-84ea-52ab79a0bd36",
+    "evt:60729ff0-0b7d-4763-af09-56314e771bec",
+    "evt:fc0573d2-1492-4e20-b211-316123e92a0a",
+    "evt:37a47ce3-f5fa-4316-8d07-bc78595bec98"
+   ]
+  },
+  "headline": "Method B used 38% less base than Method A",
+  "candidate": {
+   "note": null,
+   "unit": "mL",
+   "value": 2.5,
+   "display": "2.5 mL",
+   "available": true,
+   "provenance": "reported",
+   "evidence_ids": [
+    "evt:024d868d-afd0-4a8f-a6ca-e0384403b6da",
+    "frm:b2ebaf8f-be2e-4eb9-9bdf-a4e95af1f57c",
+    "evt:de2f27b3-b44b-4fec-9859-583ce53d236c",
+    "evt:4c8f5056-9303-4d92-a874-f607775eb067",
+    "evt:f2ed5a7e-7b96-4a8b-bad5-45ef0795a3bf",
+    "evt:b82ed2e8-ba95-44da-be0c-ac2cea8a78bd",
+    "evt:49b8dd3b-15b8-4dbd-baab-6310ea81a2e5"
+   ]
+  },
+  "reference": {
+   "n": 5,
+   "sd": 0.3535533905932738,
+   "max": 4.5,
+   "min": 3.5,
+   "mean": 4.0,
+   "values": [
+    {
+     "label": "Reference 1",
+     "value": 4.0,
+     "run_id": "45b7a006-19c9-4ca7-bb12-b152d8a72983",
+     "evidence_ids": [
+      "evt:e62091a3-08e7-467a-bd34-e6f8e8187826",
+      "frm:52dc289d-75e8-4b9e-abdf-772594a18bf2",
+      "evt:e1e563c2-9f82-4fa2-a162-fd612a8516af",
+      "evt:de9c2089-eebc-4960-8e47-6c0cdd7e3f46",
+      "evt:f3b69972-1507-43c2-be65-f9a8e8a7640e",
+      "evt:5d3b0857-804a-4fa8-bb0b-58f0b69b7bd4",
+      "evt:ad7db3b2-202b-4164-a16b-5092ea47f934",
+      "evt:9299a1d9-364f-44ce-a19d-d4fd7ef402e9",
+      "evt:37c0ffa3-9136-4478-863a-29a2c501c78c",
+      "evt:f141272d-eeed-4b9b-aa08-43677368e2ee"
+     ]
+    },
+    {
+     "label": "Reference 2",
+     "value": 4.5,
+     "run_id": "47fed71c-1d1e-41c7-9133-23f28bcd9833",
+     "evidence_ids": [
+      "evt:6f1db9fb-411e-462d-b497-e535e1a46999",
+      "frm:202953a9-817c-4274-819e-5e7df44f9bbf",
+      "evt:2c3b7c58-b5ce-4b2a-b049-90773f050d43",
+      "evt:5022eb83-3b9c-4ea8-9d48-114f0a14f051",
+      "evt:320f13d6-5359-428f-9849-3fa1c37ec2f7",
+      "evt:a37df00c-8258-415c-810c-274f2a9b6692",
+      "evt:9788e710-6201-4810-93b9-a9ad22f7ce53",
+      "evt:553434b1-27d9-4cf9-9e83-ce4be24b5870",
+      "evt:eb20c657-c621-4622-8c96-efb23d3a21f9",
+      "evt:14894cc2-a7e5-4fcb-b1f8-e9a21cae92c2",
+      "evt:78e6f587-c0b8-4133-8d01-df345efcb4b2"
+     ]
+    },
+    {
+     "label": "Reference 3",
+     "value": 4.0,
+     "run_id": "190f5fa4-c3fc-4abd-a717-02072c60edf1",
+     "evidence_ids": [
+      "evt:8e5f0a93-4919-4970-8ce4-6a383553e2a0",
+      "frm:1c790992-0c85-4e0e-929e-0366f029c1ba",
+      "evt:c6dbd627-86ee-409e-80ea-039f368c8ffb",
+      "evt:cd13abf6-44e1-4ab9-966c-87968af753c6",
+      "evt:f806ec7e-4478-4f9b-a789-4ccb4cec2b4e",
+      "evt:2d6cf77b-9dc3-4daf-8f13-952768e60e2d",
+      "evt:a623b6e4-ff45-4560-8e5d-b802bcc6a0e7",
+      "evt:0446cb55-5d1c-4160-b3ae-b36a8a07c2cc",
+      "evt:8cbdf2e3-f709-4404-997b-c2ed260f3549",
+      "evt:b4d23296-8347-4173-8d05-6e63beecd5c2"
+     ]
+    },
+    {
+     "label": "Reference 4",
+     "value": 3.5,
+     "run_id": "4ee0490a-c7bd-4451-bc86-52553596c8dc",
+     "evidence_ids": [
+      "evt:75d13ab0-0ba8-4450-9865-37d4b6548b76",
+      "frm:7baf451a-d93f-4b41-b3fe-1e2467ab8e01",
+      "evt:d852ac73-51cc-4aee-b9af-7b40a3791f86",
+      "evt:eff92ece-e456-4a49-a4de-32adbb54fc60",
+      "evt:9c2cbb98-547f-48e9-930d-b2ac39869641",
+      "evt:42a84a94-9113-43bb-bc97-882370df9d60",
+      "evt:2a5ff7e2-5153-4c1f-9123-c3f3278535d3",
+      "evt:eeccca0a-2f0c-46ac-a1c5-b6d838602bcd",
+      "evt:f0f3cdf7-c8aa-414e-a7a7-b9b3ca8d60a8"
+     ]
+    },
+    {
+     "label": "Reference 5",
+     "value": 4.0,
+     "run_id": "8e3521a4-87d8-494a-b862-979f59bcae56",
+     "evidence_ids": [
+      "evt:f20eb2dd-c8ed-40b8-b6a7-c31e4e996c1b",
+      "frm:45d06eba-f9f0-48c6-98c4-929d9b62c844",
+      "evt:315c38e2-e749-494c-9a06-6213d50844eb",
+      "evt:3df4f99b-140c-4468-a97b-2aaa11e0065e",
+      "evt:3d0968da-1aa1-488d-8428-0ccdf067fe73",
+      "evt:1bf23a07-60e5-4dac-845e-fded606ff5d4",
+      "evt:cd2a7642-68d8-4123-8cfc-1dba75bb459b",
+      "evt:b6456fd7-8f0d-46e1-b02a-926b75ee02b0",
+      "evt:1dbf1cc3-a065-44f4-bbe8-fdf4f4646493",
+      "evt:8b7f8bdd-a422-49b8-ac65-30ad3da42f46"
+     ]
+    }
+   ]
+  },
+  "band_method": "2sd",
+  "explanation": "Base added at color flip: 2.5 mL vs 4 mL in the control, a difference of -1.5 mL. Normal variation is ±1 (how far two runs normally differ, from 5 reference runs), so this is outside normal variation.",
+  "percent_change": -37.5,
+  "result_is_outside_normal_variation": true
+ },
+ "assumed_cause": {
+  "text": "Method B neutralized with less base because I stirred longer after each addition.",
+  "label": "contradicted",
+  "label_text": "not supported",
+  "statement": "The assumed cause of longer stirring is contradicted because mixing time per addition was 4.8 s in Method B vs 4.4 s in Method A (difference of 0.4 s), which is within normal variation of ±0.7.",
+  "variable_keys": [
+   "mix_active_s"
+  ],
+  "evidence_ids": [
+   "run:14e8634f-e2a3-4bb7-82f4-df0e4b24d797",
+   "ser:14e8634f-e2a3-4bb7-82f4-df0e4b24d797:mix_angle:1792895760000:1792895844600",
+   "evt:de2f27b3-b44b-4fec-9859-583ce53d236c",
+   "evt:4c8f5056-9303-4d92-a874-f607775eb067",
+   "ser:25949a39-66ab-4bd2-80f0-331cfee7bcbd:mix_angle:1792894800000:1792894920600",
+   "evt:c2e28b82-6242-4a80-a30f-b18e32b9f041",
+   "evt:722a0f34-0f07-4f85-8e7c-a542ecd59475"
+  ],
+  "confounds": [
+   "water_source"
+  ]
+ },
+ "claims": [
+  {
+   "text": "Base added at color flip was 2.5 mL in Method B vs 4 mL in Method A, a difference of -1.5 mL, which is outside normal variation of ±1.",
+   "label": "observed",
+   "evidence_ids": [
+    "evt:024d868d-afd0-4a8f-a6ca-e0384403b6da",
+    "frm:b2ebaf8f-be2e-4eb9-9bdf-a4e95af1f57c",
+    "evt:de2f27b3-b44b-4fec-9859-583ce53d236c",
+    "evt:4c8f5056-9303-4d92-a874-f607775eb067",
+    "evt:e8fbac95-fdbd-4ce4-893a-2f208da14e3e",
+    "frm:c70a62a3-2a72-42c2-9cbe-963e2c9966f1",
+    "evt:c2e28b82-6242-4a80-a30f-b18e32b9f041",
+    "evt:722a0f34-0f07-4f85-8e7c-a542ecd59475"
+   ]
+  },
+  {
+   "text": "Mixing time per addition was 4.8 s in Method B vs 4.4 s in Method A, a difference of 0.4 s, which is within normal variation of ±0.7.",
+   "label": "contradicted",
+   "evidence_ids": [
+    "run:14e8634f-e2a3-4bb7-82f4-df0e4b24d797",
+    "ser:14e8634f-e2a3-4bb7-82f4-df0e4b24d797:mix_angle:1792895760000:1792895844600",
+    "evt:de2f27b3-b44b-4fec-9859-583ce53d236c",
+    "evt:4c8f5056-9303-4d92-a874-f607775eb067",
+    "evt:f2ed5a7e-7b96-4a8b-bad5-45ef0795a3bf",
+    "ser:25949a39-66ab-4bd2-80f0-331cfee7bcbd:mix_angle:1792894800000:1792894920600",
+    "evt:c2e28b82-6242-4a80-a30f-b18e32b9f041",
+    "evt:722a0f34-0f07-4f85-8e7c-a542ecd59475",
+    "evt:7e1c74d7-2f05-4130-9ebd-ef1f5eb24bae"
+   ],
+   "variable_key": "mix_active_s"
+  },
+  {
+   "text": "Water source was tap in Method B vs distilled in Method A, while the protocol specifies distilled and none of the 5 reference runs used tap.",
+   "label": "possible_explanation",
+   "evidence_ids": [
+    "evt:395b7fbd-c61e-4931-8e4b-7bf65db1995e",
+    "frm:4c486f9d-ce2f-4f83-a672-1f2d25bc6666",
+    "evt:6f6e0d89-f925-4923-939a-c4b806ce67c0",
+    "frm:c3722d62-a47c-48cc-b254-11b894165e53"
+   ],
+   "variable_key": "water_source",
+   "suggested_check": "Repeat Method B with distilled water to match the control."
+  },
+  {
+   "text": "Time to flip was 54.0 s in Method B vs 90.0 s in Method A (-36 s, normal variation ±22.4), and number of base additions was 5.0 additions vs 8.0 additions (-3 additions, normal variation ±2); both are consequences of the result.",
+   "label": "observed",
+   "evidence_ids": [
+    "evt:024d868d-afd0-4a8f-a6ca-e0384403b6da",
+    "evt:de2f27b3-b44b-4fec-9859-583ce53d236c",
+    "evt:4c8f5056-9303-4d92-a874-f607775eb067",
+    "evt:f2ed5a7e-7b96-4a8b-bad5-45ef0795a3bf",
+    "evt:b82ed2e8-ba95-44da-be0c-ac2cea8a78bd",
+    "evt:e8fbac95-fdbd-4ce4-893a-2f208da14e3e",
+    "evt:c2e28b82-6242-4a80-a30f-b18e32b9f041",
+    "evt:722a0f34-0f07-4f85-8e7c-a542ecd59475",
+    "evt:7e1c74d7-2f05-4130-9ebd-ef1f5eb24bae",
+    "evt:28da04d8-f817-43c9-ada0-e34ca7d60d65"
+   ],
+   "variable_key": "time_to_flip_s"
+  },
+  {
+   "text": "Liquid temperature (22.6 °C vs 21.6 °C), starting color a* (4.3 a* vs 3.9 a*), and air quality (122.1 raw vs 120.3 raw) were within normal variation; vinegar bottle (Bottle A), protocol steps performed, mixing per addition (3.0 inversions), sample volume (10.0 mL), dilution volume (20.0 mL), and indicator drops (3.0 drops) were identical.",
+   "label": "observed",
+   "evidence_ids": [
+    "ser:14e8634f-e2a3-4bb7-82f4-df0e4b24d797:mix_angle:1792895760000:1792895844600",
+    "ser:25949a39-66ab-4bd2-80f0-331cfee7bcbd:mix_angle:1792894800000:1792894920600",
+    "ser:14e8634f-e2a3-4bb7-82f4-df0e4b24d797:temp_c:1792895765000:1792895765000",
+    "ser:25949a39-66ab-4bd2-80f0-331cfee7bcbd:temp_c:1792894805000:1792894805000",
+    "ser:14e8634f-e2a3-4bb7-82f4-df0e4b24d797:lab_a:1792895760000:1792895763000",
+    "ser:25949a39-66ab-4bd2-80f0-331cfee7bcbd:lab_a:1792894800000:1792894803000",
+    "ser:14e8634f-e2a3-4bb7-82f4-df0e4b24d797:air_quality:1792895760000:1792895844500",
+    "ser:25949a39-66ab-4bd2-80f0-331cfee7bcbd:air_quality:1792894800000:1792894920500",
+    "evt:8dfb8f04-941f-4010-92cc-537df7d526fe",
+    "frm:3277a670-ff18-4950-aa3c-06c00a7ddc77",
+    "evt:632a60a2-c1a1-4429-baaa-74710caa557a",
+    "frm:84e7cb62-d7e0-470f-9833-7d736828a8e2",
+    "evt:98c528eb-a62e-4740-80ad-a34b2b0eb0ca",
+    "evt:942251de-ae11-4e23-8fe7-b794d678a0a6",
+    "evt:1c3826f6-7d68-4ee1-90ca-25adff3bce7d",
+    "evt:165ac1c9-9280-49a3-b3d1-2dc3e97b1607",
+    "evt:97ce7c9e-6205-4427-af7e-8094f139ea04",
+    "evt:9305ec52-8325-4d9b-913e-5d7d1837a3b8",
+    "evt:515eabe6-a3c8-474b-a85c-f2693f87bbb0",
+    "evt:681e6fb1-0719-4cfb-80a2-853106c69019",
+    "evt:3bf6e0e1-6de0-45d7-94ff-be30173b8fb3",
+    "evt:6fd9989f-64d3-4a4d-923e-9d0d75c117dc",
+    "evt:49395483-5b69-4980-be0f-917c33154206",
+    "evt:718ee13a-50f2-4c20-8edf-cf55868f6298",
+    "evt:cae5f52e-7eb8-40a7-857f-3a0431de61e6",
+    "evt:9a5ac75d-53c1-437d-9e60-7a7a7b6f3f87"
+   ]
+  },
+  {
+   "text": "Base solution batch was not measured, so it cannot be ruled out as a factor.",
+   "label": "missing_evidence",
+   "evidence_ids": [
+    "run:14e8634f-e2a3-4bb7-82f4-df0e4b24d797",
+    "run:25949a39-66ab-4bd2-80f0-331cfee7bcbd"
+   ],
+   "variable_key": "base_solution"
+  },
+  {
+   "text": "Air humidity was not measured, so it cannot be ruled out as a factor.",
+   "label": "missing_evidence",
+   "evidence_ids": [
+    "run:14e8634f-e2a3-4bb7-82f4-df0e4b24d797",
+    "run:25949a39-66ab-4bd2-80f0-331cfee7bcbd"
+   ],
+   "variable_key": "humidity"
+  }
+ ],
+ "rejected_claims": [
+  {
+   "text": "Base solution batch was not measured in either Method B or Method A.",
+   "label": "missing_evidence",
+   "reason": "cites no existing evidence"
+  },
+  {
+   "text": "Air humidity was not measured in either Method B or Method A.",
+   "label": "missing_evidence",
+   "reason": "cites no existing evidence"
+  }
+ ],
+ "follow_up": {
+  "check": "Matched rerun: repeat Method B exactly, but with water source set to distilled (as in the control). Optional swap run: repeat the control with water source set to tap.",
+  "variable_key": "water_source",
+  "outcomes": [
+   {
+    "if": "the base added at color flip returns to the control level (within normal variation)",
+    "means": "explained_by_confound",
+    "text": "The difference is explained by water source, not by mixing time per addition."
+   },
+   {
+    "if": "the base added at color flip stays as far from the control as before",
+    "means": "supported",
+    "text": "Water source is not the cause; the method difference is reproducible."
+   },
+   {
+    "if": "the result lands in between",
+    "means": "unresolved",
+    "text": "Both may contribute. Run the swap run to separate them."
+   }
+  ]
+ },
+ "notable": [
+  "water_source",
+  "time_to_flip_s",
+  "addition_count"
+ ],
+ "missing_evidence": [
+  "base_solution",
+  "humidity"
+ ],
+ "model": "gemini-4-argon",
+ "validator": {
+  "accepted": 7,
+  "rejected": 2,
+  "relabeled": 0
+ },
+ "diff": {
+  "result": {
+   "key": "base_added_ml",
+   "band": 1.0000000000000002,
+   "type": "numeric",
+   "unit": "mL",
+   "delta": -1.5,
+   "label": "Base added at color flip",
+   "ratio": 1.5,
+   "status": "notable",
+   "control": {
+    "note": null,
+    "unit": "mL",
+    "value": 4.0,
+    "display": "4.0 mL",
+    "available": true,
+    "provenance": "reported",
+    "evidence_ids": [
+     "evt:e8fbac95-fdbd-4ce4-893a-2f208da14e3e",
+     "frm:c70a62a3-2a72-42c2-9cbe-963e2c9966f1",
+     "evt:c2e28b82-6242-4a80-a30f-b18e32b9f041",
+     "evt:722a0f34-0f07-4f85-8e7c-a542ecd59475",
+     "evt:7e1c74d7-2f05-4130-9ebd-ef1f5eb24bae",
+     "evt:28da04d8-f817-43c9-ada0-e34ca7d60d65",
+     "evt:1bb74a5d-e07b-4000-84ea-52ab79a0bd36",
+     "evt:60729ff0-0b7d-4763-af09-56314e771bec",
+     "evt:fc0573d2-1492-4e20-b211-316123e92a0a",
+     "evt:37a47ce3-f5fa-4316-8d07-bc78595bec98"
+    ]
+   },
+   "headline": "Method B used 38% less base than Method A",
+   "candidate": {
+    "note": null,
+    "unit": "mL",
+    "value": 2.5,
+    "display": "2.5 mL",
+    "available": true,
+    "provenance": "reported",
+    "evidence_ids": [
+     "evt:024d868d-afd0-4a8f-a6ca-e0384403b6da",
+     "frm:b2ebaf8f-be2e-4eb9-9bdf-a4e95af1f57c",
+     "evt:de2f27b3-b44b-4fec-9859-583ce53d236c",
+     "evt:4c8f5056-9303-4d92-a874-f607775eb067",
+     "evt:f2ed5a7e-7b96-4a8b-bad5-45ef0795a3bf",
+     "evt:b82ed2e8-ba95-44da-be0c-ac2cea8a78bd",
+     "evt:49b8dd3b-15b8-4dbd-baab-6310ea81a2e5"
+    ]
+   },
+   "reference": {
+    "n": 5,
+    "sd": 0.3535533905932738,
+    "max": 4.5,
+    "min": 3.5,
+    "mean": 4.0,
+    "values": [
+     {
+      "label": "Reference 1",
+      "value": 4.0,
+      "run_id": "45b7a006-19c9-4ca7-bb12-b152d8a72983",
+      "evidence_ids": [
+       "evt:e62091a3-08e7-467a-bd34-e6f8e8187826",
+       "frm:52dc289d-75e8-4b9e-abdf-772594a18bf2",
+       "evt:e1e563c2-9f82-4fa2-a162-fd612a8516af",
+       "evt:de9c2089-eebc-4960-8e47-6c0cdd7e3f46",
+       "evt:f3b69972-1507-43c2-be65-f9a8e8a7640e",
+       "evt:5d3b0857-804a-4fa8-bb0b-58f0b69b7bd4",
+       "evt:ad7db3b2-202b-4164-a16b-5092ea47f934",
+       "evt:9299a1d9-364f-44ce-a19d-d4fd7ef402e9",
+       "evt:37c0ffa3-9136-4478-863a-29a2c501c78c",
+       "evt:f141272d-eeed-4b9b-aa08-43677368e2ee"
+      ]
+     },
+     {
+      "label": "Reference 2",
+      "value": 4.5,
+      "run_id": "47fed71c-1d1e-41c7-9133-23f28bcd9833",
+      "evidence_ids": [
+       "evt:6f1db9fb-411e-462d-b497-e535e1a46999",
+       "frm:202953a9-817c-4274-819e-5e7df44f9bbf",
+       "evt:2c3b7c58-b5ce-4b2a-b049-90773f050d43",
+       "evt:5022eb83-3b9c-4ea8-9d48-114f0a14f051",
+       "evt:320f13d6-5359-428f-9849-3fa1c37ec2f7",
+       "evt:a37df00c-8258-415c-810c-274f2a9b6692",
+       "evt:9788e710-6201-4810-93b9-a9ad22f7ce53",
+       "evt:553434b1-27d9-4cf9-9e83-ce4be24b5870",
+       "evt:eb20c657-c621-4622-8c96-efb23d3a21f9",
+       "evt:14894cc2-a7e5-4fcb-b1f8-e9a21cae92c2",
+       "evt:78e6f587-c0b8-4133-8d01-df345efcb4b2"
+      ]
+     },
+     {
+      "label": "Reference 3",
+      "value": 4.0,
+      "run_id": "190f5fa4-c3fc-4abd-a717-02072c60edf1",
+      "evidence_ids": [
+       "evt:8e5f0a93-4919-4970-8ce4-6a383553e2a0",
+       "frm:1c790992-0c85-4e0e-929e-0366f029c1ba",
+       "evt:c6dbd627-86ee-409e-80ea-039f368c8ffb",
+       "evt:cd13abf6-44e1-4ab9-966c-87968af753c6",
+       "evt:f806ec7e-4478-4f9b-a789-4ccb4cec2b4e",
+       "evt:2d6cf77b-9dc3-4daf-8f13-952768e60e2d",
+       "evt:a623b6e4-ff45-4560-8e5d-b802bcc6a0e7",
+       "evt:0446cb55-5d1c-4160-b3ae-b36a8a07c2cc",
+       "evt:8cbdf2e3-f709-4404-997b-c2ed260f3549",
+       "evt:b4d23296-8347-4173-8d05-6e63beecd5c2"
+      ]
+     },
+     {
+      "label": "Reference 4",
+      "value": 3.5,
+      "run_id": "4ee0490a-c7bd-4451-bc86-52553596c8dc",
+      "evidence_ids": [
+       "evt:75d13ab0-0ba8-4450-9865-37d4b6548b76",
+       "frm:7baf451a-d93f-4b41-b3fe-1e2467ab8e01",
+       "evt:d852ac73-51cc-4aee-b9af-7b40a3791f86",
+       "evt:eff92ece-e456-4a49-a4de-32adbb54fc60",
+       "evt:9c2cbb98-547f-48e9-930d-b2ac39869641",
+       "evt:42a84a94-9113-43bb-bc97-882370df9d60",
+       "evt:2a5ff7e2-5153-4c1f-9123-c3f3278535d3",
+       "evt:eeccca0a-2f0c-46ac-a1c5-b6d838602bcd",
+       "evt:f0f3cdf7-c8aa-414e-a7a7-b9b3ca8d60a8"
+      ]
+     },
+     {
+      "label": "Reference 5",
+      "value": 4.0,
+      "run_id": "8e3521a4-87d8-494a-b862-979f59bcae56",
+      "evidence_ids": [
+       "evt:f20eb2dd-c8ed-40b8-b6a7-c31e4e996c1b",
+       "frm:45d06eba-f9f0-48c6-98c4-929d9b62c844",
+       "evt:315c38e2-e749-494c-9a06-6213d50844eb",
+       "evt:3df4f99b-140c-4468-a97b-2aaa11e0065e",
+       "evt:3d0968da-1aa1-488d-8428-0ccdf067fe73",
+       "evt:1bf23a07-60e5-4dac-845e-fded606ff5d4",
+       "evt:cd2a7642-68d8-4123-8cfc-1dba75bb459b",
+       "evt:b6456fd7-8f0d-46e1-b02a-926b75ee02b0",
+       "evt:1dbf1cc3-a065-44f4-bbe8-fdf4f4646493",
+       "evt:8b7f8bdd-a422-49b8-ac65-30ad3da42f46"
+      ]
+     }
+    ]
+   },
+   "band_method": "2sd",
+   "explanation": "Base added at color flip: 2.5 mL vs 4 mL in the control, a difference of -1.5 mL. Normal variation is ±1 (how far two runs normally differ, from 5 reference runs), so this is outside normal variation.",
+   "percent_change": -37.5,
+   "result_is_outside_normal_variation": true
+  },
+  "notable": [
+   "water_source",
+   "time_to_flip_s",
+   "addition_count"
+  ],
+  "controls": [
+   {
+    "role": "control",
+    "label": "Method A",
+    "run_id": "25949a39-66ab-4bd2-80f0-331cfee7bcbd"
+   }
+  ],
+  "candidate": {
+   "role": "candidate",
+   "label": "Method B",
+   "run_id": "14e8634f-e2a3-4bb7-82f4-df0e4b24d797"
+  },
+  "follow_up": {
+   "check": "Matched rerun: repeat Method B exactly, but with water source set to distilled (as in the control). Optional swap run: repeat the control with water source set to tap.",
+   "variable_key": "water_source",
+   "outcomes": [
+    {
+     "if": "the base added at color flip returns to the control level (within normal variation)",
+     "means": "explained_by_confound",
+     "text": "The difference is explained by water source, not by mixing time per addition."
+    },
+    {
+     "if": "the base added at color flip stays as far from the control as before",
+     "means": "supported",
+     "text": "Water source is not the cause; the method difference is reproducible."
+    },
+    {
+     "if": "the result lands in between",
+     "means": "unresolved",
+     "text": "Both may contribute. Run the swap run to separate them."
+    }
+   ]
+  },
+  "experiment": {
+   "name": "Vinegar titration with phenol red",
+   "slug": "vinegar-titration"
+  },
+  "references": [
+   {
+    "label": "Reference 1",
+    "run_id": "45b7a006-19c9-4ca7-bb12-b152d8a72983"
+   },
+   {
+    "label": "Reference 2",
+    "run_id": "47fed71c-1d1e-41c7-9133-23f28bcd9833"
+   },
+   {
+    "label": "Reference 3",
+    "run_id": "190f5fa4-c3fc-4abd-a717-02072c60edf1"
+   },
+   {
+    "label": "Reference 4",
+    "run_id": "4ee0490a-c7bd-4451-bc86-52553596c8dc"
+   },
+   {
+    "label": "Reference 5",
+    "run_id": "8e3521a4-87d8-494a-b862-979f59bcae56"
+   }
+  ],
+  "differences": [
+   {
+    "key": "water_source",
+    "rank": 1,
+    "role": "condition",
+    "type": "categorical",
+    "unit": null,
+    "label": "Water source",
+    "status": "notable",
+    "control": {
+     "note": null,
+     "unit": null,
+     "value": "distilled",
+     "display": "distilled",
+     "available": true,
+     "provenance": "inferred",
+     "evidence_ids": [
+      "evt:6f6e0d89-f925-4923-939a-c4b806ce67c0",
+      "frm:c3722d62-a47c-48cc-b254-11b894165e53"
+     ]
+    },
+    "expected": "distilled",
+    "candidate": {
+     "note": null,
+     "unit": null,
+     "value": "tap",
+     "display": "tap",
+     "available": true,
+     "provenance": "inferred",
+     "evidence_ids": [
+      "evt:395b7fbd-c61e-4931-8e4b-7bf65db1995e",
+      "frm:4c486f9d-ce2f-4f83-a672-1f2d25bc6666"
+     ]
+    },
+    "reference": {
+     "n": 5,
+     "counts": {
+      "distilled": 5
+     },
+     "values": [
+      {
+       "label": "Reference 1",
+       "value": "distilled",
+       "run_id": "45b7a006-19c9-4ca7-bb12-b152d8a72983",
+       "evidence_ids": [
+        "evt:c31d7d1c-38d9-46ab-b788-5132b3169926",
+        "frm:e32c6f10-8825-49b4-a5ad-8933367b7bc2"
+       ]
+      },
+      {
+       "label": "Reference 2",
+       "value": "distilled",
+       "run_id": "47fed71c-1d1e-41c7-9133-23f28bcd9833",
+       "evidence_ids": [
+        "evt:76ff4540-b3e7-4886-8b0c-7f77d6a0dc4c",
+        "frm:7a381db4-140c-4b81-904e-8ecca6991ffb"
+       ]
+      },
+      {
+       "label": "Reference 3",
+       "value": "distilled",
+       "run_id": "190f5fa4-c3fc-4abd-a717-02072c60edf1",
+       "evidence_ids": [
+        "evt:1b7c2c3c-8291-4523-aa6f-2e8d249973b0",
+        "frm:3089fbbe-298c-4780-b5f7-2872325580fb"
+       ]
+      },
+      {
+       "label": "Reference 4",
+       "value": "distilled",
+       "run_id": "4ee0490a-c7bd-4451-bc86-52553596c8dc",
+       "evidence_ids": [
+        "evt:2c2f5ff5-ffa4-4b67-b644-ddb2b0657511",
+        "frm:a5e922ef-388a-45ce-a9ec-2b5b330049d7"
+       ]
+      },
+      {
+       "label": "Reference 5",
+       "value": "distilled",
+       "run_id": "8e3521a4-87d8-494a-b862-979f59bcae56",
+       "evidence_ids": [
+        "evt:38abcd28-4a3f-4889-9014-a9a18efa1752",
+        "frm:822778a6-45b5-434f-95f2-281b20656784"
+       ]
+      }
+     ]
+    },
+    "explanation": "Water source: tap in the candidate vs distilled in the control. None of the 5 reference runs used tap. The protocol specifies distilled."
+   },
+   {
+    "key": "time_to_flip_s",
+    "band": 22.40535650240808,
+    "rank": 2,
+    "role": "outcome",
+    "type": "numeric",
+    "unit": "s",
+    "delta": -36.0,
+    "label": "Time to flip",
+    "ratio": 1.607,
+    "status": "notable",
+    "control": {
+     "note": null,
+     "unit": "s",
+     "value": 90.0,
+     "display": "90.0 s",
+     "available": true,
+     "provenance": "reported",
+     "evidence_ids": [
+      "evt:c2e28b82-6242-4a80-a30f-b18e32b9f041",
+      "evt:e8fbac95-fdbd-4ce4-893a-2f208da14e3e"
+     ]
+    },
+    "candidate": {
+     "note": null,
+     "unit": "s",
+     "value": 54.0,
+     "display": "54.0 s",
+     "available": true,
+     "provenance": "reported",
+     "evidence_ids": [
+      "evt:de2f27b3-b44b-4fec-9859-583ce53d236c",
+      "evt:024d868d-afd0-4a8f-a6ca-e0384403b6da"
+     ]
+    },
+    "reference": {
+     "n": 5,
+     "sd": 7.92148975887743,
+     "max": 101.5,
+     "min": 79.5,
+     "mean": 89.0,
+     "values": [
+      {
+       "label": "Reference 1",
+       "value": 88.5,
+       "run_id": "45b7a006-19c9-4ca7-bb12-b152d8a72983",
+       "evidence_ids": [
+        "evt:e1e563c2-9f82-4fa2-a162-fd612a8516af",
+        "evt:e62091a3-08e7-467a-bd34-e6f8e8187826"
+       ]
+      },
+      {
+       "label": "Reference 2",
+       "value": 101.5,
+       "run_id": "47fed71c-1d1e-41c7-9133-23f28bcd9833",
+       "evidence_ids": [
+        "evt:2c3b7c58-b5ce-4b2a-b049-90773f050d43",
+        "evt:6f1db9fb-411e-462d-b497-e535e1a46999"
+       ]
+      },
+      {
+       "label": "Reference 3",
+       "value": 87.0,
+       "run_id": "190f5fa4-c3fc-4abd-a717-02072c60edf1",
+       "evidence_ids": [
+        "evt:c6dbd627-86ee-409e-80ea-039f368c8ffb",
+        "evt:8e5f0a93-4919-4970-8ce4-6a383553e2a0"
+       ]
+      },
+      {
+       "label": "Reference 4",
+       "value": 79.5,
+       "run_id": "4ee0490a-c7bd-4451-bc86-52553596c8dc",
+       "evidence_ids": [
+        "evt:d852ac73-51cc-4aee-b9af-7b40a3791f86",
+        "evt:75d13ab0-0ba8-4450-9865-37d4b6548b76"
+       ]
+      },
+      {
+       "label": "Reference 5",
+       "value": 88.5,
+       "run_id": "8e3521a4-87d8-494a-b862-979f59bcae56",
+       "evidence_ids": [
+        "evt:315c38e2-e749-494c-9a06-6213d50844eb",
+        "evt:f20eb2dd-c8ed-40b8-b6a7-c31e4e996c1b"
+       ]
+      }
+     ]
+    },
+    "band_method": "2sd",
+    "explanation": "Time to flip: 54 s vs 90 s in the control, a difference of -36 s. Normal variation is ±22.4 (how far two runs normally differ, from 5 reference runs), so this is outside normal variation."
+   },
+   {
+    "key": "addition_count",
+    "band": 2.0000000000000004,
+    "rank": 3,
+    "role": "outcome",
+    "type": "numeric",
+    "unit": "additions",
+    "delta": -3.0,
+    "label": "Number of base additions",
+    "ratio": 1.5,
+    "status": "notable",
+    "control": {
+     "note": null,
+     "unit": "additions",
+     "value": 8.0,
+     "display": "8.0 additions",
+     "available": true,
+     "provenance": "reported",
+     "evidence_ids": [
+      "evt:c2e28b82-6242-4a80-a30f-b18e32b9f041",
+      "evt:722a0f34-0f07-4f85-8e7c-a542ecd59475",
+      "evt:7e1c74d7-2f05-4130-9ebd-ef1f5eb24bae",
+      "evt:28da04d8-f817-43c9-ada0-e34ca7d60d65",
+      "evt:1bb74a5d-e07b-4000-84ea-52ab79a0bd36",
+      "evt:60729ff0-0b7d-4763-af09-56314e771bec",
+      "evt:fc0573d2-1492-4e20-b211-316123e92a0a",
+      "evt:37a47ce3-f5fa-4316-8d07-bc78595bec98"
+     ]
+    },
+    "candidate": {
+     "note": null,
+     "unit": "additions",
+     "value": 5.0,
+     "display": "5.0 additions",
+     "available": true,
+     "provenance": "reported",
+     "evidence_ids": [
+      "evt:de2f27b3-b44b-4fec-9859-583ce53d236c",
+      "evt:4c8f5056-9303-4d92-a874-f607775eb067",
+      "evt:f2ed5a7e-7b96-4a8b-bad5-45ef0795a3bf",
+      "evt:b82ed2e8-ba95-44da-be0c-ac2cea8a78bd",
+      "evt:49b8dd3b-15b8-4dbd-baab-6310ea81a2e5"
+     ]
+    },
+    "reference": {
+     "n": 5,
+     "sd": 0.7071067811865476,
+     "max": 9.0,
+     "min": 7.0,
+     "mean": 8.0,
+     "values": [
+      {
+       "label": "Reference 1",
+       "value": 8.0,
+       "run_id": "45b7a006-19c9-4ca7-bb12-b152d8a72983",
+       "evidence_ids": [
+        "evt:e1e563c2-9f82-4fa2-a162-fd612a8516af",
+        "evt:de9c2089-eebc-4960-8e47-6c0cdd7e3f46",
+        "evt:f3b69972-1507-43c2-be65-f9a8e8a7640e",
+        "evt:5d3b0857-804a-4fa8-bb0b-58f0b69b7bd4",
+        "evt:ad7db3b2-202b-4164-a16b-5092ea47f934",
+        "evt:9299a1d9-364f-44ce-a19d-d4fd7ef402e9",
+        "evt:37c0ffa3-9136-4478-863a-29a2c501c78c",
+        "evt:f141272d-eeed-4b9b-aa08-43677368e2ee"
+       ]
+      },
+      {
+       "label": "Reference 2",
+       "value": 9.0,
+       "run_id": "47fed71c-1d1e-41c7-9133-23f28bcd9833",
+       "evidence_ids": [
+        "evt:2c3b7c58-b5ce-4b2a-b049-90773f050d43",
+        "evt:5022eb83-3b9c-4ea8-9d48-114f0a14f051",
+        "evt:320f13d6-5359-428f-9849-3fa1c37ec2f7",
+        "evt:a37df00c-8258-415c-810c-274f2a9b6692",
+        "evt:9788e710-6201-4810-93b9-a9ad22f7ce53",
+        "evt:553434b1-27d9-4cf9-9e83-ce4be24b5870",
+        "evt:eb20c657-c621-4622-8c96-efb23d3a21f9",
+        "evt:14894cc2-a7e5-4fcb-b1f8-e9a21cae92c2",
+        "evt:78e6f587-c0b8-4133-8d01-df345efcb4b2"
+       ]
+      },
+      {
+       "label": "Reference 3",
+       "value": 8.0,
+       "run_id": "190f5fa4-c3fc-4abd-a717-02072c60edf1",
+       "evidence_ids": [
+        "evt:c6dbd627-86ee-409e-80ea-039f368c8ffb",
+        "evt:cd13abf6-44e1-4ab9-966c-87968af753c6",
+        "evt:f806ec7e-4478-4f9b-a789-4ccb4cec2b4e",
+        "evt:2d6cf77b-9dc3-4daf-8f13-952768e60e2d",
+        "evt:a623b6e4-ff45-4560-8e5d-b802bcc6a0e7",
+        "evt:0446cb55-5d1c-4160-b3ae-b36a8a07c2cc",
+        "evt:8cbdf2e3-f709-4404-997b-c2ed260f3549",
+        "evt:b4d23296-8347-4173-8d05-6e63beecd5c2"
+       ]
+      },
+      {
+       "label": "Reference 4",
+       "value": 7.0,
+       "run_id": "4ee0490a-c7bd-4451-bc86-52553596c8dc",
+       "evidence_ids": [
+        "evt:d852ac73-51cc-4aee-b9af-7b40a3791f86",
+        "evt:eff92ece-e456-4a49-a4de-32adbb54fc60",
+        "evt:9c2cbb98-547f-48e9-930d-b2ac39869641",
+        "evt:42a84a94-9113-43bb-bc97-882370df9d60",
+        "evt:2a5ff7e2-5153-4c1f-9123-c3f3278535d3",
+        "evt:eeccca0a-2f0c-46ac-a1c5-b6d838602bcd",
+        "evt:f0f3cdf7-c8aa-414e-a7a7-b9b3ca8d60a8"
+       ]
+      },
+      {
+       "label": "Reference 5",
+       "value": 8.0,
+       "run_id": "8e3521a4-87d8-494a-b862-979f59bcae56",
+       "evidence_ids": [
+        "evt:315c38e2-e749-494c-9a06-6213d50844eb",
+        "evt:3df4f99b-140c-4468-a97b-2aaa11e0065e",
+        "evt:3d0968da-1aa1-488d-8428-0ccdf067fe73",
+        "evt:1bf23a07-60e5-4dac-845e-fded606ff5d4",
+        "evt:cd2a7642-68d8-4123-8cfc-1dba75bb459b",
+        "evt:b6456fd7-8f0d-46e1-b02a-926b75ee02b0",
+        "evt:1dbf1cc3-a065-44f4-bbe8-fdf4f4646493",
+        "evt:8b7f8bdd-a422-49b8-ac65-30ad3da42f46"
+       ]
+      }
+     ]
+    },
+    "band_method": "2sd",
+    "explanation": "Number of base additions: 5 additions vs 8 additions in the control, a difference of -3 additions. Normal variation is ±2 (how far two runs normally differ, from 5 reference runs), so this is outside normal variation."
+   },
+   {
+    "key": "temp_c",
+    "band": 1.715808847162178,
+    "rank": 4,
+    "role": "condition",
+    "type": "numeric",
+    "unit": "°C",
+    "delta": 1.0,
+    "label": "Liquid temperature",
+    "ratio": 0.583,
+    "status": "within_normal",
+    "control": {
+     "note": null,
+     "unit": "°C",
+     "value": 21.6,
+     "display": "21.6 °C",
+     "available": true,
+     "provenance": "reported",
+     "evidence_ids": [
+      "ser:25949a39-66ab-4bd2-80f0-331cfee7bcbd:temp_c:1792894805000:1792894805000"
+     ]
+    },
+    "candidate": {
+     "note": null,
+     "unit": "°C",
+     "value": 22.6,
+     "display": "22.6 °C",
+     "available": true,
+     "provenance": "reported",
+     "evidence_ids": [
+      "ser:14e8634f-e2a3-4bb7-82f4-df0e4b24d797:temp_c:1792895765000:1792895765000"
+     ]
+    },
+    "reference": {
+     "n": 5,
+     "sd": 0.6066300355241242,
+     "max": 22.4,
+     "min": 20.9,
+     "mean": 21.66,
+     "values": [
+      {
+       "label": "Reference 1",
+       "value": 21.2,
+       "run_id": "45b7a006-19c9-4ca7-bb12-b152d8a72983",
+       "evidence_ids": [
+        "ser:45b7a006-19c9-4ca7-bb12-b152d8a72983:temp_c:1792890005000:1792890005000"
+       ]
+      },
+      {
+       "label": "Reference 2",
+       "value": 22.4,
+       "run_id": "47fed71c-1d1e-41c7-9133-23f28bcd9833",
+       "evidence_ids": [
+        "ser:47fed71c-1d1e-41c7-9133-23f28bcd9833:temp_c:1792890845000:1792890845000"
+       ]
+      },
+      {
+       "label": "Reference 3",
+       "value": 21.8,
+       "run_id": "190f5fa4-c3fc-4abd-a717-02072c60edf1",
+       "evidence_ids": [
+        "ser:190f5fa4-c3fc-4abd-a717-02072c60edf1:temp_c:1792891625000:1792891625000"
+       ]
+      },
+      {
+       "label": "Reference 4",
+       "value": 20.9,
+       "run_id": "4ee0490a-c7bd-4451-bc86-52553596c8dc",
+       "evidence_ids": [
+        "ser:4ee0490a-c7bd-4451-bc86-52553596c8dc:temp_c:1792892465000:1792892465000"
+       ]
+      },
+      {
+       "label": "Reference 5",
+       "value": 22.0,
+       "run_id": "8e3521a4-87d8-494a-b862-979f59bcae56",
+       "evidence_ids": [
+        "ser:8e3521a4-87d8-494a-b862-979f59bcae56:temp_c:1792893305000:1792893305000"
+       ]
+      }
+     ]
+    },
+    "band_method": "2sd",
+    "explanation": "Liquid temperature: 22.6 °C vs 21.6 °C, a difference of 1 °C, within normal variation ±1.7 (how far two runs normally differ, from 5 reference runs)."
+   },
+   {
+    "key": "mix_active_s",
+    "band": 0.7151487046101672,
+    "rank": 5,
+    "role": "condition",
+    "type": "numeric",
+    "unit": "s",
+    "delta": 0.35999999999999943,
+    "label": "Mixing time per addition",
+    "ratio": 0.503,
+    "status": "within_normal",
+    "control": {
+     "note": null,
+     "unit": "s",
+     "value": 4.4,
+     "display": "4.4 s",
+     "available": true,
+     "provenance": "measured",
+     "evidence_ids": [
+      "ser:25949a39-66ab-4bd2-80f0-331cfee7bcbd:mix_angle:1792894800000:1792894920600",
+      "evt:c2e28b82-6242-4a80-a30f-b18e32b9f041",
+      "evt:722a0f34-0f07-4f85-8e7c-a542ecd59475",
+      "evt:7e1c74d7-2f05-4130-9ebd-ef1f5eb24bae",
+      "evt:28da04d8-f817-43c9-ada0-e34ca7d60d65"
+     ]
+    },
+    "candidate": {
+     "note": null,
+     "unit": "s",
+     "value": 4.76,
+     "display": "4.8 s",
+     "available": true,
+     "provenance": "measured",
+     "evidence_ids": [
+      "ser:14e8634f-e2a3-4bb7-82f4-df0e4b24d797:mix_angle:1792895760000:1792895844600",
+      "evt:de2f27b3-b44b-4fec-9859-583ce53d236c",
+      "evt:4c8f5056-9303-4d92-a874-f607775eb067",
+      "evt:f2ed5a7e-7b96-4a8b-bad5-45ef0795a3bf",
+      "evt:b82ed2e8-ba95-44da-be0c-ac2cea8a78bd"
+     ]
+    },
+    "reference": {
+     "n": 5,
+     "sd": 0.2528432492933122,
+     "max": 4.885714,
+     "min": 4.35,
+     "mean": 4.6054762,
+     "values": [
+      {
+       "label": "Reference 1",
+       "value": 4.5,
+       "run_id": "45b7a006-19c9-4ca7-bb12-b152d8a72983",
+       "evidence_ids": [
+        "ser:45b7a006-19c9-4ca7-bb12-b152d8a72983:mix_angle:1792890000000:1792890118800",
+        "evt:e1e563c2-9f82-4fa2-a162-fd612a8516af",
+        "evt:de9c2089-eebc-4960-8e47-6c0cdd7e3f46",
+        "evt:f3b69972-1507-43c2-be65-f9a8e8a7640e",
+        "evt:5d3b0857-804a-4fa8-bb0b-58f0b69b7bd4"
+       ]
+      },
+      {
+       "label": "Reference 2",
+       "value": 4.866667,
+       "run_id": "47fed71c-1d1e-41c7-9133-23f28bcd9833",
+       "evidence_ids": [
+        "ser:47fed71c-1d1e-41c7-9133-23f28bcd9833:mix_angle:1792890840000:1792890972200",
+        "evt:2c3b7c58-b5ce-4b2a-b049-90773f050d43",
+        "evt:5022eb83-3b9c-4ea8-9d48-114f0a14f051",
+        "evt:320f13d6-5359-428f-9849-3fa1c37ec2f7",
+        "evt:a37df00c-8258-415c-810c-274f2a9b6692"
+       ]
+      },
+      {
+       "label": "Reference 3",
+       "value": 4.425,
+       "run_id": "190f5fa4-c3fc-4abd-a717-02072c60edf1",
+       "evidence_ids": [
+        "ser:190f5fa4-c3fc-4abd-a717-02072c60edf1:mix_angle:1792891620000:1792891737600",
+        "evt:c6dbd627-86ee-409e-80ea-039f368c8ffb",
+        "evt:cd13abf6-44e1-4ab9-966c-87968af753c6",
+        "evt:f806ec7e-4478-4f9b-a789-4ccb4cec2b4e",
+        "evt:2d6cf77b-9dc3-4daf-8f13-952768e60e2d"
+       ]
+      },
+      {
+       "label": "Reference 4",
+       "value": 4.885714,
+       "run_id": "4ee0490a-c7bd-4451-bc86-52553596c8dc",
+       "evidence_ids": [
+        "ser:4ee0490a-c7bd-4451-bc86-52553596c8dc:mix_angle:1792892460000:1792892569800",
+        "evt:d852ac73-51cc-4aee-b9af-7b40a3791f86",
+        "evt:eff92ece-e456-4a49-a4de-32adbb54fc60",
+        "evt:9c2cbb98-547f-48e9-930d-b2ac39869641",
+        "evt:42a84a94-9113-43bb-bc97-882370df9d60"
+       ]
+      },
+      {
+       "label": "Reference 5",
+       "value": 4.35,
+       "run_id": "8e3521a4-87d8-494a-b862-979f59bcae56",
+       "evidence_ids": [
+        "ser:8e3521a4-87d8-494a-b862-979f59bcae56:mix_angle:1792893300000:1792893419200",
+        "evt:315c38e2-e749-494c-9a06-6213d50844eb",
+        "evt:3df4f99b-140c-4468-a97b-2aaa11e0065e",
+        "evt:3d0968da-1aa1-488d-8428-0ccdf067fe73",
+        "evt:1bf23a07-60e5-4dac-845e-fded606ff5d4"
+       ]
+      }
+     ]
+    },
+    "band_method": "2sd",
+    "explanation": "Mixing time per addition: 4.8 s vs 4.4 s, a difference of 0.4 s, within normal variation ±0.7 (how far two runs normally differ, from 5 reference runs)."
+   },
+   {
+    "key": "start_color_a",
+    "band": 2.0,
+    "rank": 6,
+    "role": "condition",
+    "type": "numeric",
+    "unit": "a*",
+    "delta": 0.3892289999999998,
+    "label": "Starting color (a*)",
+    "ratio": 0.195,
+    "status": "within_normal",
+    "control": {
+     "note": null,
+     "unit": "a*",
+     "value": 3.905871,
+     "display": "3.9 a*",
+     "available": true,
+     "provenance": "measured",
+     "evidence_ids": [
+      "ser:25949a39-66ab-4bd2-80f0-331cfee7bcbd:lab_a:1792894800000:1792894803000"
+     ]
+    },
+    "candidate": {
+     "note": null,
+     "unit": "a*",
+     "value": 4.2951,
+     "display": "4.3 a*",
+     "available": true,
+     "provenance": "measured",
+     "evidence_ids": [
+      "ser:14e8634f-e2a3-4bb7-82f4-df0e4b24d797:lab_a:1792895760000:1792895763000"
+     ]
+    },
+    "reference": {
+     "n": 5,
+     "sd": 0.12582550525509542,
+     "max": 4.208586,
+     "min": 3.864057,
+     "mean": 4.0650227999999995,
+     "values": [
+      {
+       "label": "Reference 1",
+       "value": 4.0561,
+       "run_id": "45b7a006-19c9-4ca7-bb12-b152d8a72983",
+       "evidence_ids": [
+        "ser:45b7a006-19c9-4ca7-bb12-b152d8a72983:lab_a:1792890000000:1792890003000"
+       ]
+      },
+      {
+       "label": "Reference 2",
+       "value": 4.103257,
+       "run_id": "47fed71c-1d1e-41c7-9133-23f28bcd9833",
+       "evidence_ids": [
+        "ser:47fed71c-1d1e-41c7-9133-23f28bcd9833:lab_a:1792890840000:1792890843000"
+       ]
+      },
+      {
+       "label": "Reference 3",
+       "value": 4.093114,
+       "run_id": "190f5fa4-c3fc-4abd-a717-02072c60edf1",
+       "evidence_ids": [
+        "ser:190f5fa4-c3fc-4abd-a717-02072c60edf1:lab_a:1792891620000:1792891623000"
+       ]
+      },
+      {
+       "label": "Reference 4",
+       "value": 3.864057,
+       "run_id": "4ee0490a-c7bd-4451-bc86-52553596c8dc",
+       "evidence_ids": [
+        "ser:4ee0490a-c7bd-4451-bc86-52553596c8dc:lab_a:1792892460000:1792892463000"
+       ]
+      },
+      {
+       "label": "Reference 5",
+       "value": 4.208586,
+       "run_id": "8e3521a4-87d8-494a-b862-979f59bcae56",
+       "evidence_ids": [
+        "ser:8e3521a4-87d8-494a-b862-979f59bcae56:lab_a:1792893300000:1792893303000"
+       ]
+      }
+     ]
+    },
+    "band_method": "resolution",
+    "explanation": "Starting color (a*): 4.3 a* vs 3.9 a*, a difference of 0.4 a*, within normal variation ±2 (measurement resolution)."
+   },
+   {
+    "key": "air_quality",
+    "band": 11.581803096911363,
+    "rank": 7,
+    "role": "condition",
+    "type": "numeric",
+    "unit": "raw",
+    "delta": 1.7925500000000056,
+    "label": "Air quality",
+    "ratio": 0.155,
+    "status": "within_normal",
+    "control": {
+     "note": null,
+     "unit": "raw",
+     "value": 120.344076,
+     "display": "120.3 raw",
+     "available": true,
+     "provenance": "measured",
+     "evidence_ids": [
+      "ser:25949a39-66ab-4bd2-80f0-331cfee7bcbd:air_quality:1792894800000:1792894920500"
+     ]
+    },
+    "candidate": {
+     "note": null,
+     "unit": "raw",
+     "value": 122.136626,
+     "display": "122.1 raw",
+     "available": true,
+     "provenance": "measured",
+     "evidence_ids": [
+      "ser:14e8634f-e2a3-4bb7-82f4-df0e4b24d797:air_quality:1792895760000:1792895844500"
+     ]
+    },
+    "reference": {
+     "n": 5,
+     "sd": 4.094785754096691,
+     "max": 123.832831,
+     "min": 113.36663,
+     "mean": 118.73281779999999,
+     "values": [
+      {
+       "label": "Reference 1",
+       "value": 121.139144,
+       "run_id": "45b7a006-19c9-4ca7-bb12-b152d8a72983",
+       "evidence_ids": [
+        "ser:45b7a006-19c9-4ca7-bb12-b152d8a72983:air_quality:1792890000000:1792890118500"
+       ]
+      },
+      {
+       "label": "Reference 2",
+       "value": 116.216636,
+       "run_id": "47fed71c-1d1e-41c7-9133-23f28bcd9833",
+       "evidence_ids": [
+        "ser:47fed71c-1d1e-41c7-9133-23f28bcd9833:air_quality:1792890840000:1792890972000"
+       ]
+      },
+      {
+       "label": "Reference 3",
+       "value": 123.832831,
+       "run_id": "190f5fa4-c3fc-4abd-a717-02072c60edf1",
+       "evidence_ids": [
+        "ser:190f5fa4-c3fc-4abd-a717-02072c60edf1:air_quality:1792891620000:1792891737500"
+       ]
+      },
+      {
+       "label": "Reference 4",
+       "value": 113.36663,
+       "run_id": "4ee0490a-c7bd-4451-bc86-52553596c8dc",
+       "evidence_ids": [
+        "ser:4ee0490a-c7bd-4451-bc86-52553596c8dc:air_quality:1792892460000:1792892569500"
+       ]
+      },
+      {
+       "label": "Reference 5",
+       "value": 119.108848,
+       "run_id": "8e3521a4-87d8-494a-b862-979f59bcae56",
+       "evidence_ids": [
+        "ser:8e3521a4-87d8-494a-b862-979f59bcae56:air_quality:1792893300000:1792893419000"
+       ]
+      }
+     ]
+    },
+    "band_method": "2sd",
+    "explanation": "Air quality: 122.1 raw vs 120.3 raw, a difference of 1.8 raw, within normal variation ±11.6 (how far two runs normally differ, from 5 reference runs)."
+   },
+   {
+    "key": "vinegar_bottle",
+    "rank": 8,
+    "role": "condition",
+    "type": "categorical",
+    "unit": null,
+    "label": "Vinegar bottle",
+    "status": "same",
+    "control": {
+     "note": null,
+     "unit": null,
+     "value": "Bottle A",
+     "display": "Bottle A",
+     "available": true,
+     "provenance": "inferred",
+     "evidence_ids": [
+      "evt:632a60a2-c1a1-4429-baaa-74710caa557a",
+      "frm:84e7cb62-d7e0-470f-9833-7d736828a8e2"
+     ]
+    },
+    "expected": null,
+    "candidate": {
+     "note": null,
+     "unit": null,
+     "value": "Bottle A",
+     "display": "Bottle A",
+     "available": true,
+     "provenance": "inferred",
+     "evidence_ids": [
+      "evt:8dfb8f04-941f-4010-92cc-537df7d526fe",
+      "frm:3277a670-ff18-4950-aa3c-06c00a7ddc77"
+     ]
+    },
+    "reference": {
+     "n": 5,
+     "counts": {
+      "Bottle A": 5
+     },
+     "values": [
+      {
+       "label": "Reference 1",
+       "value": "Bottle A",
+       "run_id": "45b7a006-19c9-4ca7-bb12-b152d8a72983",
+       "evidence_ids": [
+        "evt:b249ff2a-3cf3-43a6-bb33-a816c0a0bcaa",
+        "frm:b4ced574-2765-41db-a029-5a7dc008e4a2"
+       ]
+      },
+      {
+       "label": "Reference 2",
+       "value": "Bottle A",
+       "run_id": "47fed71c-1d1e-41c7-9133-23f28bcd9833",
+       "evidence_ids": [
+        "evt:6ae9d23e-1873-4301-8fce-16e11a39f73f",
+        "frm:52e70179-b61d-4446-a6dd-7b8aa334412b"
+       ]
+      },
+      {
+       "label": "Reference 3",
+       "value": "Bottle A",
+       "run_id": "190f5fa4-c3fc-4abd-a717-02072c60edf1",
+       "evidence_ids": [
+        "evt:f43cd015-03ad-4483-a323-914e5e8c4031",
+        "frm:5882b8e9-0945-4c42-b2bd-15fb0141ea25"
+       ]
+      },
+      {
+       "label": "Reference 4",
+       "value": "Bottle A",
+       "run_id": "4ee0490a-c7bd-4451-bc86-52553596c8dc",
+       "evidence_ids": [
+        "evt:97eeeff9-f7d4-4c81-ae5a-b2865b299673",
+        "frm:a10d377b-73c2-481e-8e47-dcd1e18bd70d"
+       ]
+      },
+      {
+       "label": "Reference 5",
+       "value": "Bottle A",
+       "run_id": "8e3521a4-87d8-494a-b862-979f59bcae56",
+       "evidence_ids": [
+        "evt:d61f1673-60fa-4cbe-bf0d-61eefe7c4673",
+        "frm:684b1c90-b5d1-4b6a-a108-528d4e8c94c6"
+       ]
+      }
+     ]
+    },
+    "explanation": "Vinegar bottle: Bottle A in both runs."
+   },
+   {
+    "key": "step_order",
+    "rank": 9,
+    "role": "condition",
+    "type": "sequence",
+    "unit": null,
+    "label": "Protocol steps performed",
+    "status": "same",
+    "control": {
+     "note": null,
+     "unit": null,
+     "value": [
+      "sample",
+      "dilute",
+      "indicator",
+      "titrate",
+      "endpoint"
+     ],
+     "display": "sample → dilute → indicator → titrate → endpoint",
+     "available": true,
+     "provenance": "reported",
+     "evidence_ids": [
+      "evt:97ce7c9e-6205-4427-af7e-8094f139ea04",
+      "evt:9305ec52-8325-4d9b-913e-5d7d1837a3b8",
+      "evt:515eabe6-a3c8-474b-a85c-f2693f87bbb0",
+      "evt:681e6fb1-0719-4cfb-80a2-853106c69019",
+      "evt:47fd8d39-b943-450a-94ca-061b1ec2d32c"
+     ]
+    },
+    "candidate": {
+     "note": null,
+     "unit": null,
+     "value": [
+      "sample",
+      "dilute",
+      "indicator",
+      "titrate",
+      "endpoint"
+     ],
+     "display": "sample → dilute → indicator → titrate → endpoint",
+     "available": true,
+     "provenance": "reported",
+     "evidence_ids": [
+      "evt:98c528eb-a62e-4740-80ad-a34b2b0eb0ca",
+      "evt:942251de-ae11-4e23-8fe7-b794d678a0a6",
+      "evt:1c3826f6-7d68-4ee1-90ca-25adff3bce7d",
+      "evt:165ac1c9-9280-49a3-b3d1-2dc3e97b1607",
+      "evt:3fdd4307-3a47-42db-bb40-f4c866b76ad8"
+     ]
+    },
+    "explanation": "Protocol steps performed: same steps in the same order."
+   },
+   {
+    "key": "mix_inversions",
+    "band": 0.5,
+    "rank": 10,
+    "role": "condition",
+    "type": "numeric",
+    "unit": "inversions",
+    "delta": 0.0,
+    "label": "Mixing per addition (inversions)",
+    "ratio": 0.0,
+    "status": "same",
+    "control": {
+     "note": null,
+     "unit": "inversions",
+     "value": 3.0,
+     "display": "3.0 inversions",
+     "available": true,
+     "provenance": "measured",
+     "evidence_ids": [
+      "ser:25949a39-66ab-4bd2-80f0-331cfee7bcbd:mix_angle:1792894800000:1792894920600",
+      "evt:c2e28b82-6242-4a80-a30f-b18e32b9f041",
+      "evt:722a0f34-0f07-4f85-8e7c-a542ecd59475",
+      "evt:7e1c74d7-2f05-4130-9ebd-ef1f5eb24bae",
+      "evt:28da04d8-f817-43c9-ada0-e34ca7d60d65"
+     ]
+    },
+    "candidate": {
+     "note": null,
+     "unit": "inversions",
+     "value": 3.0,
+     "display": "3.0 inversions",
+     "available": true,
+     "provenance": "measured",
+     "evidence_ids": [
+      "ser:14e8634f-e2a3-4bb7-82f4-df0e4b24d797:mix_angle:1792895760000:1792895844600",
+      "evt:de2f27b3-b44b-4fec-9859-583ce53d236c",
+      "evt:4c8f5056-9303-4d92-a874-f607775eb067",
+      "evt:f2ed5a7e-7b96-4a8b-bad5-45ef0795a3bf",
+      "evt:b82ed2e8-ba95-44da-be0c-ac2cea8a78bd"
+     ]
+    },
+    "reference": {
+     "n": 5,
+     "sd": 0.1384729466043819,
+     "max": 3.142857,
+     "min": 2.875,
+     "mean": 2.9757936000000003,
+     "values": [
+      {
+       "label": "Reference 1",
+       "value": 2.875,
+       "run_id": "45b7a006-19c9-4ca7-bb12-b152d8a72983",
+       "evidence_ids": [
+        "ser:45b7a006-19c9-4ca7-bb12-b152d8a72983:mix_angle:1792890000000:1792890118800",
+        "evt:e1e563c2-9f82-4fa2-a162-fd612a8516af",
+        "evt:de9c2089-eebc-4960-8e47-6c0cdd7e3f46",
+        "evt:f3b69972-1507-43c2-be65-f9a8e8a7640e",
+        "evt:5d3b0857-804a-4fa8-bb0b-58f0b69b7bd4"
+       ]
+      },
+      {
+       "label": "Reference 2",
+       "value": 3.111111,
+       "run_id": "47fed71c-1d1e-41c7-9133-23f28bcd9833",
+       "evidence_ids": [
+        "ser:47fed71c-1d1e-41c7-9133-23f28bcd9833:mix_angle:1792890840000:1792890972200",
+        "evt:2c3b7c58-b5ce-4b2a-b049-90773f050d43",
+        "evt:5022eb83-3b9c-4ea8-9d48-114f0a14f051",
+        "evt:320f13d6-5359-428f-9849-3fa1c37ec2f7",
+        "evt:a37df00c-8258-415c-810c-274f2a9b6692"
+       ]
+      },
+      {
+       "label": "Reference 3",
+       "value": 2.875,
+       "run_id": "190f5fa4-c3fc-4abd-a717-02072c60edf1",
+       "evidence_ids": [
+        "ser:190f5fa4-c3fc-4abd-a717-02072c60edf1:mix_angle:1792891620000:1792891737600",
+        "evt:c6dbd627-86ee-409e-80ea-039f368c8ffb",
+        "evt:cd13abf6-44e1-4ab9-966c-87968af753c6",
+        "evt:f806ec7e-4478-4f9b-a789-4ccb4cec2b4e",
+        "evt:2d6cf77b-9dc3-4daf-8f13-952768e60e2d"
+       ]
+      },
+      {
+       "label": "Reference 4",
+       "value": 3.142857,
+       "run_id": "4ee0490a-c7bd-4451-bc86-52553596c8dc",
+       "evidence_ids": [
+        "ser:4ee0490a-c7bd-4451-bc86-52553596c8dc:mix_angle:1792892460000:1792892569800",
+        "evt:d852ac73-51cc-4aee-b9af-7b40a3791f86",
+        "evt:eff92ece-e456-4a49-a4de-32adbb54fc60",
+        "evt:9c2cbb98-547f-48e9-930d-b2ac39869641",
+        "evt:42a84a94-9113-43bb-bc97-882370df9d60"
+       ]
+      },
+      {
+       "label": "Reference 5",
+       "value": 2.875,
+       "run_id": "8e3521a4-87d8-494a-b862-979f59bcae56",
+       "evidence_ids": [
+        "ser:8e3521a4-87d8-494a-b862-979f59bcae56:mix_angle:1792893300000:1792893419200",
+        "evt:315c38e2-e749-494c-9a06-6213d50844eb",
+        "evt:3df4f99b-140c-4468-a97b-2aaa11e0065e",
+        "evt:3d0968da-1aa1-488d-8428-0ccdf067fe73",
+        "evt:1bf23a07-60e5-4dac-845e-fded606ff5d4"
+       ]
+      }
+     ]
+    },
+    "band_method": "resolution",
+    "explanation": "Mixing per addition (inversions): identical (3 inversions) in candidate and control."
+   },
+   {
+    "key": "sample_ml",
+    "band": 0.5,
+    "rank": 11,
+    "role": "condition",
+    "type": "numeric",
+    "unit": "mL",
+    "delta": 0.0,
+    "label": "Sample volume",
+    "ratio": 0.0,
+    "status": "same",
+    "control": {
+     "note": null,
+     "unit": "mL",
+     "value": 10.0,
+     "display": "10.0 mL",
+     "available": true,
+     "provenance": "reported",
+     "evidence_ids": [
+      "evt:6fd9989f-64d3-4a4d-923e-9d0d75c117dc"
+     ]
+    },
+    "candidate": {
+     "note": null,
+     "unit": "mL",
+     "value": 10.0,
+     "display": "10.0 mL",
+     "available": true,
+     "provenance": "reported",
+     "evidence_ids": [
+      "evt:3bf6e0e1-6de0-45d7-94ff-be30173b8fb3"
+     ]
+    },
+    "reference": {
+     "n": 5,
+     "sd": 0.0,
+     "max": 10.0,
+     "min": 10.0,
+     "mean": 10.0,
+     "values": [
+      {
+       "label": "Reference 1",
+       "value": 10.0,
+       "run_id": "45b7a006-19c9-4ca7-bb12-b152d8a72983",
+       "evidence_ids": [
+        "evt:0fd6cdcb-9a43-437c-a2e5-969fb4bd56cf"
+       ]
+      },
+      {
+       "label": "Reference 2",
+       "value": 10.0,
+       "run_id": "47fed71c-1d1e-41c7-9133-23f28bcd9833",
+       "evidence_ids": [
+        "evt:f546bf7c-8879-493c-9444-f28a10b72f31"
+       ]
+      },
+      {
+       "label": "Reference 3",
+       "value": 10.0,
+       "run_id": "190f5fa4-c3fc-4abd-a717-02072c60edf1",
+       "evidence_ids": [
+        "evt:ffac8a84-4fd8-4eb4-b035-879870fcec1f"
+       ]
+      },
+      {
+       "label": "Reference 4",
+       "value": 10.0,
+       "run_id": "4ee0490a-c7bd-4451-bc86-52553596c8dc",
+       "evidence_ids": [
+        "evt:98aa5f40-1fea-4fa0-8768-c47f12104d7f"
+       ]
+      },
+      {
+       "label": "Reference 5",
+       "value": 10.0,
+       "run_id": "8e3521a4-87d8-494a-b862-979f59bcae56",
+       "evidence_ids": [
+        "evt:53e79da6-19ec-4e69-88cd-24dc7331b651"
+       ]
+      }
+     ]
+    },
+    "band_method": "resolution",
+    "explanation": "Sample volume: identical (10 mL) in candidate and control."
+   },
+   {
+    "key": "water_ml",
+    "band": 0.5,
+    "rank": 12,
+    "role": "condition",
+    "type": "numeric",
+    "unit": "mL",
+    "delta": 0.0,
+    "label": "Dilution volume",
+    "ratio": 0.0,
+    "status": "same",
+    "control": {
+     "note": null,
+     "unit": "mL",
+     "value": 20.0,
+     "display": "20.0 mL",
+     "available": true,
+     "provenance": "reported",
+     "evidence_ids": [
+      "evt:718ee13a-50f2-4c20-8edf-cf55868f6298"
+     ]
+    },
+    "candidate": {
+     "note": null,
+     "unit": "mL",
+     "value": 20.0,
+     "display": "20.0 mL",
+     "available": true,
+     "provenance": "reported",
+     "evidence_ids": [
+      "evt:49395483-5b69-4980-be0f-917c33154206"
+     ]
+    },
+    "reference": {
+     "n": 5,
+     "sd": 0.0,
+     "max": 20.0,
+     "min": 20.0,
+     "mean": 20.0,
+     "values": [
+      {
+       "label": "Reference 1",
+       "value": 20.0,
+       "run_id": "45b7a006-19c9-4ca7-bb12-b152d8a72983",
+       "evidence_ids": [
+        "evt:82c2f792-6e73-4a96-8aed-4e975b4cc9aa"
+       ]
+      },
+      {
+       "label": "Reference 2",
+       "value": 20.0,
+       "run_id": "47fed71c-1d1e-41c7-9133-23f28bcd9833",
+       "evidence_ids": [
+        "evt:22e807c7-23ea-488b-9cb7-49ef865fe64a"
+       ]
+      },
+      {
+       "label": "Reference 3",
+       "value": 20.0,
+       "run_id": "190f5fa4-c3fc-4abd-a717-02072c60edf1",
+       "evidence_ids": [
+        "evt:71d00d77-eee0-432c-9a2f-b6faaf5fa36a"
+       ]
+      },
+      {
+       "label": "Reference 4",
+       "value": 20.0,
+       "run_id": "4ee0490a-c7bd-4451-bc86-52553596c8dc",
+       "evidence_ids": [
+        "evt:fbfe4312-5911-49a2-9d77-a5f4bcf8b716"
+       ]
+      },
+      {
+       "label": "Reference 5",
+       "value": 20.0,
+       "run_id": "8e3521a4-87d8-494a-b862-979f59bcae56",
+       "evidence_ids": [
+        "evt:2fa37aab-4dd6-48bb-addc-fbeea89b9b7a"
+       ]
+      }
+     ]
+    },
+    "band_method": "resolution",
+    "explanation": "Dilution volume: identical (20 mL) in candidate and control."
+   },
+   {
+    "key": "indicator_drops",
+    "band": 1.0,
+    "rank": 13,
+    "role": "condition",
+    "type": "numeric",
+    "unit": "drops",
+    "delta": 0.0,
+    "label": "Indicator drops",
+    "ratio": 0.0,
+    "status": "same",
+    "control": {
+     "note": null,
+     "unit": "drops",
+     "value": 3.0,
+     "display": "3.0 drops",
+     "available": true,
+     "provenance": "reported",
+     "evidence_ids": [
+      "evt:9a5ac75d-53c1-437d-9e60-7a7a7b6f3f87"
+     ]
+    },
+    "candidate": {
+     "note": null,
+     "unit": "drops",
+     "value": 3.0,
+     "display": "3.0 drops",
+     "available": true,
+     "provenance": "reported",
+     "evidence_ids": [
+      "evt:cae5f52e-7eb8-40a7-857f-3a0431de61e6"
+     ]
+    },
+    "reference": {
+     "n": 5,
+     "sd": 0.0,
+     "max": 3.0,
+     "min": 3.0,
+     "mean": 3.0,
+     "values": [
+      {
+       "label": "Reference 1",
+       "value": 3.0,
+       "run_id": "45b7a006-19c9-4ca7-bb12-b152d8a72983",
+       "evidence_ids": [
+        "evt:aedba9bd-5a74-4202-a943-c851a98073f2"
+       ]
+      },
+      {
+       "label": "Reference 2",
+       "value": 3.0,
+       "run_id": "47fed71c-1d1e-41c7-9133-23f28bcd9833",
+       "evidence_ids": [
+        "evt:76bc726b-61a8-4bd6-a890-434d2078f5c3"
+       ]
+      },
+      {
+       "label": "Reference 3",
+       "value": 3.0,
+       "run_id": "190f5fa4-c3fc-4abd-a717-02072c60edf1",
+       "evidence_ids": [
+        "evt:193b1bb9-5a50-45cf-a65c-2bf459ace736"
+       ]
+      },
+      {
+       "label": "Reference 4",
+       "value": 3.0,
+       "run_id": "4ee0490a-c7bd-4451-bc86-52553596c8dc",
+       "evidence_ids": [
+        "evt:76e2f0d4-ccc0-4d19-8316-c51b047de70e"
+       ]
+      },
+      {
+       "label": "Reference 5",
+       "value": 3.0,
+       "run_id": "8e3521a4-87d8-494a-b862-979f59bcae56",
+       "evidence_ids": [
+        "evt:acefc035-845c-4041-bd09-c98481587af7"
+       ]
+      }
+     ]
+    },
+    "band_method": "resolution",
+    "explanation": "Indicator drops: identical (3 drops) in candidate and control."
+   },
+   {
+    "key": "base_solution",
+    "rank": 14,
+    "role": "condition",
+    "type": "categorical",
+    "unit": null,
+    "label": "Base solution batch",
+    "status": "missing_evidence",
+    "control": {
+     "note": "not recorded in this run",
+     "unit": null,
+     "value": null,
+     "display": "not measured",
+     "available": false,
+     "provenance": null,
+     "evidence_ids": []
+    },
+    "expected": null,
+    "candidate": {
+     "note": "not recorded in this run",
+     "unit": null,
+     "value": null,
+     "display": "not measured",
+     "available": false,
+     "provenance": null,
+     "evidence_ids": []
+    },
+    "reference": {
+     "n": 0,
+     "counts": {},
+     "values": []
+    },
+    "explanation": "Base solution batch was not recorded for the candidate and control.",
+    "missing_side": "candidate and control"
+   },
+   {
+    "key": "humidity",
+    "rank": 15,
+    "role": "condition",
+    "type": "numeric",
+    "unit": "%RH",
+    "label": "Air humidity",
+    "status": "missing_evidence",
+    "control": {
+     "note": "no humidity sensor data (sensor not connected or not recorded)",
+     "unit": "%RH",
+     "value": null,
+     "display": "not measured",
+     "available": false,
+     "provenance": null,
+     "evidence_ids": []
+    },
+    "candidate": {
+     "note": "no humidity sensor data (sensor not connected or not recorded)",
+     "unit": "%RH",
+     "value": null,
+     "display": "not measured",
+     "available": false,
+     "provenance": null,
+     "evidence_ids": []
+    },
+    "reference": {
+     "n": 0,
+     "values": []
+    },
+    "explanation": "Air humidity was not measured for the candidate and control (no humidity sensor data (sensor not connected or not recorded)).",
+    "missing_side": "candidate and control"
+   }
+  ],
+  "assumed_cause": {
+   "text": "Method B neutralized with less base because I stirred longer after each addition.",
+   "variable_keys": [
+    "mix_active_s"
+   ],
+   "label": "contradicted",
+   "evidence_ids": [
+    "run:14e8634f-e2a3-4bb7-82f4-df0e4b24d797",
+    "ser:14e8634f-e2a3-4bb7-82f4-df0e4b24d797:mix_angle:1792895760000:1792895844600",
+    "evt:de2f27b3-b44b-4fec-9859-583ce53d236c",
+    "evt:4c8f5056-9303-4d92-a874-f607775eb067",
+    "ser:25949a39-66ab-4bd2-80f0-331cfee7bcbd:mix_angle:1792894800000:1792894920600",
+    "evt:c2e28b82-6242-4a80-a30f-b18e32b9f041",
+    "evt:722a0f34-0f07-4f85-8e7c-a542ecd59475"
+   ],
+   "reason": "Not supported by the evidence. Mixing time per addition: 4.8 s vs 4.4 s, a difference of 0.4 s, within normal variation ±0.7 (how far two runs normally differ, from 5 reference runs).",
+   "confounds": [
+    "water_source"
+   ]
+  },
+  "within_normal": [
+   "temp_c",
+   "mix_active_s",
+   "start_color_a",
+   "air_quality",
+   "vinegar_bottle",
+   "step_order",
+   "mix_inversions",
+   "sample_ml",
+   "water_ml",
+   "indicator_drops"
+  ],
+  "missing_evidence": [
+   "base_solution",
+   "humidity"
+  ]
+ },
+ "diff_analysis_id": "746ad683-49f5-4814-8e5a-1d7cbc77bf9e"
+}

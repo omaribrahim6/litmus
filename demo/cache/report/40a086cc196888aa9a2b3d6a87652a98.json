@@ -1,0 +1,329 @@
+{
+ "title": "Vinegar titration with phenol red",
+ "sections": [
+  {
+   "id": "aim",
+   "heading": "Aim",
+   "sentences": [
+    {
+     "text": "The experiment performed a vinegar titration with phenol red to measure the base added at the color flip across two runs, Method B (candidate) and Method A (control).",
+     "evidence_ids": [
+      "evt:d1be0a24-4142-4938-b4ba-e2dae1bfd572",
+      "evt:bd22b936-be3e-408f-9793-62feae25a860",
+      "evt:a84a5090-b62c-48b9-99b6-fd8cd4ff15f2",
+      "evt:0be701d4-6bad-4baa-8a4c-5fcd1efa46d0"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "method",
+   "heading": "Method as performed",
+   "sentences": [
+    {
+     "text": "In Method B, the run started and 10 mL of vinegar sample from Bottle A was added.",
+     "evidence_ids": [
+      "evt:8dfb8f04-941f-4010-92cc-537df7d526fe",
+      "frm:3277a670-ff18-4950-aa3c-06c00a7ddc77",
+      "evt:98c528eb-a62e-4740-80ad-a34b2b0eb0ca",
+      "evt:3bf6e0e1-6de0-45d7-94ff-be30173b8fb3",
+      "evt:d1be0a24-4142-4938-b4ba-e2dae1bfd572"
+     ]
+    },
+    {
+     "text": "A temperature of 22.6 °C was entered from the thermometer.",
+     "evidence_ids": [
+      "evt:419c08c9-de17-45e8-816d-bb8e5b1167c7"
+     ]
+    },
+    {
+     "text": "Next, 20 mL of water from the tap-water jug was added for dilution, followed by 3 drops of phenol red indicator.",
+     "evidence_ids": [
+      "evt:395b7fbd-c61e-4931-8e4b-7bf65db1995e",
+      "frm:4c486f9d-ce2f-4f83-a672-1f2d25bc6666",
+      "evt:942251de-ae11-4e23-8fe7-b794d678a0a6",
+      "evt:1c3826f6-7d68-4ee1-90ca-25adff3bce7d",
+      "evt:49395483-5b69-4980-be0f-917c33154206",
+      "evt:cae5f52e-7eb8-40a7-857f-3a0431de61e6"
+     ]
+    },
+    {
+     "text": "During titration, 0.5 mL of base was added five times to reach totals of 0.5 mL, 1.0 mL, 1.5 mL, 2.0 mL, and 2.5 mL, with mixing of 3 inversions over 4.8 s after each addition.",
+     "evidence_ids": [
+      "evt:de2f27b3-b44b-4fec-9859-583ce53d236c",
+      "evt:4c8f5056-9303-4d92-a874-f607775eb067",
+      "evt:f2ed5a7e-7b96-4a8b-bad5-45ef0795a3bf",
+      "evt:b82ed2e8-ba95-44da-be0c-ac2cea8a78bd",
+      "evt:49b8dd3b-15b8-4dbd-baab-6310ea81a2e5",
+      "evt:165ac1c9-9280-49a3-b3d1-2dc3e97b1607",
+      "evt:ac1221d9-485b-418c-a15d-bba2d606d4a7",
+      "evt:41de546d-78e2-4963-a7ac-dfe8e1e0857b",
+      "evt:fed162a9-c515-4e4d-b5ad-84e8785ee9bb",
+      "evt:5c779475-a37f-4e59-a859-65f21b36a6a6",
+      "evt:42fae54b-7703-4210-b07d-8dc7ef88bc49"
+     ]
+    },
+    {
+     "text": "The camera detected the color flip, the light sensor confirmed the flip +0.50 s later, and the run ended.",
+     "evidence_ids": [
+      "evt:024d868d-afd0-4a8f-a6ca-e0384403b6da",
+      "frm:b2ebaf8f-be2e-4eb9-9bdf-a4e95af1f57c",
+      "evt:3fdd4307-3a47-42db-bb40-f4c866b76ad8",
+      "evt:843d54c2-df2b-4460-8f47-3bcb2626b855",
+      "evt:bd22b936-be3e-408f-9793-62feae25a860"
+     ]
+    },
+    {
+     "text": "In Method A, the run started and 10 mL of vinegar sample from Bottle A was added.",
+     "evidence_ids": [
+      "evt:632a60a2-c1a1-4429-baaa-74710caa557a",
+      "frm:84e7cb62-d7e0-470f-9833-7d736828a8e2",
+      "evt:97ce7c9e-6205-4427-af7e-8094f139ea04",
+      "evt:6fd9989f-64d3-4a4d-923e-9d0d75c117dc",
+      "evt:a84a5090-b62c-48b9-99b6-fd8cd4ff15f2"
+     ]
+    },
+    {
+     "text": "A temperature of 21.6 °C was entered from the thermometer.",
+     "evidence_ids": [
+      "evt:b75be81e-f600-4ff2-bb82-1f545225cf8d"
+     ]
+    },
+    {
+     "text": "Next, 20 mL of water from the distilled-water jug was added for dilution, followed by 3 drops of phenol red indicator.",
+     "evidence_ids": [
+      "evt:6f6e0d89-f925-4923-939a-c4b806ce67c0",
+      "frm:c3722d62-a47c-48cc-b254-11b894165e53",
+      "evt:9305ec52-8325-4d9b-913e-5d7d1837a3b8",
+      "evt:515eabe6-a3c8-474b-a85c-f2693f87bbb0",
+      "evt:718ee13a-50f2-4c20-8edf-cf55868f6298",
+      "evt:9a5ac75d-53c1-437d-9e60-7a7a7b6f3f87"
+     ]
+    },
+    {
+     "text": "During titration, 0.5 mL of base was added eight times to reach totals of 0.5 mL, 1.0 mL, 1.5 mL, 2.0 mL, 2.5 mL, 3.0 mL, 3.5 mL, and 4.0 mL, with mixing of 3 inversions over 4.8 s after each addition.",
+     "evidence_ids": [
+      "evt:c2e28b82-6242-4a80-a30f-b18e32b9f041",
+      "evt:722a0f34-0f07-4f85-8e7c-a542ecd59475",
+      "evt:7e1c74d7-2f05-4130-9ebd-ef1f5eb24bae",
+      "evt:28da04d8-f817-43c9-ada0-e34ca7d60d65",
+      "evt:1bb74a5d-e07b-4000-84ea-52ab79a0bd36",
+      "evt:60729ff0-0b7d-4763-af09-56314e771bec",
+      "evt:fc0573d2-1492-4e20-b211-316123e92a0a",
+      "evt:37a47ce3-f5fa-4316-8d07-bc78595bec98",
+      "evt:681e6fb1-0719-4cfb-80a2-853106c69019",
+      "evt:056d29da-99ff-45c4-ad79-deb4d92dd4a7",
+      "evt:0f88115c-4352-4e0f-aafa-0efc72b1eb97",
+      "evt:0a73e695-542b-4c7c-be59-d7462dc5561e",
+      "evt:431af541-a598-4080-b341-42bf6067ac4e",
+      "evt:1de1d1be-d292-40d9-bd7a-5a040d6396c7",
+      "evt:e44f9dc1-007b-4ac1-9934-f47061602c1c",
+      "evt:2eddbdd2-ad9c-4ab3-8358-1c3024f85c4e",
+      "evt:c9339709-33be-408d-904d-36862cb1754c"
+     ]
+    },
+    {
+     "text": "The camera and light sensor simultaneously detected the color flip, and the run ended.",
+     "evidence_ids": [
+      "evt:e8fbac95-fdbd-4ce4-893a-2f208da14e3e",
+      "frm:c70a62a3-2a72-42c2-9cbe-963e2c9966f1",
+      "evt:47fd8d39-b943-450a-94ca-061b1ec2d32c",
+      "evt:ac680365-1c4e-4236-befd-3b8a127112d7",
+      "evt:0be701d4-6bad-4baa-8a4c-5fcd1efa46d0"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "results",
+   "heading": "Results",
+   "sentences": [
+    {
+     "text": "The base added at the color flip was 2.5 mL in Method B and 4.0 mL in Method A, which is a difference of -1.5 mL and outside the normal variation of ±1.",
+     "evidence_ids": [
+      "evt:024d868d-afd0-4a8f-a6ca-e0384403b6da",
+      "frm:b2ebaf8f-be2e-4eb9-9bdf-a4e95af1f57c",
+      "evt:de2f27b3-b44b-4fec-9859-583ce53d236c",
+      "evt:4c8f5056-9303-4d92-a874-f607775eb067",
+      "evt:e8fbac95-fdbd-4ce4-893a-2f208da14e3e",
+      "frm:c70a62a3-2a72-42c2-9cbe-963e2c9966f1",
+      "evt:c2e28b82-6242-4a80-a30f-b18e32b9f041",
+      "evt:722a0f34-0f07-4f85-8e7c-a542ecd59475",
+      "evt:bd22b936-be3e-408f-9793-62feae25a860",
+      "evt:0be701d4-6bad-4baa-8a4c-5fcd1efa46d0"
+     ]
+    },
+    {
+     "text": "In Method B, the camera detected a lab_a change of +29.8 from a baseline of 4.6, with a time to flip of 54.0 s across 5.0 additions.",
+     "evidence_ids": [
+      "evt:024d868d-afd0-4a8f-a6ca-e0384403b6da",
+      "frm:b2ebaf8f-be2e-4eb9-9bdf-a4e95af1f57c",
+      "evt:de2f27b3-b44b-4fec-9859-583ce53d236c",
+      "evt:4c8f5056-9303-4d92-a874-f607775eb067",
+      "evt:f2ed5a7e-7b96-4a8b-bad5-45ef0795a3bf",
+      "evt:b82ed2e8-ba95-44da-be0c-ac2cea8a78bd"
+     ]
+    },
+    {
+     "text": "In Method A, the camera detected a lab_a change of +29.7 from a baseline of 4.0, with a time to flip of 90.0 s across 8.0 additions.",
+     "evidence_ids": [
+      "evt:e8fbac95-fdbd-4ce4-893a-2f208da14e3e",
+      "frm:c70a62a3-2a72-42c2-9cbe-963e2c9966f1",
+      "evt:c2e28b82-6242-4a80-a30f-b18e32b9f041",
+      "evt:722a0f34-0f07-4f85-8e7c-a542ecd59475",
+      "evt:7e1c74d7-2f05-4130-9ebd-ef1f5eb24bae",
+      "evt:28da04d8-f817-43c9-ada0-e34ca7d60d65"
+     ]
+    },
+    {
+     "text": "The differences of -36 s in time to flip (normal variation ±22.4) and -3 additions (normal variation ±2) were consequences of the result.",
+     "evidence_ids": [
+      "evt:024d868d-afd0-4a8f-a6ca-e0384403b6da",
+      "evt:de2f27b3-b44b-4fec-9859-583ce53d236c",
+      "evt:4c8f5056-9303-4d92-a874-f607775eb067",
+      "evt:f2ed5a7e-7b96-4a8b-bad5-45ef0795a3bf",
+      "evt:b82ed2e8-ba95-44da-be0c-ac2cea8a78bd",
+      "evt:e8fbac95-fdbd-4ce4-893a-2f208da14e3e",
+      "evt:c2e28b82-6242-4a80-a30f-b18e32b9f041",
+      "evt:722a0f34-0f07-4f85-8e7c-a542ecd59475",
+      "evt:7e1c74d7-2f05-4130-9ebd-ef1f5eb24bae",
+      "evt:28da04d8-f817-43c9-ada0-e34ca7d60d65"
+     ]
+    },
+    {
+     "text": "Liquid temperature (22.6 °C vs 21.6 °C), starting color a* (4.3 a* vs 3.9 a*), and air quality (122.1 raw vs 120.3 raw) were within normal variation.",
+     "evidence_ids": [
+      "ser:14e8634f-e2a3-4bb7-82f4-df0e4b24d797:temp_c:1792895765000:1792895765000",
+      "ser:25949a39-66ab-4bd2-80f0-331cfee7bcbd:temp_c:1792894805000:1792894805000",
+      "ser:14e8634f-e2a3-4bb7-82f4-df0e4b24d797:lab_a:1792895760000:1792895763000",
+      "ser:25949a39-66ab-4bd2-80f0-331cfee7bcbd:lab_a:1792894800000:1792894803000",
+      "ser:14e8634f-e2a3-4bb7-82f4-df0e4b24d797:air_quality:1792895760000:1792895844500",
+      "ser:25949a39-66ab-4bd2-80f0-331cfee7bcbd:air_quality:1792894800000:1792894920500"
+     ]
+    },
+    {
+     "text": "Both runs used identical vinegar bottles (Bottle A), protocol steps, mixing per addition (3.0 inversions), sample volumes (10.0 mL), dilution volumes (20.0 mL), and indicator drops (3.0 drops).",
+     "evidence_ids": [
+      "ser:14e8634f-e2a3-4bb7-82f4-df0e4b24d797:mix_angle:1792895760000:1792895844600",
+      "ser:25949a39-66ab-4bd2-80f0-331cfee7bcbd:mix_angle:1792894800000:1792894920600",
+      "evt:8dfb8f04-941f-4010-92cc-537df7d526fe",
+      "frm:3277a670-ff18-4950-aa3c-06c00a7ddc77",
+      "evt:632a60a2-c1a1-4429-baaa-74710caa557a",
+      "frm:84e7cb62-d7e0-470f-9833-7d736828a8e2",
+      "evt:98c528eb-a62e-4740-80ad-a34b2b0eb0ca",
+      "evt:942251de-ae11-4e23-8fe7-b794d678a0a6",
+      "evt:1c3826f6-7d68-4ee1-90ca-25adff3bce7d",
+      "evt:165ac1c9-9280-49a3-b3d1-2dc3e97b1607",
+      "evt:97ce7c9e-6205-4427-af7e-8094f139ea04",
+      "evt:9305ec52-8325-4d9b-913e-5d7d1837a3b8",
+      "evt:515eabe6-a3c8-474b-a85c-f2693f87bbb0",
+      "evt:681e6fb1-0719-4cfb-80a2-853106c69019",
+      "evt:3bf6e0e1-6de0-45d7-94ff-be30173b8fb3",
+      "evt:6fd9989f-64d3-4a4d-923e-9d0d75c117dc",
+      "evt:49395483-5b69-4980-be0f-917c33154206",
+      "evt:718ee13a-50f2-4c20-8edf-cf55868f6298",
+      "evt:cae5f52e-7eb8-40a7-857f-3a0431de61e6",
+      "evt:9a5ac75d-53c1-437d-9e60-7a7a7b6f3f87"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "deviations",
+   "heading": "Notable deviations",
+   "sentences": [
+    {
+     "text": "The protocol specified diluting with distilled water, which was followed in Method A, whereas Method B deviated from the protocol by diluting from the tap-water jug.",
+     "evidence_ids": [
+      "evt:395b7fbd-c61e-4931-8e4b-7bf65db1995e",
+      "frm:4c486f9d-ce2f-4f83-a672-1f2d25bc6666",
+      "evt:6f6e0d89-f925-4923-939a-c4b806ce67c0",
+      "frm:c3722d62-a47c-48cc-b254-11b894165e53"
+     ]
+    },
+    {
+     "text": "None of the 5 reference runs used tap water, making the water source difference a possible explanation for Method B using 38% less base than Method A.",
+     "evidence_ids": [
+      "evt:395b7fbd-c61e-4931-8e4b-7bf65db1995e",
+      "frm:4c486f9d-ce2f-4f83-a672-1f2d25bc6666",
+      "evt:6f6e0d89-f925-4923-939a-c4b806ce67c0",
+      "frm:c3722d62-a47c-48cc-b254-11b894165e53"
+     ]
+    },
+    {
+     "text": "The assumed cause that Method B neutralized with less base due to longer stirring after each addition is contradicted.",
+     "evidence_ids": [
+      "run:14e8634f-e2a3-4bb7-82f4-df0e4b24d797",
+      "ser:14e8634f-e2a3-4bb7-82f4-df0e4b24d797:mix_angle:1792895760000:1792895844600",
+      "ser:25949a39-66ab-4bd2-80f0-331cfee7bcbd:mix_angle:1792894800000:1792894920600"
+     ]
+    },
+    {
+     "text": "The mixing time per addition was 4.8 s in Method B vs 4.4 s in Method A, a difference of 0.4 s, which is within the normal variation of ±0.7.",
+     "evidence_ids": [
+      "evt:de2f27b3-b44b-4fec-9859-583ce53d236c",
+      "evt:4c8f5056-9303-4d92-a874-f607775eb067",
+      "evt:f2ed5a7e-7b96-4a8b-bad5-45ef0795a3bf",
+      "evt:c2e28b82-6242-4a80-a30f-b18e32b9f041",
+      "evt:722a0f34-0f07-4f85-8e7c-a542ecd59475",
+      "evt:7e1c74d7-2f05-4130-9ebd-ef1f5eb24bae",
+      "run:14e8634f-e2a3-4bb7-82f4-df0e4b24d797",
+      "ser:14e8634f-e2a3-4bb7-82f4-df0e4b24d797:mix_angle:1792895760000:1792895844600",
+      "ser:25949a39-66ab-4bd2-80f0-331cfee7bcbd:mix_angle:1792894800000:1792894920600"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "limitations",
+   "heading": "Limitations",
+   "sentences": [
+    {
+     "text": "The base solution batch was not measured, so it cannot be ruled out as a factor.",
+     "evidence_ids": [
+      "run:14e8634f-e2a3-4bb7-82f4-df0e4b24d797",
+      "run:25949a39-66ab-4bd2-80f0-331cfee7bcbd"
+     ]
+    },
+    {
+     "text": "Air humidity was not measured, so it cannot be ruled out as a factor.",
+     "evidence_ids": [
+      "run:14e8634f-e2a3-4bb7-82f4-df0e4b24d797",
+      "run:25949a39-66ab-4bd2-80f0-331cfee7bcbd"
+     ]
+    },
+    {
+     "text": "The use of Bottle A for the vinegar and the selection of the tap-water jug and distilled-water jug were inferred from video frames rather than directly measured.",
+     "evidence_ids": [
+      "evt:395b7fbd-c61e-4931-8e4b-7bf65db1995e",
+      "frm:4c486f9d-ce2f-4f83-a672-1f2d25bc6666",
+      "evt:6f6e0d89-f925-4923-939a-c4b806ce67c0",
+      "frm:c3722d62-a47c-48cc-b254-11b894165e53",
+      "evt:8dfb8f04-941f-4010-92cc-537df7d526fe",
+      "frm:3277a670-ff18-4950-aa3c-06c00a7ddc77",
+      "evt:632a60a2-c1a1-4429-baaa-74710caa557a",
+      "frm:84e7cb62-d7e0-470f-9833-7d736828a8e2"
+     ]
+    }
+   ]
+  }
+ ],
+ "model": "gemini-4-argon",
+ "candidate": {
+  "role": "candidate",
+  "label": "Method B",
+  "run_id": "14e8634f-e2a3-4bb7-82f4-df0e4b24d797"
+ },
+ "controls": [
+  {
+   "role": "control",
+   "label": "Method A",
+   "run_id": "25949a39-66ab-4bd2-80f0-331cfee7bcbd"
+  }
+ ],
+ "stats": {
+  "sentences": 24,
+  "gaps": 0,
+  "traceable": 24
+ }
+}
