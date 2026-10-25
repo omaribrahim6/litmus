@@ -84,7 +84,7 @@
 </header>
 <main>
   <section class="panel camera">
-    <img id="cam" alt="Station camera" src="/frame.jpg">
+    <img id="cam" alt="Station camera">
     <div id="camwarn" class="banner err hidden" style="position:absolute;left:12px;top:12px"></div>
   </section>
 
@@ -92,7 +92,12 @@
     <!-- idle -->
     <div id="idle" class="stack">
       <div>
-        <div class="muted" style="font-size:15px;margin-bottom:8px">This run is a</div>
+        <div style="font-size:22px;font-weight:600;line-height:1.25">Tap start, then say who you are and what you're doing.</div>
+        <div class="muted" style="font-size:15px;margin-top:6px">Gemini sets up the run from what you say. If you say nothing, it works from what the camera sees.</div>
+        <button class="ghost" id="manual" style="margin-top:10px;padding:8px 12px;font-size:14px">Choose run type manually</button>
+      </div>
+      <div id="manualbox" class="hidden">
+        <div class="muted" style="font-size:14px;margin-bottom:6px">Reference: a normal run. Control: the baseline. Candidate: the run to test.</div>
         <div class="seg" id="roles">
           <button data-role="reference" class="on">Reference</button>
           <button data-role="control">Control</button>
@@ -121,8 +126,7 @@
       <div id="said" class="said hidden"></div>
       <div id="warns"></div>
       <div style="display:grid;grid-template-columns:1fr auto;gap:10px">
-        <button class="big" id="confirm">Confirm step</button>
-        <button class="ghost" id="end">End run</button>
+        <button class="big" id="end" style="grid-column:1 / -1;background:var(--accent);color:#fff">Stop recording</button>
       </div>
     </div>
 
@@ -164,9 +168,12 @@ function tiles(el, s) {
   const out = [];
   const rgb = s.camera.rgb;
   out.push(`<div class="tile"><div class="k">Tube color (camera)</div>${rgb ? `<div class="swatch" style="background:rgb(${rgb.map(Math.round).join(",")})"></div>` : `<div class="v" style="font-size:15px;color:var(--ink-3)">no camera</div>`}</div>`);
-  out.push(`<div class="tile"><div class="k">Mixing this episode</div><div class="v num">${s.mix_inversions}<small>inversions</small></div></div>`);
+  out.push(s.sensors.mix_angle && s.sensors.mix_angle.available
+    ? `<div class="tile"><div class="k">Mixing this episode</div><div class="v num">${s.mix_inversions}<small>inversions</small></div></div>`
+    : `<div class="tile"><div class="k">Mixing (camera)</div><div class="v">${s.mixing_now ? "moving" : "still"}</div></div>`);
   for (const [name, x] of Object.entries(s.sensors)) {
     if (name === "mix_angle" && x.available) continue;
+    if (!x.available && name !== "temp_c") continue;  // not part of this station's hardware
     if (!x.available) {
       const enter = name === "temp_c" && s.state === "recording" ? `<button class="ghost" style="margin-top:6px;padding:6px 10px;font-size:14px" onclick="openPad()">Enter reading</button>` : "";
       const entered = name === "temp_c" && x.value != null ? `<div class="v num">${fmt(x.value)}<small>°C entered</small></div>` : `<div class="v">missing: ${x.detail}</div>`;
@@ -180,7 +187,7 @@ function tiles(el, s) {
 
 function render(s) {
   S = s;
-  $("exp").textContent = s.experiment + (s.simulated ? " (simulated bench)" : "");
+  $("exp").textContent = ((s.setup && s.setup.name) || s.experiment) + (s.simulated ? " (simulated bench)" : "");
   const up = s.upload;
   $("upload").innerHTML = up.online || up.pending === 0
     ? `<span class="dot" style="background:var(--ok)"></span>${up.pending ? up.pending + " uploading" : "Synced"}`
@@ -193,9 +200,9 @@ function render(s) {
     ? `Listening on ${a.sources.map(m => m.name).join(" and ")}. You'll be asked to say who you are; anything you say about the experiment is added to the record.`
     : "No microphone connected. The run is labeled from the buttons above.";
   renderIntro(s);
-  const said = (s.narration || []).slice(-2);
+  const said = [...(s.narration || []).map(n => ({ text: `“${n.text}”`, by: n.mic })), ...(s.seen || []).map(n => ({ text: n.text, by: "camera" }))].slice(-3);
   $("said").classList.toggle("hidden", !said.length || s.state !== "recording");
-  $("said").innerHTML = said.map(n => `<div><b>“${n.text}”</b> <span class="num" style="font-size:12px">${n.mic}</span></div>`).join("");
+  $("said").innerHTML = said.map(n => `<div><b>${n.text}</b> <span class="num" style="font-size:12px">${n.by}</span></div>`).join("");
   $("timer").textContent = rec ? `${Math.floor(s.elapsed_s / 60)}:${String(Math.floor(s.elapsed_s % 60)).padStart(2, "0")}` : "";
   $("idle").classList.toggle("hidden", s.state !== "idle");
   $("recording").classList.toggle("hidden", !rec && s.state !== "finishing");
@@ -210,17 +217,19 @@ function render(s) {
   if (rec || s.state === "finishing") {
     tiles($("tiles-rec"), s);
     const st = s.current_step;
-    $("stepcount").textContent = st ? `Step ${s.step_index + 1} of ${s.steps.length}` : "All steps confirmed";
+    $("stepcount").textContent = st ? `Gemini sees step ${s.step_index + 1} of ${s.steps.length}${s.armed ? ", watching for the color change" : ""}` : "Protocol complete";
     $("steptitle").textContent = s.state === "finishing" ? "Uploading the record" : st ? st.title : "Protocol complete";
     $("stepdetail").textContent = st ? (st.detail || "") : "End the run when you are done.";
-    const titrating = st && st.repeat;
-    $("titrate").classList.toggle("hidden", !titrating);
-    $("total").textContent = `${fmt(s.totals.base_ml || 0)} mL`;
-    $("confirm").textContent = titrating ? "Done titrating" : "Confirm step";
-    $("confirm").disabled = !st || s.state === "finishing";
+    const titrating = st && st.repeat && st.quantity;
+  const q = (st && st.quantity) || {};
+  window.addAmount = q.step || 1;
+  $("add").textContent = `+ ${q.step || 1} ${q.unit || ""} added`;
+    $("titrate").classList.add("hidden");
+    $("total").textContent = `${fmt((s.totals || {})[q.name] || 0)} ${q.unit || ""}`;
+    $("end").disabled = s.state === "finishing";
     const w = [];
     if (s.no_flip_warning) w.push(`<div class="banner warn">No color flip after 10 minutes of titration.</div>`);
-    for (const [n, x] of Object.entries(s.sensors)) if (!x.available && n !== "temp_c" && n !== "humidity") w.push(`<div class="banner warn">${NAMES[n] || n} missing: recorded as missing evidence, never estimated.</div>`);
+    for (const [n, x] of Object.entries(s.sensors)) if (!x.available && /failed|disconnected/.test(x.detail || "")) w.push(`<div class="banner warn">${NAMES[n] || n} missing: recorded as missing evidence, never estimated.</div>`);
     $("warns").innerHTML = w.join("");
   }
   const fl = $("flip");
@@ -280,10 +289,11 @@ document.querySelectorAll("#roles button").forEach(b => b.onclick = () => {
   document.querySelectorAll("#roles button").forEach(x => x.classList.toggle("on", x === b));
   renderLabels();
 });
-$("start").onclick = () => post("/start", { label, role });
-$("confirm").onclick = () => S && S.current_step && S.current_step.repeat ? post("/next") : post("/confirm");
-$("add").onclick = () => post("/add", { value: 0.5 });
-$("end").onclick = () => { if (confirm("End this run and seal the record?")) post("/end"); };
+let manual = false;
+$("manual").onclick = () => { manual = !manual; $("manualbox").classList.toggle("hidden", !manual); $("manual").textContent = manual ? "Let Gemini decide" : "Choose run type manually"; };
+$("start").onclick = () => post("/start", manual ? { label, role } : { label: "", role: "reference" });
+$("add").onclick = () => post("/add", { value: window.addAmount || 1 });
+$("end").onclick = () => post("/end");
 $("new").onclick = () => post("/reset");
 
 const keys = ["7","8","9","4","5","6","1","2","3",".","0","⌫"];
@@ -295,7 +305,22 @@ $("padok").onclick = () => { const v = parseFloat(padValue); $("modal").style.di
 
 async function tick() { try { render(await (await fetch("/state")).json()); } catch (e) { $("upload").textContent = "Station service not responding"; } }
 setInterval(tick, 500);
-setInterval(() => { $("cam").src = "/frame.jpg?t=" + Date.now(); }, 500);
+// Live preview: fetch stills back to back (~10 fps). Each request stands alone, so it recovers by itself after restarts.
+(async function preview() {
+  let url = null;
+  for (;;) {
+    try {
+      const r = await fetch("/frame.jpg?t=" + Date.now(), { cache: "no-store" });
+      if (r.status === 200) {
+        const next = URL.createObjectURL(await r.blob());
+        $("cam").src = next;
+        if (url) URL.revokeObjectURL(url);
+        url = next;
+      }
+    } catch (e) { await new Promise(res => setTimeout(res, 1000)); }
+    await new Promise(res => setTimeout(res, 100));
+  }
+})();
 tick();
 </script>
 </body>

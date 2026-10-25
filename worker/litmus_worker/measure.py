@@ -84,12 +84,33 @@ def quantity_events(rd: RunData, name: str, until: datetime | None = None) -> li
     return out
 
 
+def change_start(rd: RunData, protocol: dict) -> dict | None:
+    """The commit the time-to-change clock starts from: the step armed for the change, else the run start."""
+    armed = {s["id"] for s in protocol.get("steps", []) if s.get("arm_flip")}
+    for e in rd.events_of("step_confirmed"):
+        if (e.get("payload") or {}).get("step") in armed:
+            return e
+    starts = rd.events_of("run_started")
+    return starts[0] if starts else (rd.events[0] if rd.events else None)
+
+
 def measure_result(rd: RunData, protocol: dict) -> Measure:
-    """Result = total of the result quantity added up to the camera-detected flip."""
+    """Result of a run, by the protocol's result kind:
+    amount added until the camera-detected change (default), time until the change, or none."""
     spec = protocol["result"]
+    kind = spec.get("kind", "amount_until_change")
+    if kind == "none":
+        return Measure(False, unit=spec.get("unit"), note="this experiment has no single numeric result")
     flip = rd.flip_event()
     if flip is None:
-        return Measure(False, unit=spec.get("unit"), note="no color flip was detected in this run")
+        return Measure(False, unit=spec.get("unit"), note="no color change was detected in this run")
+    if kind == "time_until_change":
+        start = change_start(rd, protocol)
+        if start is None:
+            return Measure(False, unit="s", note="no start commit to time from")
+        return Measure(True, round((flip["t"] - start["t"]).total_seconds(), 2), "s",
+                       weakest([flip["provenance"], start["provenance"]]),
+                       [ev.evt(flip["id"])] + _frame_ids([flip], 2) + [ev.evt(start["id"])])
     adds = quantity_events(rd, spec["quantity"], until=flip["t"])
     if not adds:
         return Measure(False, unit=spec.get("unit"), note=f"no {spec['quantity']} additions were recorded")
@@ -193,12 +214,14 @@ def measure_variable(rd: RunData, var: dict, protocol: dict) -> Measure:
 
     if src.get("derived") == "time_to_flip":
         flip = rd.flip_event()
-        adds = quantity_events(rd, protocol["result"]["quantity"])
-        if not flip or not adds:
-            return Measure(False, unit=unit, note="needs both a first base addition and a detected flip")
-        value = (flip["t"] - adds[0]["t"]).total_seconds()
-        return Measure(True, round(value, 3), unit, weakest([flip["provenance"], adds[0]["provenance"]]),
-                       [ev.evt(adds[0]["id"]), ev.evt(flip["id"])])
+        q = protocol["result"].get("quantity")
+        adds = quantity_events(rd, q) if q else []
+        start = adds[0] if adds else change_start(rd, protocol)
+        if not flip or not start:
+            return Measure(False, unit=unit, note="needs a start commit and a detected change")
+        value = (flip["t"] - start["t"]).total_seconds()
+        return Measure(True, round(value, 3), unit, weakest([flip["provenance"], start["provenance"]]),
+                       [ev.evt(start["id"]), ev.evt(flip["id"])])
 
     if src.get("steps"):
         steps = rd.events_of("step_confirmed")

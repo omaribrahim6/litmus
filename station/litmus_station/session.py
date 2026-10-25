@@ -29,7 +29,7 @@ def iso(t: float) -> str:
 
 
 def load_protocol(cfg: StationConfig) -> dict:
-    cache = cfg.data_dir / "protocol.json"
+    cache = cfg.data_dir / f"protocol-{cfg.experiment}.json"
     try:
         res = requests.get(f"{cfg.worker_url}/api/experiments", timeout=4)
         res.raise_for_status()
@@ -48,6 +48,7 @@ class Session:
     def __init__(self, cfg: StationConfig, simulate: bool = False):
         self.cfg = cfg
         self.protocol = load_protocol(cfg)
+        self.base_protocol = self.protocol  # every run starts here; Gemini sets up the real experiment
         self.bench = SimulatedBench() if simulate else None
         self.sensors = build_sensors(cfg.hardware, self.bench)
         self.camera = Camera(cfg.hardware.get("camera", 0), self.protocol["roi"], simulate=self.bench,
@@ -93,6 +94,9 @@ class Session:
         self.narration: list[dict] = []
         self.cam_mix_since: float | None = None
         self.cam_mix_last: float | None = None
+        self.setup: dict | None = None
+        self.setup_at: float | None = None
+        self.seen: list[dict] = []
 
     def snapshot(self) -> dict:
         with self.lock:
@@ -110,6 +114,7 @@ class Session:
                            "blocked": bool(self.color and self.color.get("blocked")),
                            "rgb": [self.color["r"], self.color["g"], self.color["b"]] if self.color else None},
                 "mix_inversions": self._mix_count_live(),
+                "mixing_now": self.cam_mix_since is not None,
                 "flip": self.flip, "result": self.result, "verdict": self.verdict, "message": self.message,
                 "no_flip_warning": bool(self.titrate_started and not self.flip and time.time() - self.titrate_started > 600),
                 "upload": {"online": self.outbox.online, "pending": self.outbox.pending(), "error": self.outbox.last_error},
@@ -118,6 +123,9 @@ class Session:
                 "audio": {"available": self.audio.available, "active": self.audio.active, "sources": self.audio.status()},
                 "narration": self.narration[-4:],
                 "title": self.title,
+                "setup": self.setup,
+                "seen": self.seen,
+                "armed": self.flip_detector is not None,
                 "action_camera": {"available": self.action_camera.available, "detail": self.action_camera.detail} if self.action_camera else None,
             }
 
@@ -128,10 +136,12 @@ class Session:
             if self.state == "recording":
                 return self.snapshot()
             self._reset()
+            self.protocol = self.base_protocol
+            self.camera.roi = self.protocol["roi"]
             if self.bench:
                 self.bench.reset()
             self.run_id = str(uuid.uuid4())
-            self.label, self.role, self.started, self.state = label or "Untitled run", role, time.time(), "recording"
+            self.label, self.role, self.started, self.state = label or time.strftime("Run %H:%M"), role, time.time(), "recording"
             available = [n for n, s in self.sensors.items() if s.available] + (["camera"] if self.camera.available else [])
             if self.action_camera and self.action_camera.available:
                 available.append("action_camera")
@@ -154,6 +164,7 @@ class Session:
                     max_s = float(self.cfg.hardware.get("intro_seconds", 15))
                     self.intro = {"state": "listening", "since": self.started, "until": self.started + max_s}
                 threading.Thread(target=self._listen_loop, args=(self.run_id,), daemon=True).start()
+            threading.Thread(target=self._observe_loop, args=(self.run_id,), daemon=True).start()
             return self.snapshot()
 
     # ------------------------------------------------- spoken intro and narration
@@ -183,12 +194,15 @@ class Session:
                 utt = self.audio.best(seg_start, now) if intro != "skipped" else None
                 seg_start = self.seg_start = now
                 with self.lock:
+                    auto = self.protocol.get("slug") == "auto"
                     if intro == "skipped":
                         self.intro = {"state": "skipped"}
-                        continue
-                    self.intro = {"state": "processing"} if utt else {"state": "failed", "error": "Didn't hear an introduction"}
+                    else:
+                        self.intro = {"state": "processing"} if utt else {"state": "failed", "error": "Didn't hear an introduction; setting up from the camera"}
                 if utt:
                     threading.Thread(target=self._send_intro, args=(run_id, utt), daemon=True).start()
+                elif auto:
+                    threading.Thread(target=self._auto_setup, args=(run_id,), daemon=True).start()
                 continue
             if self.audio.segment_ready(seg_start, now):
                 utt = self.audio.best(seg_start, now)
@@ -226,6 +240,74 @@ class Session:
                 self.label = heard["run_label"]
             if heard.get("role") and heard["role"] != "unknown":
                 self.role = heard["role"]
+            if (heard.get("setup") or {}).get("ok"):
+                self.apply_protocol(heard["setup"])
+
+    def apply_protocol(self, setup: dict) -> None:
+        """Switch to the experiment Gemini just set up (caller holds the lock)."""
+        self.protocol = setup["protocol"]
+        self.camera.roi = self.protocol["roi"]
+        if self.action_camera:
+            self.action_camera.roi = self.protocol["roi"]
+        self.step = 0
+        self.flip_detector = None
+        self.setup_at = time.time()
+        self.setup = {"experiment": setup["experiment"], "name": self.protocol["name"], "reused": setup.get("reused"),
+                      "change": self.protocol.get("change")}
+
+    def _observe_loop(self, run_id: str) -> None:
+        """Hands-free: every ~12 s Gemini looks at the latest frames and says which step the researcher is on."""
+        while True:
+            time.sleep(12)
+            with self.lock:
+                if self.run_id != run_id or self.state != "recording":
+                    return
+                if self.intro.get("state") in ("listening", "stopping", "processing"):
+                    continue
+                steps = self.protocol["steps"]
+                current = steps[self.step]["id"] if self.step < len(steps) else None
+            try:
+                res = requests.post(f"{self.cfg.worker_url}/api/runs/{run_id}/observe", json={"current_step": current},
+                                    headers=self.outbox.headers, timeout=45)
+                res.raise_for_status()
+                out = res.json()
+            except requests.RequestException as exc:
+                log.info("observe skipped: %s", exc)
+                continue
+            with self.lock:
+                if self.run_id != run_id:
+                    return
+                ids = [s["id"] for s in self.protocol["steps"]]
+                if out.get("current_step") in ids:
+                    self.step = ids.index(out["current_step"])
+                self.seen = (self.seen + [{"t_s": round(time.time() - self.started), "text": c} for c in out.get("committed", [])])[-6:]
+                self._maybe_arm()
+
+    def _maybe_arm(self) -> None:
+        """Arm color-change detection on the step expected to show it, or 30 s after setup at the latest."""
+        if self.flip_detector is not None or not self.protocol.get("flip"):
+            return
+        steps = self.protocol["steps"]
+        on_arm_step = self.step < len(steps) and steps[self.step].get("arm_flip")
+        late = self.setup_at is not None and time.time() - self.setup_at > 30
+        if on_arm_step or late:
+            self.titrate_started = time.time()
+            self.flip_detector = FlipDetector(FlipConfig.from_dict(self.protocol["flip"]))
+
+    def _auto_setup(self, run_id: str) -> None:
+        """Nobody introduced the run: let Gemini set it up from what the camera sees."""
+        self.outbox.flush(timeout_s=15)
+        try:
+            res = requests.post(f"{self.cfg.worker_url}/api/setup", data={"run_id": run_id},
+                                headers=self.outbox.headers, timeout=60)
+            res.raise_for_status()
+            out = res.json()
+        except requests.RequestException as exc:
+            log.warning("auto setup failed: %s", exc)
+            return
+        with self.lock:
+            if self.run_id == run_id and out.get("ok"):
+                self.apply_protocol(out)
 
     def _send_narration(self, run_id: str, utt, n: int) -> None:
         path = self._utterance_file(run_id, utt, f"narration_{n:03d}")
@@ -269,7 +351,7 @@ class Session:
             s = steps[self.step]
             fid = self._keyframe("event")
             self._event("step_confirmed", f"Step confirmed: {s['title']}", "reported", {"step": s["id"]}, [fid] if fid else [])
-            if s["id"] == "titrate":
+            if (s.get("arm_flip") or s["id"] == "titrate") and self.protocol.get("flip") and self.flip_detector is None:
                 self.titrate_started = time.time()
                 self.flip_detector = FlipDetector(FlipConfig.from_dict(self.protocol.get("flip")))
             q = s.get("quantity")

@@ -1,0 +1,16 @@
+{
+  "slug": "auto",
+  "name": "Untitled bench session",
+  "description": "A run started before the experiment was described. Litmus sets it up from the researcher's intro or from what the camera sees.",
+  "generated": true,
+  "result": { "kind": "none", "key": "result", "label": "Result", "unit": null, "decimals": 1 },
+  "roi": { "x": 0.4, "y": 0.35, "w": 0.2, "h": 0.3 },
+  "mix": { "source": "camera" },
+  "steps": [ { "id": "observe", "title": "Observe the sample", "detail": "Describe what you are doing; Litmus records it." } ],
+  "variables": [
+    { "key": "mix_active_s", "label": "Mixing time", "type": "numeric", "unit": "s", "source": { "mix": "active_s" }, "resolution": 1, "aliases": ["stir", "mix", "shak", "swirl"] },
+    { "key": "temp_c", "label": "Temperature", "type": "numeric", "unit": "°C", "source": { "sensor": "temp_c", "agg": "mean" }, "resolution": 0.3, "aliases": ["temp", "heat", "warm", "cold"] },
+    { "key": "start_color", "label": "Starting color", "type": "numeric", "unit": "a*", "source": { "sensor": "lab_a", "agg": "first" }, "resolution": 2, "aliases": ["color", "colour"] },
+    { "key": "step_order", "label": "Steps performed", "type": "sequence", "source": { "steps": true }, "aliases": ["skip", "order", "step"] }
+  ]
+}

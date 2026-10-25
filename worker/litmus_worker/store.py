@@ -94,7 +94,7 @@ def create_run(conn: psycopg.Connection, **fields: Any) -> dict:
 
 def update_run(conn: psycopg.Connection, run_id: uuid.UUID, **fields: Any) -> dict:
     """Update run-level fields (status, result, video). Committed events are never touched."""
-    allowed = {"label", "role", "status", "ended_at", "video_url", "result", "assumed_cause", "metadata", "parent_run_id"}
+    allowed = {"label", "role", "status", "ended_at", "video_url", "result", "assumed_cause", "metadata", "parent_run_id", "experiment_id"}
     sets, vals = [], []
     for k, v in fields.items():
         if k not in allowed:

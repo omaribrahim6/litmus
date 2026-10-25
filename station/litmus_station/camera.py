@@ -81,8 +81,12 @@ class Camera:
         else:
             self._cap = cv2.VideoCapture(self._device)
         if self._cap.isOpened() and not self._stream:
+            # MJPEG from the webcam: uncompressed 720p only manages a few fps over USB 2.0.
+            self._cap.set(cv2.CAP_PROP_FOURCC, cv2.VideoWriter_fourcc(*"MJPG"))
             self._cap.set(cv2.CAP_PROP_FRAME_WIDTH, 1280)
             self._cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 720)
+            self._cap.set(cv2.CAP_PROP_FPS, 30)
+            self._cap.set(cv2.CAP_PROP_BUFFERSIZE, 1)
 
     def _render_sim(self) -> np.ndarray:
         p = self.simulate.flip_progress()

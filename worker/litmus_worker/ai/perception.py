@@ -28,7 +28,7 @@ def label_frame(image: bytes, question: str, choices: dict[str, str]) -> FrameLa
               + "\n".join(f"- {k}: {v}" for k, v in choices.items())
               + "\nAnswer with the choice key only if the image clearly shows it; otherwise null.")
     return generate_json(settings.model_flash, [types.Part.from_bytes(data=image, mime_type="image/jpeg"), prompt],
-                         FrameLabel, temperature=0.0)
+                         FrameLabel, temperature=0.0, thinking="LOW")
 
 
 def detect_reagents_for_step(run_id: uuid.UUID, step_event: dict, wait_s: float = 4.0) -> list[dict]:
