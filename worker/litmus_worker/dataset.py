@@ -21,7 +21,7 @@ from .measure import Measure, measure_result, measure_variable, measurement_even
 def columns(protocol: dict) -> list[dict]:
     spec = protocol["result"]
     cols = []
-    if spec.get("kind", "none") != "none":
+    if spec.get("kind", "amount_until_change") != "none":  # older protocols predate result kinds: they are titrations
         cols.append({"key": spec["key"], "label": spec["label"], "unit": spec.get("unit"), "role": "outcome", "result": True})
     for v in protocol.get("variables", []):
         if v["type"] == "sequence" or v["key"] == spec.get("key"):
