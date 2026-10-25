@@ -3,7 +3,9 @@
 #   ssh altair@23.95.188.69 'bash ~/litmus/deploy/vps-up.sh'
 set -euo pipefail
 cd "$(dirname "$0")"
-git -C .. pull -q --ff-only || true
+if [ -z "${SKIP_PULL:-}" ]; then
+  git -C .. pull -q --ff-only || echo "git pull failed (private repo?): use deploy/sync-to-vps.sh from the laptop" >&2
+fi
 
 HOST=$(grep '^LITMUS_HOST=' .env.vps | cut -d= -f2)
 

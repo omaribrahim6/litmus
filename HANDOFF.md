@@ -4,6 +4,8 @@ Living status for whoever picks this up (Claude, Codex, or a teammate). Read REA
 
 Deadline: Devpost submission Sunday Oct 25, 12:00 PM ET (edits until 1:45 PM).
 
+**The GitHub repo is PRIVATE until submission. Make it public again before 12:00 PM ET** (Devpost requires a public repo): `gh repo edit omaribrahim6/litmus --visibility public --accept-visibility-change-consequences`. While private, deploy the worker with `wsl -e bash deploy/sync-to-vps.sh` (the VPS cannot `git pull`), and copy code to the Pi with scp or `gh repo clone`.
+
 ## Where things run
 
 | Piece | Where | How |
