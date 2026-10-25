@@ -1,0 +1,12 @@
+{
+  "adc": "grove",
+  "light": { "channel": 0 },
+  "mix_angle": { "channel": 2, "max_deg": 300 },
+  "air_quality": { "channel": 4 },
+  "light_rc_pin": null,
+  "ds18b20": true,
+  "dht22_pin": null,
+  "confirm_button_pin": 17,
+  "camera": 0,
+  "lock_exposure": true
+}

@@ -44,3 +44,6 @@ Thumbs.db
 
 # graphify output
 graphify-out/
+
+# Per-device station wiring
+station/station.json
