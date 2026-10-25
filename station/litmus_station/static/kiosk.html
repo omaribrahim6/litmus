@@ -22,7 +22,7 @@
   .panel { background: var(--surface); border: 1px solid var(--rule); border-radius: 14px; padding: 16px; min-height: 0; }
   .camera { position: relative; padding: 0; overflow: hidden; display: flex; flex-direction: column; }
   .camera img { width: 100%; flex: 1; object-fit: contain; background: #000; min-height: 0; }
-  .tiles { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; align-content: start; overflow: auto; }
+  .tiles { display: grid; grid-template-columns: 1fr 1fr; grid-auto-rows: max-content; gap: 8px; align-content: start; overflow: auto; }
   .tile { background: var(--sunken); border: 1px solid var(--rule); border-radius: 10px; padding: 8px 12px; min-height: 60px; }
   .tile .k { font-size: 13px; color: var(--ink-2); }
   .tile .v { font-size: 22px; margin-top: 2px; }
@@ -135,6 +135,7 @@
       <div class="muted" style="font-size:15px">Run complete</div>
       <div id="result" style="font-size:40px" class="num"></div>
       <div id="resultlabel" class="muted"></div>
+      <div id="findata" class="said" style="border-left-color:var(--ok)"></div>
       <div id="verdict" class="verdict grow"></div>
       <div id="finmsg" class="muted"></div>
       <button class="big" id="new">New run</button>
@@ -164,13 +165,35 @@ const post = (path, body) => fetch(path, { method: "POST", headers: { "content-t
 const NAMES = { light: "Light through tube", mix_angle: "Holder angle", air_quality: "Air quality", temp_c: "Temperature", humidity: "Humidity" };
 const fmt = (v, d = 1) => v === null || v === undefined ? "" : Number(v).toFixed(d);
 
+const esc = (t) => String(t ?? "").replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+const shown = (d) => typeof d.value === "number" ? `${+d.value.toFixed(4)}` : esc(d.value);
+
 function tiles(el, s) {
   const out = [];
+  if (s.state !== "idle") {
+    const sees = !s.camera.available ? "Camera disconnected" : s.scene ? esc(s.scene) : "Looking at the bench…";
+    out.push(`<div class="tile" style="grid-column:1 / -1"><div class="k">Gemini sees${s.activity && s.activity !== "unclear" ? ` · ${esc(s.activity)}` : ""}</div><div class="v" style="font-size:16px;line-height:1.3">${sees}</div></div>`);
+  }
+  // Every measurement Gemini decided to record for this lab, with the latest value it read or heard.
+  const data = s.data || {};
+  const declared = (s.measurements || []).map(m => m.key);
+  for (const m of s.measurements || []) {
+    const d = data[m.key];
+    out.push(d
+      ? `<div class="tile"><div class="k">${esc(m.label)}${m.role === "outcome" ? " · result" : ""}</div><div class="v num">${shown(d)}<small>${esc(d.unit || "")} ${d.source === "speech" ? "said" : "read"}</small></div></div>`
+      : `<div class="tile missing"><div class="k">${esc(m.label)}${m.role === "outcome" ? " · result" : ""}</div><div class="v">watching${m.unit ? " (" + esc(m.unit) + ")" : ""}</div></div>`);
+  }
+  for (const [key, d] of Object.entries(data)) {
+    if (declared.includes(key)) continue;
+    out.push(`<div class="tile"><div class="k">${esc(d.label)}</div><div class="v num">${shown(d)}<small>${esc(d.unit || "")}</small></div></div>`);
+  }
   const rgb = s.camera.rgb;
-  out.push(`<div class="tile"><div class="k">Tube color (camera)</div>${rgb ? `<div class="swatch" style="background:rgb(${rgb.map(Math.round).join(",")})"></div>` : `<div class="v" style="font-size:15px;color:var(--ink-3)">no camera</div>`}</div>`);
-  out.push(s.sensors.mix_angle && s.sensors.mix_angle.available
-    ? `<div class="tile"><div class="k">Mixing this episode</div><div class="v num">${s.mix_inversions}<small>inversions</small></div></div>`
-    : `<div class="tile"><div class="k">Mixing (camera)</div><div class="v">${s.mixing_now ? "moving" : "still"}</div></div>`);
+  if (s.armed || (s.setup && s.setup.change)) {
+    out.push(`<div class="tile"><div class="k">Liquid color (camera)</div>${rgb ? `<div class="swatch" style="background:rgb(${rgb.map(Math.round).join(",")})"></div>` : `<div class="v" style="font-size:15px;color:var(--ink-3)">no camera</div>`}</div>`);
+  }
+  if (s.sensors.mix_angle && s.sensors.mix_angle.available) {
+    out.push(`<div class="tile"><div class="k">Mixing this episode</div><div class="v num">${s.mix_inversions}<small>inversions</small></div></div>`);
+  }
   for (const [name, x] of Object.entries(s.sensors)) {
     if (name === "mix_angle" && x.available) continue;
     if (!x.available && name !== "temp_c") continue;  // not part of this station's hardware
@@ -209,7 +232,7 @@ function render(s) {
   $("finished").classList.toggle("hidden", s.state !== "finished");
 
   const cw = $("camwarn");
-  if (!s.camera.available) { cw.textContent = "Camera disconnected. Color cannot be measured."; cw.classList.remove("hidden"); }
+  if (!s.camera.available) { cw.textContent = "Camera disconnected. Gemini cannot see the bench."; cw.classList.remove("hidden"); }
   else if (s.camera.blocked) { cw.textContent = "Camera view blocked or too dark."; cw.classList.remove("hidden"); }
   else cw.classList.add("hidden");
 
@@ -228,18 +251,27 @@ function render(s) {
     $("total").textContent = `${fmt((s.totals || {})[q.name] || 0)} ${q.unit || ""}`;
     $("end").disabled = s.state === "finishing";
     const w = [];
-    if (s.no_flip_warning) w.push(`<div class="banner warn">No color flip after 10 minutes of titration.</div>`);
+    if (s.no_flip_warning) w.push(`<div class="banner warn">No color change after 10 minutes.</div>`);
     for (const [n, x] of Object.entries(s.sensors)) if (!x.available && /failed|disconnected/.test(x.detail || "")) w.push(`<div class="banner warn">${NAMES[n] || n} missing: recorded as missing evidence, never estimated.</div>`);
     $("warns").innerHTML = w.join("");
   }
   const fl = $("flip");
-  if (s.flip && rec) { fl.textContent = `Color flip detected at ${fmt(s.flip.at_total)} ${s.flip.unit || ""}`; fl.style.display = "block"; }
+  if (s.flip && rec) { fl.textContent = s.flip.at_total ? `Color change detected at ${fmt(s.flip.at_total)} ${s.flip.unit || ""}` : `Color change detected at ${fmt(s.flip.t_s)} s`; fl.style.display = "block"; }
   else fl.style.display = "none";
 
   if (s.state === "finished") {
     const r = s.result;
-    $("result").textContent = r && r.value != null ? `${fmt(r.value)} ${r.unit || ""}` : (r ? "no flip" : "…");
-    $("resultlabel").textContent = r ? r.label : "Waiting for the worker";
+    const n = Object.keys(s.data || {}).length;
+    if (!r) { $("result").textContent = "…"; $("resultlabel").textContent = "Waiting for the worker"; }
+    else if (r.value != null) {
+      $("result").textContent = typeof r.value === "number" ? `${+r.value.toFixed(4)} ${r.unit || ""}` : r.value;
+      $("resultlabel").textContent = r.label;
+    } else {
+      // No single outcome (or it was not observed): say what was recorded instead of a bare "no result".
+      $("result").textContent = r.recorded ? `${r.recorded} values recorded` : "Recorded";
+      $("resultlabel").textContent = r.note && r.metric !== "result" ? `${r.label}: ${r.note}` : "Every commit is sealed in the record.";
+    }
+    $("findata").innerHTML = n ? Object.values(s.data).map(d => `<div><b>${esc(d.label)}</b> ${shown(d)} ${esc(d.unit || "")}</div>`).join("") : "";
     $("verdict").textContent = s.verdict ? s.verdict.summary : (s.role === "candidate" ? "Running the litmus test…" : "");
     $("finmsg").textContent = s.message || "Sealed in the record. Open the web app to see every commit.";
   }
@@ -270,6 +302,7 @@ function renderIntro(s) {
       <div class="t">${r.title || "Untitled session"}</div>
       <div class="muted" style="margin-top:4px;font-size:16px">${[r.researcher, r.lab, r.run_label].filter(Boolean).join(", ") || "No names heard"}</div>
       ${r.hypothesis ? `<div style="margin-top:6px;font-size:15px">Expecting: “${r.hypothesis}”</div>` : ""}
+      ${s.setup && (s.setup.recording || []).length ? `<div style="margin-top:6px;font-size:15px">Recording: ${s.setup.recording.map(esc).join(", ")}</div>` : ""}
       <div class="row"><button class="big" style="padding:12px;font-size:18px" onclick="post('/intro/confirm')">Looks right</button><button class="ghost" onclick="post('/intro/dismiss')">Dismiss</button></div>`;
   } else {
     box.innerHTML = `<div class="muted">${it.error || "No introduction recorded."}</div><div class="row"><button class="ghost" onclick="post('/intro/dismiss')">OK</button></div>`;

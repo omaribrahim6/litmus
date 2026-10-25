@@ -92,11 +92,13 @@ class Session:
         self.intro: dict = {"state": None}
         self.title: dict = {}
         self.narration: list[dict] = []
-        self.cam_mix_since: float | None = None
-        self.cam_mix_last: float | None = None
+        self.cam_moving_last: float | None = None
         self.setup: dict | None = None
         self.setup_at: float | None = None
         self.seen: list[dict] = []
+        self.scene: str | None = None
+        self.activity: str | None = None
+        self.data: dict[str, dict] = {}  # latest value per measurement, as recorded by the worker
 
     def snapshot(self) -> dict:
         with self.lock:
@@ -114,7 +116,10 @@ class Session:
                            "blocked": bool(self.color and self.color.get("blocked")),
                            "rgb": [self.color["r"], self.color["g"], self.color["b"]] if self.color else None},
                 "mix_inversions": self._mix_count_live(),
-                "mixing_now": self.cam_mix_since is not None,
+                "scene": self.scene, "activity": self.activity,
+                "measurements": [{"key": m["key"], "label": m["label"], "unit": m.get("unit"), "role": m.get("role")}
+                                 for m in self.protocol.get("measurements", [])],
+                "data": self.data,
                 "flip": self.flip, "result": self.result, "verdict": self.verdict, "message": self.message,
                 "no_flip_warning": bool(self.titrate_started and not self.flip and time.time() - self.titrate_started > 600),
                 "upload": {"online": self.outbox.online, "pending": self.outbox.pending(), "error": self.outbox.last_error},
@@ -253,10 +258,11 @@ class Session:
         self.flip_detector = None
         self.setup_at = time.time()
         self.setup = {"experiment": setup["experiment"], "name": self.protocol["name"], "reused": setup.get("reused"),
-                      "change": self.protocol.get("change")}
+                      "change": self.protocol.get("change"),
+                      "recording": [m["label"] for m in self.protocol.get("measurements", [])]}
 
     def _observe_loop(self, run_id: str) -> None:
-        """Hands-free: every ~12 s Gemini looks at the latest frames and says which step the researcher is on."""
+        """Hands-free: every ~12 s Gemini looks at the latest frames, says what is happening and reads any values in view."""
         while True:
             time.sleep(12)
             with self.lock:
@@ -280,8 +286,18 @@ class Session:
                 ids = [s["id"] for s in self.protocol["steps"]]
                 if out.get("current_step") in ids:
                     self.step = ids.index(out["current_step"])
-                self.seen = (self.seen + [{"t_s": round(time.time() - self.started), "text": c} for c in out.get("committed", [])])[-6:]
+                if out.get("scene"):
+                    self.scene, self.activity = out["scene"], out.get("activity")
+                self._take_data(out.get("recorded", []))
+                said = out.get("committed", []) + [r["summary"] for r in out.get("recorded", [])]
+                self.seen = (self.seen + [{"t_s": round(time.time() - self.started), "text": c} for c in said])[-6:]
                 self._maybe_arm()
+
+    def _take_data(self, recorded: list[dict]) -> None:
+        """Keep the latest value of each measurement for the kiosk (caller holds the lock)."""
+        for r in recorded:
+            self.data[r["key"]] = {"label": r["label"], "value": r["value"], "unit": r.get("unit"), "source": r.get("source"),
+                                   "t_s": round(time.time() - self.started)}
 
     def _maybe_arm(self) -> None:
         """Arm color-change detection on the step expected to show it, or 30 s after setup at the latest."""
@@ -325,6 +341,8 @@ class Session:
         with self.lock:
             for c in out.get("committed", []):
                 self.narration.append({"t_s": round(c.get("t_s", 0), 1), "text": c["text"], "mic": utt.source})
+            if self.run_id == run_id:
+                self._take_data(out.get("recorded", []))
 
     def confirm_intro(self) -> dict:
         with self.lock:
@@ -377,7 +395,7 @@ class Session:
             if not q:
                 return self.snapshot()
             self._quantity(q, value, s["id"])
-            if self.bench and q["name"] == self.protocol["result"]["quantity"]:
+            if self.bench and q["name"] == self.protocol["result"].get("quantity"):
                 self.bench.add_base(value)
             return self.snapshot()
 
@@ -405,8 +423,6 @@ class Session:
             if self.state != "recording":
                 return self.snapshot()
             self._close_mix(time.time(), force=True)
-            if self.cam_mix_since is not None:  # close a camera mixing episode still in progress
-                self._camera_mixing(time.time() + 2.0, 0.0)
             self._flush_now()
             self.state = "finishing"
             run_id, started, role = self.run_id, self.started, self.role
@@ -529,21 +545,13 @@ class Session:
                     self._close_mix(t)
             time.sleep(max(0.0, period - (time.time() - t)))
 
-    def _camera_mixing(self, t: float, motion: float | None) -> bool:
-        """Mixing measured by the camera when there is no rotary sensor. Returns True while the tube is moving."""
+    def _camera_moving(self, t: float, motion: float | None) -> bool:
+        """True while the scene is moving and briefly after, so color samples taken mid-motion don't trigger a change.
+        What the movement is (mixing, pouring, a hand passing) is for Gemini to say, not this threshold."""
         threshold = float(self.cfg.hardware.get("mix_motion_threshold", 0.04))
-        moving = motion is not None and motion >= threshold
-        if moving:
-            self.cam_mix_since = self.cam_mix_since or t
-            self.cam_mix_last = t
-        elif self.cam_mix_since is not None and t - self.cam_mix_last > 1.0:
-            duration = round(self.cam_mix_last - self.cam_mix_since, 2)
-            if duration >= 1.0:
-                self._event("mix", f"Mixed for {duration:.1f} s (camera)", "measured",
-                            {"duration_s": duration, "source": "camera"}, t=self.cam_mix_last)
-            self.cam_mix_since = None
-        # Hold off color-based flip detection while moving and briefly after.
-        return moving or (self.cam_mix_last is not None and t - self.cam_mix_last < 1.5)
+        if motion is not None and motion >= threshold:
+            self.cam_moving_last = t
+        return self.cam_moving_last is not None and t - self.cam_moving_last < 1.5
 
     def _color_loop(self) -> None:
         period = 1.0 / self.cfg.color_hz
@@ -556,8 +564,7 @@ class Session:
                 moving = False
                 if self.state == "recording" and motion is not None:
                     self.readings.append({"t": iso(t), "sensor": "mix_motion", "value": round(motion, 4), "unit": "ratio", "provenance": "measured"})
-                    if not self.sensors["mix_angle"].available:
-                        moving = self._camera_mixing(t, motion)
+                    moving = self._camera_moving(t, motion)
                 if m and self.state == "recording":
                     if not m.get("blocked") and not moving:
                         for sensor, unit in COLOR_SENSORS:
@@ -573,7 +580,7 @@ class Session:
 
     def _on_flip(self, f, metric: str) -> None:
         fid = self._keyframe("flip")
-        total = self.totals.get(self.protocol["result"]["quantity"], 0.0)
+        total = self.totals.get(self.protocol["result"].get("quantity", ""), 0.0)
         self.flip = {"t_s": round(f.t - self.started, 1), "at_total": total, "unit": self.protocol["result"].get("unit")}
         self._event("flip_detected", f"Color flip detected by camera ({metric} changed {f.change:+.1f} from baseline {f.baseline:.1f})",
                     "measured", {"source": "camera", "metric": metric, "baseline": round(f.baseline, 3), "value": round(f.value, 3),
